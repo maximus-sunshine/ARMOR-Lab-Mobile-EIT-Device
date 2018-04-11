@@ -19,8 +19,8 @@ char h = HIGH;
 char l = LOW;
 float data = 0;
 char chan[8][3] = {{h,l,l},{h,h,l},{h,h,h},
-                   {h,l,h},{l,l,h},{l,h,l},
-                   {l,h,h},{l,l,l}}; 
+                   {h,l,h},{l,h,l,{l,l,h},
+                   {l,l,l},{l,h,h}}; 
 int demux1[8] = {1,2,3,4,5,6,7,8};
 int demux2[8] = {6,5,8,7,2,1,4,3};
 int mux[8][6] = {{2,3,4,5,7,8},{1,3,4,6,7,8},
@@ -29,23 +29,24 @@ int mux[8][6] = {{2,3,4,5,7,8},{1,3,4,6,7,8},
                  {1,2,3,5,6,8},{1,2,4,5,6,7}}; 
                    
 int volt_read = 0;// pin A0 on Arduino, pin 3 on MUX
-int demux1_s0 = 5;// set s0 to pin 5 on Arduino, pin 11 on MUX1
-int demux1_s1 = 6;// set s0 to pin 6 on Arduino, pin 10 on MUX1
-int demux1_s2 = 7;// set s0 to pin 7 on Arduino, pin 9 on MUX1
-int demux2_s0 = 8;// set s0 to pin 8 on Arduino, pin 11 on MUX2
-int demux2_s1 = 9;// set s0 to pin 9 on Arduino, pin 10 on MUX2
-int demux2_s2 = 10;// set s0 to pin 10 on Arduino, pin 9 on MUX2
-int mux_s0 = 2;// set s0 to pin 2 on Arduino, pin 11 on MUX3
+int curr_read = 1;
+int demux1_s0 = 10;// set s0 to pin 5 on Arduino, pin 11 on MUX1
+int demux1_s1 = 9;// set s0 to pin 6 on Arduino, pin 10 on MUX1
+int demux1_s2 = 8;// set s0 to pin 7 on Arduino, pin 9 on MUX1
+int demux2_s0 = 7;// set s0 to pin 8 on Arduino, pin 11 on MUX2
+int demux2_s1 = 6;// set s0 to pin 9 on Arduino, pin 10 on MUX2
+int demux2_s2 = 5;// set s0 to pin 10 on Arduino, pin 9 on MUX2
+int mux_s0 = 4;// set s0 to pin 2 on Arduino, pin 11 on MUX3
 int mux_s1 = 3;// set s0 to pin 3 on Arduino, pin 10 on MUX3
-int mux_s2 = 4;// set s0 to pin 4 on Arduino, pin 9 on MUX3
-int EE = 11; //Enable (curr and gnd MUX) to pin 8 on Arduino, pin 6 on MUX 1&2 
-int EE_2 = 12;//Enable (volt read MUX) to pin 9 on Arduino, pin 6 on MUX3
+int mux_s2 = 2;// set s0 to pin 4 on Arduino, pin 9 on MUX3
+//int EE = 11; //Enable (curr and gnd MUX) to pin 8 on Arduino, pin 6 on MUX 1&2 
+//int EE_2 = 12;//Enable (volt read MUX) to pin 9 on Arduino, pin 6 on MUX3
 
-float BITS_TO_VOLTS = 3.3/1024;
+float BITS_TO_VOLTS = 5.0/1023.0;
 
 void setup() {
   // put your setup code here, to run once:
-  //Serial.begin(115200);
+  Serial.begin(115200);
   pinMode(demux1_s0, OUTPUT);
   pinMode(demux1_s1, OUTPUT);
   pinMode(demux1_s2, OUTPUT);
@@ -55,15 +56,27 @@ void setup() {
   pinMode(mux_s0, OUTPUT);
   pinMode(mux_s1, OUTPUT);
   pinMode(mux_s2, OUTPUT);
-  pinMode(EE, OUTPUT);
-  pinMode(EE_2, OUTPUT);
-//  digitalWrite(EE,LOW); //Enable pin set low
-//  digitalWrite(EE_2, LOW);
+//pinMode(EE, OUTPUT);
+//pinMode(EE_2, OUTPUT);
+//digitalWrite(EE,LOW); //Enable pin set low
+//digitalWrite(EE_2, LOW);
 }
 
 void loop() {
   
-
+  /*Set to config.1
+  digitalWrite(demux1_s0,LOW);
+  digitalWrite(demux1_s1,LOW);
+  digitalWrite(demux1_s2,HIGH);
+  digitalWrite(demux2_s0,HIGH);
+  digitalWrite(demux2_s1,LOW);
+  digitalWrite(demux2_s2,LOW);
+  digitalWrite(mux_s0, LOW);
+  digitalWrite(mux_s1, HIGH);
+  digitalWrite(mux_s2, HIGH);
+  data = analogRead(volt_read)*BITS_TO_VOLTS;
+  Serial.println(data);*/
+  
   for( int i = 0; i<=7; i++){
     //Serial.print("Configuration #");
     //Serial.println(i+1);
@@ -74,25 +87,31 @@ void loop() {
     digitalWrite(demux2_s0,chan[demux2[i]-1][2]);
     digitalWrite(demux2_s1,chan[demux2[i]-1][1]);
     digitalWrite(demux2_s2,chan[demux2[i]-1][0]);
-    digitalWrite(EE,LOW); //Enable pin set low
-  
+    //digitalWrite(EE,LOW); //Enable pin set low
+    
+    //Inner Loop controls sampling
     for(int j = 0; j <= 5; j++){
       digitalWrite(mux_s0, chan[mux[i][j]-1][2]);
       digitalWrite(mux_s1, chan[mux[i][j]-1][1]);
       digitalWrite(mux_s2, chan[mux[i][j]-1][0]);
-      digitalWrite(EE_2, LOW);
+      //digitalWrite(EE_2, LOW);
       data = analogRead(volt_read)*BITS_TO_VOLTS;
-      //Serial.println(data);
-      digitalWrite(EE_2, HIGH);
+      delay(1);
+      curr = analogREad(curr_read)*BITS_TO_VOLTS;
+      Serial.print(curr,4);
+      Serial.print(',');
+      Serial.print(data,4);
+      Serial.print(',');
+      //digitalWrite(EE_2, HIGH);
     }
     //Serial.println(' ');
 
-    //delay(10);
-    digitalWrite(EE,HIGH); //Enable pin set high
+    //delay(5000);
+    //digitalWrite(EE,HIGH); //Enable pin set high
     //delay(10);
     
   }
 
-
+  Serial.println();
 
 }
