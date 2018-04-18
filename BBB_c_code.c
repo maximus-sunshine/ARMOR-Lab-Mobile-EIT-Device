@@ -7,11 +7,11 @@
 #define BUFFER_MAX 3
 
 int main(){
-  int pin = 57;
+  int pin = 61;
   char buffer[BUFFER_MAX];
   ssize_t bytes_written;
   int fd;
-  fd = open("/sys/class/gpio/export",O_WRONGLY);
+  fd = open("/sys/class/gpio/export",O_WRONLY);
   if (-1 == fd) {
 		fprintf(stderr, "Failed to open export for writing!\n");
 		return(-1);
