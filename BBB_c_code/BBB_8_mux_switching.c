@@ -105,7 +105,7 @@ int main(){
   clean_up(mux_a1);
   clean_up(mux_a2);
   //closing adc file	
-  adc_clean_up(volt_channel);
+  adc_cleanup(volt_channel);
 
   return 0;
 }
@@ -229,5 +229,6 @@ static int read_gpio(int pin){
 
 static int clean_up(int pin){
   set_gpio_value(pin, 0);
+  unexport_gpio(pin);
   return 0;
 }
