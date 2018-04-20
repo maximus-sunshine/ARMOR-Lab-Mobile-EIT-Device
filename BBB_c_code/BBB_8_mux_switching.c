@@ -90,7 +90,7 @@ int main(){
 
   return 0;
 }
-}
+
 
 static int read_adc_raw(int channel){
   char path[66];
