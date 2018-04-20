@@ -108,12 +108,12 @@ static int adc_init(int channel){
     fprintf(stderr,"Failed to open adc for reading!\n");
     return -1;
   }
-  fd[channel] = temp_fd;
+  fd_adc[channel] = temp_fd;
 }
 
 static int read_adc_raw(int channel){
   char value_read[20];
-  int fd_read = read(fd[channel],value_read,20);
+  int fd_read = read(fd_adc[channel],value_read,20);
   if (-1 == fd_read)) {
     fprintf(stderr, "Failed to read value!\n");
     return(-1);
@@ -122,7 +122,7 @@ static int read_adc_raw(int channel){
 }
 
 static int adc_cleanup(int channel){
-  close(fd[channel]);
+  close(fd_adc[channel]);
   return 0;
 }
 
