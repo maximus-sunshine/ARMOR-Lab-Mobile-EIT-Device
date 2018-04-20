@@ -53,7 +53,7 @@ int rc_adc_cleanup()
 	return 0;
 }
 
-int adc_read_raw()
+int adc_read_raw(int ch)
 {
 	char buf[8];
 	int i;
