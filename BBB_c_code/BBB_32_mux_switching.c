@@ -74,7 +74,7 @@ int main(){
   set_gpio_dir(mux_a3,1);
   set_gpio_dir(mux_a4,1);
   
-  adc_init(volt_channel)
+  adc_init(volt_channel);
 
   float bits_to_volts = 5/32767;
   int flag = 0;
