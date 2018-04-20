@@ -38,9 +38,21 @@ int main(){
   int mux_a0 = 2;
   int mux_a1 = 3;
   int mux_a2 = 4;
-  
+  //adc initialization
   adc_init(volt_channel);
+  // exporting gpio pins needed
+  export_gpio(demux1_a0);
+  export_gpio(demux1_a1);
+  export_gpio(demux1_a2);
+  export_gpio(demux2_a0);
+  export_gpio(demux2_a1);
+  export_gpio(demux2_a2);
+  export_gpio(mux_a0);
+  export_gpio(mux_a1);
+  export_gpio(mux_a2);
+
 	
+  // setting gpio direction to outputs(1)	
   set_gpio_dir(demux1_a0,1);
   set_gpio_dir(demux1_a1,1);
   set_gpio_dir(demux1_a2,1);
@@ -92,7 +104,7 @@ int main(){
   clean_up(mux_a0);
   clean_up(mux_a1);
   clean_up(mux_a2);
-	
+  //closing adc file	
   adc_clean_up(volt_channel);
 
   return 0;
