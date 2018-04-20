@@ -131,7 +131,7 @@ int main(){
       k++;
       printf(" ******************** Cylce %d *************************",k);
   }
-  //setting all gpio mux pins to low
+  //setting all gpio mux pins to low and unexporting them
   clean_up(demux1_a0);
   clean_up(demux1_a1);
   clean_up(demux1_a2);
@@ -147,7 +147,9 @@ int main(){
   clean_up(mux_a2);
   clean_up(mux_a3);
   clean_up(mux_a4);
-
+  //closing adc file
+  adc_cleanup(volt_channel);
+  
   return 0;
 }
 
@@ -270,5 +272,6 @@ static int read_gpio(int pin){
 
 static int clean_up(int pin){
   set_gpio_value(pin, 0);
+  unexport_gpio(pin);
   return 0;
 }
