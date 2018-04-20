@@ -57,6 +57,25 @@ int main(){
   int mux_a2 = 48;
   int mux_a3 = 50;
   int mux_a4 = 52;
+ 
+//exporting gpio pins for muxes
+  export_gpio(demux1_a0);
+  export_gpio(demux1_a1);
+  export_gpio(demux1_a2);
+  export_gpio(demux1_a3);
+  export_gpio(demux1_a4);
+  export_gpio(demux2_a0);
+  export_gpio(demux2_a1);
+  export_gpio(demux2_a2);
+  export_gpio(demux2_a3);
+  export_gpio(demux2_a4);
+  export_gpio(mux_a0);
+  export_gpio(mux_a1);
+  export_gpio(mux_a2);
+  export_gpio(mux_a3);
+  export_gpio(mux_a4);
+
+
 //setting the direction of gpio pins used for muxes to outputs(1)
   set_gpio_dir(demux1_a0,1);
   set_gpio_dir(demux1_a1,1);
@@ -73,7 +92,7 @@ int main(){
   set_gpio_dir(mux_a2,1);
   set_gpio_dir(mux_a3,1);
   set_gpio_dir(mux_a4,1);
-  
+  //opening adc file
   adc_init(volt_channel);
 
   float bits_to_volts = 5/32767;
