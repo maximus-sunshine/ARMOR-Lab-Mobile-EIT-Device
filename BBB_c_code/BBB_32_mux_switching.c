@@ -69,7 +69,7 @@ int main(){
   set_gpio_dir(mux_a3,1);
   set_gpio_dir(mux_a4,1);
 
-  int bits_to_volts = 5/32767;
+  float bits_to_volts = 5/32767;
   int flag = 0;
   while(flag < 200){
     for(int i = 0; i<=31; i++){
@@ -96,7 +96,7 @@ int main(){
 
         int volt_channel = 0;
         int value = read_adc_raw(volt_channel);
-        int voltage = value*bits_to_volts;
+        float voltage = value*bits_to_volts;
         printf(" %.3f",voltage);
       }
         printf("\n");
