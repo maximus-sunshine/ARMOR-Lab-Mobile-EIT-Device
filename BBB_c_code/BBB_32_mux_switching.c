@@ -146,6 +146,10 @@ static int adc_init(int channel){
 
 static int read_adc_raw(int channel){
   char value_read[20];
+  if(-1 == lseek(fd_adc[channel],0,SEEK_SET)){
+     fprintf(stderr, "Failed to go to begginning of file\n");
+     return -1;
+  }
   int fd_read = read(fd_adc[channel],value_read,20);
   if (-1 == fd_read)) {
     fprintf(stderr, "Failed to read value!\n");
