@@ -9,8 +9,13 @@ static int set_gpio_dir(int pin, int dir);
 static int set_gpio_value(int pin, int val);
 static int unexport_gpio(int pin);
 static int read_gpio(int pin);
-static int read_adc_raw(int channel);
 static int clean_up(int pin);
+static int adc_init(int channel);
+static int read_adc_raw(int channel);
+static int adc_cleanup(int channel);
+
+int fd_adc[4];
+int volt_channel = 0;
 
 int main(){
   int chan[8][3] = {{1,0,0},{1,1,0},{1,1,1},
@@ -33,7 +38,9 @@ int main(){
   int mux_a0 = 2;
   int mux_a1 = 3;
   int mux_a2 = 4;
-
+  
+  adc_init(volt_channel);
+	
   set_gpio_dir(demux1_a0,1);
   set_gpio_dir(demux1_a1,1);
   set_gpio_dir(demux1_a2,1);
@@ -64,8 +71,7 @@ int main(){
         set_gpio_value(mux_a0, chan[mux[i][j]-1][2]);
         set_gpio_value(mux_a1, chan[mux[i][j]-1][1]);
         set_gpio_value(mux_a2, chan[mux[i][j]-1][0]);
-
-        int volt_channel = 0;
+	      
         int value = read_adc_raw(volt_channel);
         float voltage = value*bits_to_volts;
         printf(" %.3f",voltage);
@@ -86,32 +92,39 @@ int main(){
   clean_up(mux_a0);
   clean_up(mux_a1);
   clean_up(mux_a2);
-
+	
+  adc_clean_up(volt_channel);
 
   return 0;
 }
 
 
-static int read_adc_raw(int channel){
+static int adc_init(int channel){
   char path[66];
-  char value_read[20];
-  int fd;
+  int temp_fd;
   snprintf(path,66,"/sys/bus/iio/devices/iio:device1/in_voltage%d_raw",channel);
-  fd = open(path,O_WRONLY);
+  temp_fd = open(path,O_RDONLY);
   if (-1 == fd){
     fprintf(stderr,"Failed to open adc for reading!\n");
     return -1;
   }
-  int fd_read = read(fd,value_read,20);
+  fd[channel] = temp_fd;
+}
+
+static int read_adc_raw(int channel){
+  char value_read[20];
+  int fd_read = read(fd[channel],value_read,20);
   if (-1 == fd_read)) {
     fprintf(stderr, "Failed to read value!\n");
     return(-1);
   }
-  close(fd);
   return(atoi(value_read));
-
 }
 
+static int adc_cleanup(int channel){
+  close(fd[channel]);
+  return 0;
+}
 
 static int export_gpio(int pin){
   char buffer[4];
