@@ -3,16 +3,19 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
+//gpio function declarations
 static int export_gpio(int pin);
 static int set_gpio_dir(int pin, int dir);
 static int set_gpio_value(int pin, int val);
 static int unexport_gpio(int pin);
 static int read_gpio(int pin);
+static int clean_up(int pin);
+//adc fucntion declarations
 static int adc_init(int channel);
 static int adc_cleanup(int channel);
 static int read_adc_raw(int channel);
-static int clean_up(int pin);
 
 int fd_adc[4];
 int volt_channel = 0;
@@ -31,10 +34,11 @@ int main(){
   int demux2[32] = {24,23,22,21,20,19,18,17,32,31,30,29,28,27,26,25,8,7,6,5,4,3,2,1,16,15,14,13,12,11,10,9};
   int mux[32][30];
   int k = 0;
-  for(int i = 0; i<=31,i++){
-    for(int j= 0;j<=31;j++){
-      if(demux1[i] != demux1[j] && demux2[i] != demux1[j]){
-        mux[i][k] = demux1[j];
+  int a,b;
+  for(a = 0; a<=31;a++){
+    for(b= 0;b<=31;b++){
+      if(demux1[a] != demux1[b] && demux2[a] != demux1[b]){
+        mux[a][k] = demux1[b];
         k++;
       }
     }
@@ -57,7 +61,7 @@ int main(){
   int mux_a2 = 48;
   int mux_a3 = 50;
   int mux_a4 = 52;
- 
+
 //exporting gpio pins for muxes
   export_gpio(demux1_a0);
   export_gpio(demux1_a1);
@@ -92,13 +96,12 @@ int main(){
   set_gpio_dir(mux_a2,1);
   set_gpio_dir(mux_a3,1);
   set_gpio_dir(mux_a4,1);
-  //opening adc file
-  adc_init(volt_channel);
 
+  int i,j;
   float bits_to_volts = 5/32767;
   int flag = 0;
   while(flag < 200){
-    for(int i = 0; i<=31; i++){
+    for(i = 0; i<=31; i++){
       //power and ground distribution
       set_gpio_value(demux1_a0,chan[demux1[i]-1][4]);
       set_gpio_value(demux1_a1,chan[demux1[i]-1][3]);
@@ -113,23 +116,28 @@ int main(){
       set_gpio_value(demux2_a4,chan[demux1[i]-1][0]);
 
       //inner loop controls sampling
-      for(int j =0; j <= 29; j++){
+      for(j =0; j <= 29; j++){
         set_gpio_value(mux_a0, chan[mux[i][j]-1][4]);
         set_gpio_value(mux_a1, chan[mux[i][j]-1][3]);
         set_gpio_value(mux_a2, chan[mux[i][j]-1][2]);
         set_gpio_value(mux_a3, chan[mux[i][j]-1][1]);
         set_gpio_value(mux_a4, chan[mux[i][j]-1][0]);
 
-        
+        //opening adc file
+        adc_init(volt_channel);
+        //reading adc
         int value = read_adc_raw(volt_channel);
         float voltage = value*bits_to_volts;
+        //closing adc file
+        adc_cleanup(volt_channel);
+        //printing voltage
         printf(" %.3f",voltage);
       }
         printf("\n");
         printf("--------------Current Configuration %d ------------------ \n",i+1);
     }
-      k++;
-      printf(" ******************** Cylce %d *************************",k);
+      flag++;
+      printf(" ******************** Cylce %d *************************",flag);
   }
   //setting all gpio mux pins to low and unexporting them
   clean_up(demux1_a0);
@@ -147,9 +155,7 @@ int main(){
   clean_up(mux_a2);
   clean_up(mux_a3);
   clean_up(mux_a4);
-  //closing adc file
-  adc_cleanup(volt_channel);
-  
+
   return 0;
 }
 
@@ -158,21 +164,20 @@ static int adc_init(int channel){
   int temp_fd;
   snprintf(path,66,"/sys/bus/iio/devices/iio:device1/in_voltage%d_raw",channel);
   temp_fd = open(path,O_RDONLY);
-  if (-1 == fd){
+  if (-1 == temp_fd){
     fprintf(stderr,"Failed to open adc for reading!\n");
     return -1;
   }
   fd_adc[channel] = temp_fd;
+  return 0;
 }
 
 static int read_adc_raw(int channel){
   char value_read[20];
-  if(-1 == lseek(fd_adc[channel],0,SEEK_SET)){
-     fprintf(stderr, "Failed to go to begginning of file\n");
-     return -1;
-  }
+
   int fd_read = read(fd_adc[channel],value_read,20);
-  if (-1 == fd_read)) {
+
+  if (-1 == fd_read) {
     fprintf(stderr, "Failed to read value!\n");
     return(-1);
   }
@@ -183,7 +188,6 @@ static int adc_cleanup(int channel){
   close(fd_adc[channel]);
   return 0;
 }
-
 
 static int export_gpio(int pin){
   char buffer[4];
@@ -204,10 +208,13 @@ static  int set_gpio_dir(int pin, int dir){
   char buffer[4];
   char path[35];
   int fd;
-  if (dir == 1)
-    char direction[] = "out";
-  else
-    char direction[] = "in";
+  char direction[4];
+  if (1 == dir){
+    strcpy(direction, "out");
+}
+  else{
+    strcpy(direction, "in");;
+}
 
   snprintf(path,35,"/sys/class/gpio/gpio%d/direction", pin);
   fd = open(path, O_WRONLY);
