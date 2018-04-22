@@ -3,13 +3,16 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
 
+//gpio function declarations
 static int export_gpio(int pin);
 static int set_gpio_dir(int pin, int dir);
 static int set_gpio_value(int pin, int val);
 static int unexport_gpio(int pin);
 static int read_gpio(int pin);
 static int clean_up(int pin);
+//adc function declarations
 static int adc_init(int channel);
 static int read_adc_raw(int channel);
 static int adc_cleanup(int channel);
@@ -28,7 +31,7 @@ int main(){
                   {1,3,4,6,7,8},{2,3,4,5,7,8},
                   {1,2,3,5,6,8},{1,2,4,5,6,7}};
 
-
+  //gpio pins declarations
   int demux1_a0 = 5;
   int demux1_a1 = 6;
   int demux1_a2 = 7;
@@ -38,8 +41,7 @@ int main(){
   int mux_a0 = 2;
   int mux_a1 = 3;
   int mux_a2 = 4;
-  //adc initialization
-  adc_init(volt_channel);
+
   // exporting gpio pins needed
   export_gpio(demux1_a0);
   export_gpio(demux1_a1);
@@ -51,8 +53,8 @@ int main(){
   export_gpio(mux_a1);
   export_gpio(mux_a2);
 
-	
-  // setting gpio direction to outputs(1)	
+
+  // setting gpio direction to outputs(1)
   set_gpio_dir(demux1_a0,1);
   set_gpio_dir(demux1_a1,1);
   set_gpio_dir(demux1_a2,1);
@@ -63,11 +65,11 @@ int main(){
   set_gpio_dir(mux_a1,1);
   set_gpio_dir(mux_a2,1);
 
-
+  int i,j;
   float bits_to_volts = 5/32767;
   int flag = 0;
   while(flag < 200){
-    for(int i = 0; i<=7; i++){
+    for(i = 0; i<=7; i++){
       //power and ground distribution
       set_gpio_value(demux1_a0,chan[demux1[i]-1][2]);
       set_gpio_value(demux1_a1,chan[demux1[i]-1][1]);
@@ -79,22 +81,28 @@ int main(){
 
 
       //inner loop controls sampling
-      for(int j =0; j <= 5; j++){
+      for(j =0; j <= 5; j++){
         set_gpio_value(mux_a0, chan[mux[i][j]-1][2]);
         set_gpio_value(mux_a1, chan[mux[i][j]-1][1]);
         set_gpio_value(mux_a2, chan[mux[i][j]-1][0]);
-	      
+
+        //adc initialization
+        adc_init(volt_channel);
+        ///adc read
         int value = read_adc_raw(volt_channel);
         float voltage = value*bits_to_volts;
+        //closing adc file
+        adc_cleanup(volt_channel);
+        //printing voltage
         printf(" %.3f",voltage);
       }
         printf("\n");
         printf("--------------Current Configuration %d ------------------ \n",i+1);
     }
-      k++;
-      printf(" ******************** Cylce %d *************************",k);
+      flag++;
+      printf(" ******************** Cylce %d *************************",flag);
   }
-  //setting all gpio mux pins to low
+  //setting all gpio mux pins to low and unexporting them
   clean_up(demux1_a0);
   clean_up(demux1_a1);
   clean_up(demux1_a2);
@@ -104,8 +112,7 @@ int main(){
   clean_up(mux_a0);
   clean_up(mux_a1);
   clean_up(mux_a2);
-  //closing adc file	
-  adc_cleanup(volt_channel);
+
 
   return 0;
 }
@@ -116,21 +123,20 @@ static int adc_init(int channel){
   int temp_fd;
   snprintf(path,66,"/sys/bus/iio/devices/iio:device1/in_voltage%d_raw",channel);
   temp_fd = open(path,O_RDONLY);
-  if (-1 == fd){
+  if (-1 == temp_fd){
     fprintf(stderr,"Failed to open adc for reading!\n");
     return -1;
   }
   fd_adc[channel] = temp_fd;
+  return 0;
 }
 
 static int read_adc_raw(int channel){
   char value_read[20];
-  if(-1 == lseek(fd_adc[channel],0,SEEK_SET)){
-     fprintf(stderr, "Failed to go to begginning of file\n");
-     return -1;
-  }
+
   int fd_read = read(fd_adc[channel],value_read,20);
-  if (-1 == fd_read)) {
+
+  if (-1 == fd_read) {
     fprintf(stderr, "Failed to read value!\n");
     return(-1);
   }
@@ -161,10 +167,13 @@ static  int set_gpio_dir(int pin, int dir){
   char buffer[4];
   char path[35];
   int fd;
-  if (dir == 1)
-    char direction[] = "out";
-  else
-    char direction[] = "in";
+  char direction[4];
+  if (1 == dir){
+    strcpy(direction, "out");
+}
+  else{
+    strcpy(direction, "in");;
+}
 
   snprintf(path,35,"/sys/class/gpio/gpio%d/direction", pin);
   fd = open(path, O_WRONLY);
