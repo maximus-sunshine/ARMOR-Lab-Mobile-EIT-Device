@@ -32,15 +32,15 @@ int main(){
                   {1,2,3,5,6,8},{1,2,4,5,6,7}};
 
   //gpio pins declarations
-  int demux1_a0 = 5;
-  int demux1_a1 = 6;
-  int demux1_a2 = 7;
-  int demux2_a0 = 8;
-  int demux2_a1 = 9;
-  int demux2_a2 = 10;
-  int mux_a0 = 2;
-  int mux_a1 = 3;
-  int mux_a2 = 4;
+  int demux1_a0 = 66;
+  int demux1_a1 = 67;
+  int demux1_a2 = 69;
+  int demux2_a0 = 68;
+  int demux2_a1 = 45;
+  int demux2_a2 = 44;
+  int mux_a0 = 23;
+  int mux_a1 = 26;
+  int mux_a2 = 47;
 
   // exporting gpio pins needed
   export_gpio(demux1_a0);
