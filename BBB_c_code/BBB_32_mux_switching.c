@@ -53,17 +53,17 @@ int main(){
                   {1,3,4,6,7,8},{2,3,4,5,7,8},
                   {1,2,3,5,6,8},{1,2,4,5,6,7}};
 
-  int demux1_a0 = 24;
-  int demux1_a1 = 26;
-  int demux1_a2 = 28;
-  int demux1_a3 = 30;
-  int demux1_a4 = 32;
+  int demux1_a0 = 66;
+  int demux1_a1 = 67;
+  int demux1_a2 = 69;
+  int demux1_a3 = 68;
+  int demux1_a4 = 45;
 
-  int demux2_a0 = 34;
-  int demux2_a1 = 36;
-  int demux2_a2 = 38;
-  int demux2_a3 = 40;
-  int demux2_a4 = 42;
+  int demux2_a0 = 44;
+  int demux2_a1 = 23;
+  int demux2_a2 = 26;
+  int demux2_a3 = 47;
+  int demux2_a4 = 46;
   /*
   int mux_a0 = 44;
   int mux_a1 = 46;
