@@ -66,7 +66,7 @@ int main(){
   set_gpio_dir(mux_a2,1);
 
   int i,j;
-  float bits_to_volts = 5/32767;
+  float bits_to_volts = 0.078127104/1000;
   int flag = 0;
   while(flag < 200){
     for(i = 0; i<=7; i++){
