@@ -298,7 +298,7 @@ static int read_gpio(int pin){
   char value_read[20];
   int fd;
   snprintf(path,35,"/sys/class/gpio/gpio%d/value",pin);
-  fd = open(path,O_WRONLY);
+  fd = open(path,O_RDONLY);
   if (-1 == fd){
     fprintf(stderr,"Failed to open value for reading!\n");
     return -1;
