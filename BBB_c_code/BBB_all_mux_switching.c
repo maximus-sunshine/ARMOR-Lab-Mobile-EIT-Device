@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#define NODAL_NUM 32//# of nodes
+
 //gpio function declarations
 static int export_gpio(int pin);
 static int set_gpio_dir(int pin, int dir);
@@ -17,11 +19,12 @@ static int adc_init(int channel);
 static int adc_cleanup(int channel);
 static int read_adc_raw(int channel);
 
-int fd_adc[4];
-int volt_channel = 0;
+int fd_adc[4];//4 files for adc
+int volt_channel = 0;//voltage sampling done on channel one
 
 int main(){
 
+  //logic array declaration
   int chan[32][5] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1},
                       {0,0,1,0,0},{0,0,1,0,1},{0,0,1,1,0},{0,0,1,1,1},
                       {0,1,0,0,0},{0,1,0,0,1},{0,1,0,1,0},{0,1,0,1,1},
@@ -30,48 +33,61 @@ int main(){
                       {1,0,1,0,0},{1,0,1,0,1},{1,0,1,1,0},{1,0,1,1,1},
                       {1,1,0,0,0},{1,1,0,0,1},{1,1,0,1,0},{1,1,0,1,1},
                       {1,1,1,0,0},{1,1,1,0,1},{1,1,1,1,0},{1,1,1,1,1}};
-  /*	
-  int demux1[32] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
-  int demux2[32] = {24,23,22,21,20,19,18,17,32,31,30,29,28,27,26,25,8,7,6,5,4,3,2,1,16,15,14,13,12,11,10,9};
-  int mux[32][30];
+  //mux array declarations
+  int demux1[NODAL_NUM];
+  int demux2[NODAL_NUM];
+  int mux[NODAL_NUM][NODAL_NUM-2];
+
+  int side_len = NODAL_NUM/4; //# of nodes per side
+  int index = 3*(side_len); //starting index of ground
+
+  //configures current and ground nodes according to # of nodes(NODAL_NUM)
+  int n;
+  for(n = 0;n<=(NODAL_NUM-1);n++){
+    demux2[n] = index;
+    demux1[n] = n+1;
+    index  = index -1;
+    if((index % (side_len))==0){
+      index = index + (NODAL_NUM/2);
+      if (index > NODAL_NUM){
+        index = index % NODAL_NUM;
+      }
+    }
+  }
+  //configures voltage sampling nodes according to # of nodes(NODAL_NUM)
   int k = 0;
   int a,b;
-  for(a = 0; a<=31;a++){
-    for(b= 0;b<=31;b++){
-      if(demux1[a] != demux1[b] && demux2[a] != demux1[b]){
+  for(a = 0; a <= (NODAL_NUM-1); a++){
+    for(b= 0; b <= (NODAL_NUM-1); b++){
+      if((a != b) && (demux2[a] != demux1[b])){
         mux[a][k] = demux1[b];
         k++;
       }
     }
     k = 0;
   }
-  */
-  int demux1[8] = {1,2,3,4,5,6,7,8};
-  int demux2[8] = {6,5,8,7,2,1,4,3};
-  int mux[8][6] = {{2,3,4,5,7,8},{1,3,4,6,7,8},
-                  {1,2,4,5,6,7},{1,2,3,5,6,8},
-                  {1,3,4,6,7,8},{2,3,4,5,7,8},
-                  {1,2,3,5,6,8},{1,2,4,5,6,7}};
 
-  int demux1_a0 = 66;
-  int demux1_a1 = 67;
-  int demux1_a2 = 69;
-  int demux1_a3 = 68;
-  int demux1_a4 = 45;
 
-  int demux2_a0 = 44;
-  int demux2_a1 = 23;
-  int demux2_a2 = 26;
-  int demux2_a3 = 47;
-  int demux2_a4 = 46;
-  /*
+  //gpio pin declarations, used for muxes
+  int demux1_a0 = 24;
+  int demux1_a1 = 26;
+  int demux1_a2 = 28;
+  int demux1_a3 = 30;
+  int demux1_a4 = 32;
+
+  int demux2_a0 = 34;
+  int demux2_a1 = 36;
+  int demux2_a2 = 38;
+  int demux2_a3 = 40;
+  int demux2_a4 = 42;
+
   int mux_a0 = 44;
   int mux_a1 = 46;
   int mux_a2 = 48;
   int mux_a3 = 50;
   int mux_a4 = 52;
-  */
-  //exporting gpio pins for muxes
+
+//exporting gpio pins for muxes
   export_gpio(demux1_a0);
   export_gpio(demux1_a1);
   export_gpio(demux1_a2);
@@ -82,13 +98,11 @@ int main(){
   export_gpio(demux2_a2);
   export_gpio(demux2_a3);
   export_gpio(demux2_a4);
-  /*
   export_gpio(mux_a0);
   export_gpio(mux_a1);
   export_gpio(mux_a2);
   export_gpio(mux_a3);
   export_gpio(mux_a4);
-  */
 
 
 //setting the direction of gpio pins used for muxes to outputs(1)
@@ -102,18 +116,18 @@ int main(){
   set_gpio_dir(demux2_a2,1);
   set_gpio_dir(demux2_a3,1);
   set_gpio_dir(demux2_a4,1);
-  /*	
   set_gpio_dir(mux_a0,1);
   set_gpio_dir(mux_a1,1);
   set_gpio_dir(mux_a2,1);
   set_gpio_dir(mux_a3,1);
   set_gpio_dir(mux_a4,1);
-  */
+
   int i,j;
-  float bits_to_volts = 0.078127104/1000;
+  float bits_to_volts = 5/32767;//bits to volts conversion
   int flag = 0;
-  while(flag < 400){
-    for(i = 0; i<=7; i++){
+  //runs 200 times
+  while(flag < 200){
+    for(i = 0; i <= (NODAL_NUM-1); i++){
       //power and ground distribution
       set_gpio_value(demux1_a0,chan[demux1[i]-1][4]);
       set_gpio_value(demux1_a1,chan[demux1[i]-1][3]);
@@ -126,9 +140,9 @@ int main(){
       set_gpio_value(demux2_a2,chan[demux2[i]-1][2]);
       set_gpio_value(demux2_a3,chan[demux2[i]-1][1]);
       set_gpio_value(demux2_a4,chan[demux2[i]-1][0]);
-      /*
+
       //inner loop controls sampling
-      for(j =0; j <= 5; j++){
+      for(j =0; j <= (NODAL_NUM-3); j++){
         set_gpio_value(mux_a0, chan[mux[i][j]-1][4]);
         set_gpio_value(mux_a1, chan[mux[i][j]-1][3]);
         set_gpio_value(mux_a2, chan[mux[i][j]-1][2]);
@@ -143,14 +157,13 @@ int main(){
         //closing adc file
         adc_cleanup(volt_channel);
         //printing voltage
-        printf(" %.3f",voltage);
+        printf(" %.4f",voltage);
       }
         printf("\n");
         printf("--------------Current Configuration %d ------------------ \n",i+1);
-      */
     }
-      printf(" ******************** Cylce %d *************************",flag);
       flag++;
+      printf(" ******************** Cylce %d *************************",flag);
   }
   //setting all gpio mux pins to low and unexporting them
   clean_up(demux1_a0);
@@ -163,16 +176,16 @@ int main(){
   clean_up(demux2_a2);
   clean_up(demux2_a3);
   clean_up(demux2_a4);
-  /*
   clean_up(mux_a0);
   clean_up(mux_a1);
   clean_up(mux_a2);
   clean_up(mux_a3);
   clean_up(mux_a4);
-  */
+
   return 0;
 }
 
+//opens specific channel file of adc
 static int adc_init(int channel){
   char path[66];
   int temp_fd;
@@ -186,9 +199,9 @@ static int adc_init(int channel){
   return 0;
 }
 
+//read raw adc value from file
 static int read_adc_raw(int channel){
   char value_read[20];
-
   int fd_read = read(fd_adc[channel],value_read,20);
 
   if (-1 == fd_read) {
@@ -198,11 +211,13 @@ static int read_adc_raw(int channel){
   return(atoi(value_read));
 }
 
+//closes specific channel file of adc
 static int adc_cleanup(int channel){
   close(fd_adc[channel]);
   return 0;
 }
 
+//exports pin for gpio use
 static int export_gpio(int pin){
   char buffer[4];
   ssize_t bytes_written;
@@ -218,6 +233,7 @@ static int export_gpio(int pin){
   return 0;
 }
 
+//sets the direction of gpio pin to either in our out
 static  int set_gpio_dir(int pin, int dir){
   char buffer[4];
   char path[35];
@@ -242,6 +258,7 @@ static  int set_gpio_dir(int pin, int dir){
   return 0;
 }
 
+//sets value of gpio pin to either high(1) or low(0)
 static int set_gpio_value(int pin, int val){
   char buffer[2];
   char path[35];
@@ -258,6 +275,7 @@ static int set_gpio_value(int pin, int val){
   return 0;
 }
 
+//unexports gpio pin
 static int unexport_gpio(int pin){
   char buffer[4];
   ssize_t bytes_written;
@@ -273,6 +291,8 @@ static int unexport_gpio(int pin){
   return 0;
 }
 
+//reads gpio pin
+//direction needs to be in to read
 static int read_gpio(int pin){
   char path[35];
   char value_read[20];
@@ -291,6 +311,8 @@ static int read_gpio(int pin){
   return(atoi(value_read));
 }
 
+//sets gpio value to low
+//unexports gpio value
 static int clean_up(int pin){
   set_gpio_value(pin, 0);
   unexport_gpio(pin);
