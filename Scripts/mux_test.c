@@ -59,18 +59,18 @@ int volt_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
 
 //geometry
 int side_len = NODAL_NUM/4; //# of nodes per side
-int index = 3*(side_len); //starting index of ground
+int node_index = 3*(side_len); //starting node_index of ground
 
 //configures current and ground nodes according to # of nodes(NODAL_NUM)
 int n;
 for(n = 0;n<=(NODAL_NUM-1);n++){
-  ground_mux[n] = index;           //ground starts at last node of third side
+  ground_mux[n] = node_index;           //ground starts at last node of third side
   current_mux[n] = n + 1;          //current starts at first node and increments to the end
-  index  = index - 1;              //ground moves cc
-  if((index % (side_len))==0){     //once it passes an edge node it adds half the # of nodes to index
-    index = index + (NODAL_NUM/2);
-    if (index > NODAL_NUM){        //if index ends up being greater then NODAL_NUM it takes the remainder
-      index = index % NODAL_NUM;
+  node_index  = node_index - 1;              //ground moves cc
+  if((node_index % (side_len))==0){     //once it passes an edge node it adds half the # of nodes to node_index
+    node_index = node_index + (NODAL_NUM/2);
+    if (node_index > NODAL_NUM){        //if node_index ends up being greater then NODAL_NUM it takes the remainder
+      node_index = node_index % NODAL_NUM;
     }
   }
 }
