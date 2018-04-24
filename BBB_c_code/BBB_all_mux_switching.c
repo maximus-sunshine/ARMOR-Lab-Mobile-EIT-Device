@@ -154,7 +154,7 @@ int main(){
         //reading adc
         int value = read_adc_raw(volt_channel);
         float voltage = value*bits_to_volts;
-        //closing adc file
+        //closing adc file so it can update
         adc_cleanup(volt_channel);
         //printing voltage
         printf(" %.4f",voltage);
