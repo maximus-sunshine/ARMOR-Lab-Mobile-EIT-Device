@@ -44,12 +44,12 @@ int main(){
   //configures current and ground nodes according to # of nodes(NODAL_NUM)
   int n;
   for(n = 0;n<=(NODAL_NUM-1);n++){
-    demux2[n] = index;
-    demux1[n] = n+1;
-    index  = index -1;
-    if((index % (side_len))==0){
+    demux2[n] = index; // ground starts at last node of third side
+    demux1[n] = n+1;  // current starts at first node and increments to the end
+    index  = index -1; // ground moves cc
+    if((index % (side_len))==0){ //once it gets to an edge node it adds half the # of nodes to index
       index = index + (NODAL_NUM/2);
-      if (index > NODAL_NUM){
+      if (index > NODAL_NUM){ // if index ends up being greater then NODAL_NUM it takes the remainder
         index = index % NODAL_NUM;
       }
     }
