@@ -1,7 +1,7 @@
 /**
  * MAE 156B Spring 2018 Team 6
  *
- * Basic interface to the reading the TI-ADS8684 ADC, an iio device
+ * Basic interface for TI-ADS8684 ADC, an iio device
  *
  * Copied from James Strawson's GitHub
  */
