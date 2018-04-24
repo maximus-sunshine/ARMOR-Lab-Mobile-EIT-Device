@@ -123,7 +123,7 @@ int main(){
   set_gpio_dir(mux_a4,1);
 
   int i,j;
-  float bits_to_volts = 0.078127104/1000;;//bits to volts conversion
+  float bits_to_volts = 0.078127104/1000;//bits to volts conversion
   int flag = 0;
   //runs 200 times
   while(flag < 200){
