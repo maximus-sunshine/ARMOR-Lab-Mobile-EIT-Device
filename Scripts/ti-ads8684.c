@@ -1,7 +1,7 @@
 /**
  * MAE 156B Spring 2018 Team 6
  *
- * Basic interface for TI-ADS8684 ADC, an iio device
+ * Basic interface for the TI-ADS8684 ADC, an iio device
  *
  * Copied from James Strawson's GitHub
  */
@@ -69,10 +69,12 @@ int adc_read_raw(int ch)
 		fprintf(stderr,"ERROR: in rc_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}
-	// if(unlikely(lseek(fd[ch],0,SEEK_SET)<0)){
-	// 	perror("ERROR: in rc_adc_read_raw, failed to seek to beginning of FD");
-	// 	return -1;
-	// }
+
+	if(unlikely(lseek(fd[ch],0,SEEK_SET)<0)){
+		perror("ERROR: in rc_adc_read_raw, failed to seek to beginning of FD");
+		return -1;
+	}
+
 	if(unlikely(read(fd[ch], buf, sizeof(buf))==-1)){
 		perror("ERROR in rc_adc_read_raw, can't read iio adc fd");
 		return -1;
@@ -85,19 +87,31 @@ int adc_read_raw(int ch)
 	return i;
 }
 
-int loops = 100000;
+int loops = 10000;
 float scale = 0.078127104;
 float SAMPLE_RATE = 500000;
 
 int main()
 {
-	
+	int loops = 1000;
 	int j;
+	int *fd=open("/sys/bus/iio/devices/iio:device1/", O_RDONLY);
 	for(j=0;j<loops;j++){
-		ti_adc_init();
-		printf("%f V\n", adc_read_raw(2)*scale/1000);
-		adc_cleanup();
-		usleep(1000000/SAMPLE_RATE);
+		char buf[MAX_BUF];
+		lseek(fd,0,SEEK_SET);
+		fflush(fd);
+		read(fd,buf,sizeof(buf));
+		int x = atoi(buf);
+		printf("\n%d",x);
 	}
-	
+
+	// ti_adc_init();
+	// int j;
+	// int loops = 100000;
+	// for(j=0;j<loops;j++){
+		
+	// 	// printf("%f V\n", adc_read_raw(2)*scale/1000);
+	// 	adc_read_raw(2);
+	// }
+	// adc_cleanup();
 }

@@ -21,6 +21,7 @@
 ***********************/
 #define NODAL_NUM 32           //# of nodes, can be 8,12,16,20,24,and 32
 #define side_len (NODAL_NUM/4) //# of nodes per side
+#define MAX_BUF 64
 
 /**********************
 * SETUP
@@ -57,8 +58,8 @@ int current_mux_a4 = 86;
 ***********************/
 
 //exports pin for gpio use
-static int export_gpio(int pin){
-  char buffer[4];
+int export_gpio(int pin){
+  char buffer[MAX_BUF];
   ssize_t bytes_written;
   int fd;
   fd = open("/sys/class/gpio/export",O_WRONLY);
@@ -66,58 +67,56 @@ static int export_gpio(int pin){
     fprintf(stderr,"Failed to open export for writing!\n");
     return -1;
   }
-  bytes_written = snprintf(buffer, 4, "%d", pin);
+  bytes_written = snprintf(buffer, MAX_BUF, "%d", pin);
   write(fd,buffer,bytes_written);
   close(fd);
   return 0;
 }
 
 //sets the direction of gpio pin to either in our out
-static  int set_gpio_dir(int pin, int dir){
-  char buffer[4];
-  char path[35];
+int set_gpio_dir(int pin, int dir){
+  char buffer[MAX_BUF];
+  char path[MAX_BUF];
   int fd;
-  char direction[4];
+  char direction[MAX_BUF];
   if (1 == dir){
     strcpy(direction, "out");
 }
   else{
     strcpy(direction, "in");;
 }
-
-  snprintf(path,35,"/sys/class/gpio/gpio%d/direction", pin);
-  printf("\n/sys/class/gpio/gpio%d/direction", pin);
+  snprintf(path,MAX_BUF,"/sys/class/gpio/gpio%d/direction", pin);
   fd = open(path, O_WRONLY);
   if (fd<0){
     fprintf(stderr,"Failed to open direction for writing!\n");
     return -1;
   }
-  int bytes_written = snprintf(buffer,4,"%s",direction);
+  int bytes_written = snprintf(buffer,MAX_BUF,"%s",direction);
   write(fd,buffer,bytes_written);
   close(fd);
   return 0;
 }
 
 //sets value of gpio pin to either high(1) or low(0)
-static int set_gpio_value(int pin, int val){
-  char buffer[2];
-  char path[35];
+int set_gpio_value(int pin, int val){
+  char buffer[MAX_BUF];
+  char path[MAX_BUF];
   int fd;
-  snprintf(path,35,"/sys/class/gpio/gpio%d/value",pin);
+  snprintf(path,MAX_BUF,"/sys/class/gpio/gpio%d/value",pin);
   fd = open(path,O_WRONLY);
   if (fd<0){
     fprintf(stderr,"Failed to open value for writing!\n");
     return -1;
   }
-  int bytes_written = snprintf(buffer,2,"%d",val);
+  int bytes_written = snprintf(buffer,MAX_BUF,"%d",val);
   write(fd,buffer,bytes_written);
   close(fd);
   return 0;
 }
 
 //unexports gpio pin
-static int unexport_gpio(int pin){
-  char buffer[4];
+int unexport_gpio(int pin){
+  char buffer[MAX_BUF];
   ssize_t bytes_written;
   int fd;
   fd = open("/sys/class/gpio/unexport",O_WRONLY);
@@ -125,7 +124,7 @@ static int unexport_gpio(int pin){
     fprintf(stderr,"Unable to unexport: failed to open unexport for writing!\n");
     return -1;
   }
-  bytes_written = snprintf(buffer, 4, "%d", pin);
+  bytes_written = snprintf(buffer, MAX_BUF, "%d", pin);
   write(fd,buffer,bytes_written);
   close(fd);
   return 0;
@@ -133,11 +132,11 @@ static int unexport_gpio(int pin){
 
 //reads gpio pin
 //direction needs to be in to read
-static int read_gpio(int pin){
-  char path[35];
-  char value_read[20];
+int read_gpio(int pin){
+  char path[MAX_BUF];
+  char value_read[MAX_BUF];
   int fd;
-  snprintf(path,35,"/sys/class/gpio/gpio%d/value",pin);
+  snprintf(path,MAX_BUF,"/sys/class/gpio/gpio%d/value",pin);
   fd = open(path,O_WRONLY);
   if (-1 == fd){
     fprintf(stderr,"Failed to open value for reading!\n");
@@ -153,8 +152,8 @@ static int read_gpio(int pin){
 
 //sets gpio value to low
 //unexports gpio value
-static int clean_up(int pin){
-  if(set_gpio_value(pin, 0)<1){
+int clean_up(int pin){
+  if(set_gpio_value(pin, 0)<0){
     fprintf(stderr,"Failed to clean up: failed to open value for reading!\n");
   };
   unexport_gpio(pin);
@@ -170,7 +169,7 @@ int main(){
   //configures current and ground nodes according to # of nodes(NODAL_NUM)
   int n;
   for(n = 0;n<=(NODAL_NUM-1);n++){
-    current_mux[n] = n + 1;          //current starts at first node and increments to the end
+    current_mux[n] = n;          //current starts at first node and increments to the end
   }
 
   // //export GPIO pins
@@ -190,36 +189,38 @@ int main(){
   // //blink them LEDs
   // int i;
   // int flag = 0;
-  // int loops = 2;
+  // int loops = 3;
+  // printf("switching mux...");
   // //runs 'loops' times
   // while(flag < loops){
   //   for(i = 0; i <= (NODAL_NUM-1); i++){
-  //     set_gpio_value(current_mux_a0,chan[current_mux[i]-1][4]);
-  //     set_gpio_value(current_mux_a1,chan[current_mux[i]-1][3]);
-  //     set_gpio_value(current_mux_a2,chan[current_mux[i]-1][2]);
-  //     set_gpio_value(current_mux_a3,chan[current_mux[i]-1][1]);
-  //     set_gpio_value(current_mux_a4,chan[current_mux[i]-1][0]);
+  //     set_gpio_value(current_mux_a0,chan[current_mux[i]][4]);
+  //     set_gpio_value(current_mux_a1,chan[current_mux[i]][3]);
+  //     set_gpio_value(current_mux_a2,chan[current_mux[i]][2]);
+  //     set_gpio_value(current_mux_a3,chan[current_mux[i]][1]);
+  //     set_gpio_value(current_mux_a4,chan[current_mux[i]][0]);
+  //     // usleep();
   //   }
   //   flag++;
-  //   usleep(100000);
   // }
 
-  //blink them LEDs
-  int i;
-  int flag = 0;
-  int loops = 2;
-  //runs 'loops' times
-  while(flag < loops){
-    for(i = 0; i <= (NODAL_NUM-1); i++){
-      set_gpio_value(current_mux_a0,1);
-      set_gpio_value(current_mux_a1,1);
-      set_gpio_value(current_mux_a2,1);
-      set_gpio_value(current_mux_a3,1);
-      set_gpio_value(current_mux_a4,1);
-    }
-    flag++;
-    usleep(100000);
+  while(1){
+    set_gpio_value(current_mux_a0,0);
+    set_gpio_value(current_mux_a0,1);
   }
+
+  // //blink them LEDs
+  // int i;
+  // int flag = 0;
+  // int loops = 2;
+  // //runs 'loops' times
+
+  //     set_gpio_value(current_mux_a0,0);
+  //     set_gpio_value(current_mux_a1,0);
+  //     set_gpio_value(current_mux_a2,0);
+  //     set_gpio_value(current_mux_a3,0);
+  //     set_gpio_value(current_mux_a4,0);
+
 
   // //set all gpio mux pins to low and unexport them
   // clean_up(current_mux_a0);

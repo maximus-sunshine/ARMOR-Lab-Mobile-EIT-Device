@@ -59,6 +59,7 @@
 			/*  */
 			EIT_gpio_pins: pinmux_EIT_gpio_pins{
 				pinctrl-single,pins = <
+					0x078 0x07 /* P9.12 gpio1_28 (gpio 60),  OUTPUT_PULLDOWN | MODE7 */				
 					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7 */
 					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7 */
 					0x09c 0x07 /* P8.9  gpio2_5  (gpio 69),  OUTPUT_PULLDOWN | MODE7 */
