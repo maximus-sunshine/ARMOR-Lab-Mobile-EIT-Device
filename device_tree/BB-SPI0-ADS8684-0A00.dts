@@ -34,6 +34,7 @@
 		"P9.18",	/* spi0_d1 */
 		"P9.21",	/* spi0_d0 */
 		"P9.22",	/* spi0_sclk */
+		/* ADD GPIO PINS */
 		/* the hardware ip uses */
 		"spi0";
 
