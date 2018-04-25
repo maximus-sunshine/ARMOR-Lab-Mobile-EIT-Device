@@ -10,6 +10,7 @@
 ***********************/
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdlib.h> // for atoi
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -18,24 +19,8 @@
 /**********************
 * DEFINES
 ***********************/
-#define NODAL_NUM 32//# of nodes, can be 8,12,16,20,24,and 32
-
-/**********************
-* FUNCTION DECLARATIONS
-***********************/
-
-//GPIO function declarations
-static int export_gpio(int pin);
-static int set_gpio_dir(int pin, int dir);
-static int set_gpio_value(int pin, int val);
-static int unexport_gpio(int pin);
-static int read_gpio(int pin);
-static int clean_up(int pin);
-
-//ADC fucntion declarations
-static int adc_init(int channel);
-static int adc_cleanup(int channel);
-static int read_adc_raw(int channel);
+#define NODAL_NUM 32           //# of nodes, can be 8,12,16,20,24,and 32
+#define side_len (NODAL_NUM/4) //# of nodes per side
 
 /**********************
 * SETUP
@@ -58,35 +43,7 @@ int ground_mux[NODAL_NUM];            // ground?
 int volt_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
 
 //geometry
-int side_len = NODAL_NUM/4; //# of nodes per side
 int node_index = 3*(side_len); //starting node_index of ground
-
-//configures current and ground nodes according to # of nodes(NODAL_NUM)
-int n;
-for(n = 0;n<=(NODAL_NUM-1);n++){
-  ground_mux[n] = node_index;           //ground starts at last node of third side
-  current_mux[n] = n + 1;          //current starts at first node and increments to the end
-  node_index  = node_index - 1;              //ground moves cc
-  if((node_index % (side_len))==0){     //once it passes an edge node it adds half the # of nodes to node_index
-    node_index = node_index + (NODAL_NUM/2);
-    if (node_index > NODAL_NUM){        //if node_index ends up being greater then NODAL_NUM it takes the remainder
-      node_index = node_index % NODAL_NUM;
-    }
-  }
-}
-
-//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
-int k = 0;
-int a,b;
-for(a = 0; a <= (NODAL_NUM-1); a++){
-  for(b= 0; b <= (NODAL_NUM-1); b++){
-    if((a != b) && (ground_mux[a] != current_mux[b])){
-      volt_mux[a][k] = current_mux[b];
-      k++;
-    }
-  }
-  k = 0;
-}
 
 //gpio pin IDs, used for exporting pins
 int current_mux_a0 = 8;
@@ -95,98 +52,9 @@ int current_mux_a2 = 10;
 int current_mux_a3 = 87;
 int current_mux_a4 = 86;
 
-int ground_mux_a0 = 70;
-int ground_mux_a1 = 72;
-int ground_mux_a2 = 74;
-int ground_mux_a3 = 76;
-int ground_mux_a4 = 78;
-
-int volt_mux_a0 = 15;
-int volt_mux_a1 = 49;
-int volt_mux_a2 = 14;
-int volt_mux_a3 = 117;
-int volt_mux_a4 = 125;
-
-/* ADC */
-int fd_adc[4];//4 files for adc
-int volt_channel = 0;//voltage sampling done on channel one
-
-int main(){
-
-  //export GPIO pins
-  export_gpio(current_mux_a0);
-  export_gpio(current_mux_a1);
-  export_gpio(current_mux_a2);
-  export_gpio(current_mux_a3);
-  export_gpio(current_mux_a4);
-
-  //set direction to output
-  set_gpio_dir(current_mux_a0,1);
-  set_gpio_dir(current_mux_a1,1);
-  set_gpio_dir(current_mux_a2,1);
-  set_gpio_dir(current_mux_a3,1);
-  set_gpio_dir(current_mux_a4,1);
-
-  //blink them LEDs
-  int i;
-  int flag = 0;
-  int loops = 2;
-  //runs 'loops' times
-  while(flag < loops){
-    for(i = 0; i <= (NODAL_NUM-1); i++){
-      set_gpio_value(current_mux_a0,chan[current_mux[i]-1][4]);
-      set_gpio_value(current_mux_a1,chan[current_mux[i]-1][3]);
-      set_gpio_value(current_mux_a2,chan[current_mux[i]-1][2]);
-      set_gpio_value(current_mux_a3,chan[current_mux[i]-1][1]);
-      set_gpio_value(current_mux_a4,chan[current_mux[i]-1][0]);
-    }
-    usleep(10000);
-
-  //set all gpio mux pins to low and unexport them
-  clean_up(current_mux_a0);
-  clean_up(current_mux_a1);
-  clean_up(current_mux_a2);
-  clean_up(current_mux_a3);
-  clean_up(current_mux_a4);
-
-  return 0;
-}
-
 /**********************
 * FUNCTION DEFINITIONS
 ***********************/
-
-//opens specific channel file of adc
-static int adc_init(int channel){
-  char path[66];
-  int temp_fd;
-  snprintf(path,66,"/sys/bus/iio/devices/iio:device1/in_voltage%d_raw",channel);
-  temp_fd = open(path,O_RDONLY);
-  if (-1 == temp_fd){
-    fprintf(stderr,"Failed to open adc for reading!\n");
-    return -1;
-  }
-  fd_adc[channel] = temp_fd;
-  return 0;
-}
-
-//read raw adc value from file
-static int read_adc_raw(int channel){
-  char value_read[20];
-  int fd_read = read(fd_adc[channel],value_read,20);
-
-  if (-1 == fd_read) {
-    fprintf(stderr, "Failed to read value!\n");
-    return(-1);
-  }
-  return(atoi(value_read));
-}
-
-//closes specific channel file of adc
-static int adc_cleanup(int channel){
-  close(fd_adc[channel]);
-  return 0;
-}
 
 //exports pin for gpio use
 static int export_gpio(int pin){
@@ -194,7 +62,7 @@ static int export_gpio(int pin){
   ssize_t bytes_written;
   int fd;
   fd = open("/sys/class/gpio/export",O_WRONLY);
-  if (-1 == fd){
+  if (fd<0){
     fprintf(stderr,"Failed to open export for writing!\n");
     return -1;
   }
@@ -218,8 +86,9 @@ static  int set_gpio_dir(int pin, int dir){
 }
 
   snprintf(path,35,"/sys/class/gpio/gpio%d/direction", pin);
+  printf("\n/sys/class/gpio/gpio%d/direction", pin);
   fd = open(path, O_WRONLY);
-  if (-1 == fd){
+  if (fd<0){
     fprintf(stderr,"Failed to open direction for writing!\n");
     return -1;
   }
@@ -236,7 +105,7 @@ static int set_gpio_value(int pin, int val){
   int fd;
   snprintf(path,35,"/sys/class/gpio/gpio%d/value",pin);
   fd = open(path,O_WRONLY);
-  if (-1 == fd){
+  if (fd<0){
     fprintf(stderr,"Failed to open value for writing!\n");
     return -1;
   }
@@ -253,7 +122,7 @@ static int unexport_gpio(int pin){
   int fd;
   fd = open("/sys/class/gpio/unexport",O_WRONLY);
   if (-1 == fd){
-    fprintf(stderr,"Failed to open unexport for writing!\n");
+    fprintf(stderr,"Unable to unexport: failed to open unexport for writing!\n");
     return -1;
   }
   bytes_written = snprintf(buffer, 4, "%d", pin);
@@ -285,7 +154,86 @@ static int read_gpio(int pin){
 //sets gpio value to low
 //unexports gpio value
 static int clean_up(int pin){
-  set_gpio_value(pin, 0);
+  if(set_gpio_value(pin, 0)<1){
+    fprintf(stderr,"Failed to clean up: failed to open value for reading!\n");
+  };
   unexport_gpio(pin);
+  return 0;
+}
+
+/**********************
+* MAIN
+***********************/
+
+int main(){
+
+  //configures current and ground nodes according to # of nodes(NODAL_NUM)
+  int n;
+  for(n = 0;n<=(NODAL_NUM-1);n++){
+    current_mux[n] = n + 1;          //current starts at first node and increments to the end
+  }
+
+  // //export GPIO pins
+  // export_gpio(current_mux_a0);
+  // export_gpio(current_mux_a1);
+  // export_gpio(current_mux_a2);
+  // export_gpio(current_mux_a3);
+  // export_gpio(current_mux_a4);
+
+  // //set direction to output
+  // set_gpio_dir(current_mux_a0,1);
+  // set_gpio_dir(current_mux_a1,1);
+  // set_gpio_dir(current_mux_a2,1);
+  // set_gpio_dir(current_mux_a3,1);
+  // set_gpio_dir(current_mux_a4,1);
+
+  // //blink them LEDs
+  // int i;
+  // int flag = 0;
+  // int loops = 2;
+  // //runs 'loops' times
+  // while(flag < loops){
+  //   for(i = 0; i <= (NODAL_NUM-1); i++){
+  //     set_gpio_value(current_mux_a0,chan[current_mux[i]-1][4]);
+  //     set_gpio_value(current_mux_a1,chan[current_mux[i]-1][3]);
+  //     set_gpio_value(current_mux_a2,chan[current_mux[i]-1][2]);
+  //     set_gpio_value(current_mux_a3,chan[current_mux[i]-1][1]);
+  //     set_gpio_value(current_mux_a4,chan[current_mux[i]-1][0]);
+  //   }
+  //   flag++;
+  //   usleep(100000);
+  // }
+
+  //blink them LEDs
+  int i;
+  int flag = 0;
+  int loops = 2;
+  //runs 'loops' times
+  while(flag < loops){
+    for(i = 0; i <= (NODAL_NUM-1); i++){
+      set_gpio_value(current_mux_a0,1);
+      set_gpio_value(current_mux_a1,1);
+      set_gpio_value(current_mux_a2,1);
+      set_gpio_value(current_mux_a3,1);
+      set_gpio_value(current_mux_a4,1);
+    }
+    flag++;
+    usleep(100000);
+  }
+
+  // //set all gpio mux pins to low and unexport them
+  // clean_up(current_mux_a0);
+  // clean_up(current_mux_a1);
+  // clean_up(current_mux_a2);
+  // clean_up(current_mux_a3);
+  // clean_up(current_mux_a4);
+
+  // //unexport GPIO pins
+  // unexport_gpio(current_mux_a0);
+  // unexport_gpio(current_mux_a1);
+  // unexport_gpio(current_mux_a2);
+  // unexport_gpio(current_mux_a3);
+  // unexport_gpio(current_mux_a4);
+  
   return 0;
 }
