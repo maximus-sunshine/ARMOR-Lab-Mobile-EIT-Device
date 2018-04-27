@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 2013 CircuitCo
+ *
+ * Virtual cape for SPI0 on connector pins P9.22 P9.21 P9.18 P9.17
+ *
+ * Added ADS8684 device on the SPI0 bus.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ * 
+ * 4/19/18 Edited by Max Sun for compatibility with ADS8684 instead of ADS8688 device
+ *  - compile with "dtc -O dtb -o BB-SPI0-ADS8684-0A00.dtbo -b 0 -@ BB-SPI0-ADS8684-0A00.dts"
+ *  - copy to /lib/firmware/
+ *  - enable in /boot/uEnv.txt with "uboot_overlay_addr0=/lib/firmware/BB-SPI0-ADS8684-0A00.dtbo"
+ * 
+ * 4/24/18 - NEED TO ADD GPIO PINS FOR MUXES AND CURRENT SOURCES
+ * 
+ */
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "ti,beaglebone", "ti,beaglebone-black", "ti,beaglebone-green";
+
+	/* identification */
+	part-number = "BB-SPI0-ADS8684";
+	version = "00A0";
+
+	/* state the resources this cape uses */
+	exclusive-use =
+		/* the pin header uses */
+		"P9.17",	/* spi0_cs0 */
+		"P9.18",	/* spi0_d1 */
+		"P9.21",	/* spi0_d0 */
+		"P9.22",	/* spi0_sclk */
+		/* ADD GPIO PINS */
+		/* the hardware ip uses */
+		"spi0";
+
+	fragment@0 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+			/* default state has all gpios released and mode set to uart1 */
+			bb_spi0_pins: pinmux_bb_spi0_pins {
+				pinctrl-single,pins = <
+					0x150 0x30	/* spi0_sclk.spi0_sclk, INPUT_PULLUP | MODE0 */
+					0x154 0x30	/* spi0_d0.spi0_d0, INPUT_PULLUP | MODE0 */
+					0x158 0x10	/* spi0_d1.spi0_d1, OUTPUT_PULLUP | MODE0 */
+					0x15c 0x10	/* spi0_cs0.spi0_cs0, OUTPUT_PULLUP | MODE0 */
+				>;
+			};
+		};
+	};
+
+	fragment@1 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+			/*  */
+			EIT_gpio_pins: pinmux_EIT_gpio_pins{
+				pinctrl-single,pins = <
+					0x078 0x07 /* P9.12 gpio1_28 (gpio 60),  OUTPUT_PULLDOWN | MODE7 */				
+					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7 */
+					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7 */
+					0x09c 0x07 /* P8.9  gpio2_5  (gpio 69),  OUTPUT_PULLDOWN | MODE7 */
+					0x098 0x07 /* P8.10 gpio2_4  (gpio 68),  OUTPUT_PULLDOWN | MODE7 */
+					0x034 0x07 /* P8.11 gpio1_13 (gpio 45),  OUTPUT_PULLDOWN | MODE7 */
+					0x030 0x07 /* P8.12 gpio1_12 (gpio 44),  OUTPUT_PULLDOWN | MODE7 */
+					0x024 0x07 /* P8.13 gpio0_23 (gpio 23),  OUTPUT_PULLDOWN | MODE7 */
+					0x028 0x07 /* P8.14 gpio0_26 (gpio 26),  OUTPUT_PULLDOWN | MODE7 */
+					0x03c 0x07 /* P8.15 gpio1_15 (gpio 47),  OUTPUT_PULLDOWN | MODE7 */
+					0x038 0x07 /* P8.16 gpio1_14 (gpio 46),  OUTPUT_PULLDOWN | MODE7 */
+					0x02c 0x07 /* P8.17 gpio0_27 (gpio 27),  OUTPUT_PULLDOWN | MODE7 */
+					0x0e0 0x07 /* P8.27 gpio2_22 (gpio 86),  OUTPUT_PULLDOWN | MODE7 */
+					0x0e4 0x07 /* P8.29 gpio2_23 (gpio 87),  OUTPUT_PULLDOWN | MODE7 */
+					0x0d8 0x07 /* P8.31 gpio0_10 (gpio 10),  OUTPUT_PULLDOWN | MODE7 */
+					0x0d4 0x07 /* P8.33 gpio0_9  (gpio  9),  OUTPUT_PULLDOWN | MODE7 */
+					0x0d0 0x07 /* P8.35 gpio0_8, (gpio  8),  OUTPUT_PULLDOWN | MODE7 */
+					0x0c0 0x07 /* P8.37 gpio2_14 (gpio 78),  OUTPUT_PULLDOWN | MODE7 */
+					0x0b8 0x07 /* P8.39 gpio2_12 (gpio 76),  OUTPUT_PULLDOWN | MODE7 */
+					0x0b0 0x07 /* P8.41 gpio2_10 (gpio 74),  OUTPUT_PULLDOWN | MODE7 */
+					0x0a8 0x07 /* P8.43 gpio2_8  (gpio 72),  OUTPUT_PULLDOWN | MODE7 */
+					0x0a0 0x07 /* P8.45 gpio2_6  (gpio 70),  OUTPUT_PULLDOWN | MODE7 */
+					0x17c 0x07 /* P9.19 gpio0_13 (gpio 13),  OUTPUT_PULLDOWN | MODE7 */
+					0x044 0x07 /* P9.23 gpio1_17 (gpio 49),  OUTPUT_PULLDOWN | MODE7 */
+					0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7 */
+					0x1ac 0x07 /* P9.25 gpio3_21 (gpio 117), OUTPUT_PULLDOWN | MODE7 */
+					0x180 0x07 /* P9.26 gpio0_14 (gpio 14),  OUTPUT_PULLDOWN | MODE7 */
+					0x1a4 0x07 /* P9.27 gpio3_19 (gpio 115), OUTPUT_PULLDOWN | MODE7 */
+				>;
+			};
+		};
+	};
+
+	fragment@2 {
+		target = <&ocp>;
+		__overlay__ {
+			test_helper: helper {
+				compatible = "bone-pinmux-helper";
+				pinctrl-names = "default";
+				pinctrl-0 = <&EIT_gpio_pins>;
+				status = "okay";
+			};
+		};
+	};
+
+	fragment@3 {
+		target = <&spi0>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "okay";
+			pinctrl-names = "default";
+			pinctrl-0 = <&bb_spi0_pins>;
+
+
+			/* add any spi devices connected here */
+			adc@0 {
+				compatible = "ti,ads8684";
+				/* The ADS8684 device uses SPI serial communication 
+				 * in mode 1 (CPOL = 0, CPHA = 1) with clock speeds
+				 * up to 17 MHz.
+				 */
+				reg = <0>;
+				/* vref-supply = <&vdd_supply>; */ /* not working yet */
+				spi-max-frequency = <1000000>;
+				spi-cpha;       /* If present then it is set to 1. If it is absent then it is 0. */
+				/* spi-cpol; */ /* If present then it is set to 1. If it is absent then it is 0. */
+			};
+		};
+	};
+};
