@@ -13,6 +13,7 @@
  *
  * TODO: -find faster way to read ADC
  *		 -clean up code, move stuff to header file
+ *       -error handling
  * 
  ************************************************************************************/
 
@@ -21,9 +22,9 @@
 *************************************************************************************/
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <stdlib.h> 	// for atoi
+#include <stdlib.h>		// for atoi
 #include <fcntl.h>		// for open
-#include <unistd.h>     // for close
+#include <unistd.h>		// for close
 #include <stdio.h>		
 #include <string.h>
 #include <errno.h>
@@ -36,9 +37,10 @@
 /************************************************************************************
 * DEFINES
 *************************************************************************************/
-#define NODAL_NUM 32		   //# of nodes, can be 8,12,16,20,24,and 32
-#define side_len (NODAL_NUM/4) //# of nodes per side
-#define MAX_BUF 64			   //max buffer length
+#define NODAL_NUM 32			//# of nodes, can be 8,12,16,20,24,and 32
+#define side_len (NODAL_NUM/4)	//# of nodes per side
+#define MAX_BUF 64				//max buffer length
+#define VOLT_CHANNEL 2          //adc channel to read voltage
 
 /************************************************************************************
 * SETUP
@@ -79,7 +81,14 @@ int i_sense_reset_gpio  = 27;
 * MAIN
 *************************************************************************************/
 int main(){
-	
+	/**************************
+	* INITIALIZE ADC INTERFACE
+	**************************/	
+	ti_adc_init();
+
+	/**************************
+	* SET UP GPIO PINS
+	**************************/
 	//initialize gpio_lib
 	if(gpio_init()){
 		fprintf(stderr, "gpio_init failed with %i\n", gpio_errno);
@@ -117,5 +126,84 @@ int main(){
 	//attach other gpio pins
 	adc_reset_gpio_info = gpio_attach(adc_reset_gpio/32, adc_reset_gpio%32, GPIO_OUT);
 	i_sense_reset_gpio  = gpio_attach(i_sense_reset_gpio/32, i_sense_reset_gpio%32, GPIO_OUT);
+	
+	/**********************************
+	* SET UP MUX SWITCHING PATTERN
+	***********************************/
+	//configures current and ground nodes according to # of nodes(NODAL_NUM)
+	int n;
+	for(n = 0; n < NODAL_NUM; n++){
+	  ground_mux[n] = node_index;				//ground starts at last node of third side
+	  current_mux[n] = n;						//current starts at first node and increments to the end
+	  node_index  = node_index - 1;				//ground moves CC
+	  if((node_index % (side_len))==0){			//once it passes an edge node it adds half the # of nodes to node_index
+	    node_index = node_index + (NODAL_NUM/2);
+	    if (node_index > NODAL_NUM){			//if node_index ends up being greater then NODAL_NUM it takes the remainder
+	      node_index = node_index % NODAL_NUM;
+	    }
+	  }
+	}
+
+	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
+	int k = 0;
+	int a,b;
+	for(a = 0; a < NODAL_NUM; a++){
+	  for(b = 0; b < NODAL_NUM; b++){
+	    if((a != b) && (ground_mux[a] != current_mux[b])){
+	      voltage_mux[a][k] = current_mux[b];
+	      k++;
+	    }
+	  }
+	  k = 0;
+	}
+
+	/**********************************
+	* EXECUTE SAMPLING
+	***********************************/
+	int flag = 0;
+  	//runs 200 times
+	while(flag < 200){
+	for(i = 0; i < NODAL_NUM; i++){
+    	//power and ground distribution
+		for(k=0;k<sizeof(ground_mux_gpio);k++){                            
+			if(chan[current_mux[i]][k]==1){
+				gpio_set(current_mux_gpio_info,current_mux_gpio[k]);
+			}
+			else{
+				gpio_clear(current_mux_gpio_info,current_mux_gpio[k]);
+			}
+
+			if(chan[ground_mux[i]-1][k]==1){
+				gpio_set(ground_mux_gpio_info,ground_mux_gpio[k]);
+			}
+			else{
+				gpio_clear(ground_mux_gpio_info,ground_mux_gpio[k]);
+			}
+		}
+
+		//inner loop controls sampling
+		int j;
+		for(j =0; j <= (NODAL_NUM-3); j++){
+			if(chan[volt_mux[i]][k]==1){
+				gpio_set(voltage_mux_gpio_info,voltage_mux_gpio[k]);
+			}
+			else{
+				gpio_clear(voltage_mux_gpio_info,voltage_mux_gpio[k]);
+			}
+
+	        //reading adc
+	        //TODO: implement fast method to store values, (e.g. store values in temporary buffer and write to .txt file at low priority, pthread?)
+	        ti_adc_read_raw(VOLT_CHANNEL);
+      	}
+
+        printf("\n");
+        //TODO: print correct configuration
+        printf("--------------Current Configuration: Current at node %d, GND at node %d, Measure at node %d ------------------ \n", i, i, i);
+    }
+      flag++;
+      printf(" ******************** Cycle %d *************************",flag);
+  }
+
+
 
 }
