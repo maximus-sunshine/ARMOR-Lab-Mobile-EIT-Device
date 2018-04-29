@@ -33,6 +33,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
+#include "eit_sample.h"
 #include "eit_func.c"
 
 
