@@ -133,6 +133,7 @@ int main(){
 	while(flag < 200){
 	for(i = 0; i < NODAL_NUM; i++){
     	//power and ground distribution
+		int k;
 		for(k=0;k<sizeof(ground_mux_gpio);k++){                            
 			if(CHAN[current_mux[i]][k]==1){
 				gpio_set(current_mux_gpio_info,current_mux_gpio[k]);
