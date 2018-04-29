@@ -24,11 +24,13 @@ int cur_gnd_config(int cur_mux[],int gnd_mux[]);
 int volt_samp_config(int cur_mux[],int gnd_mux[],int volt[][NODAL_NUM-2]);
 
 
+#define MAX_BUF 64	//max buffer length
 
 
 ///////////////PIN DECLARATIONS////////////
 //adc pins
 #define ADC_RESET_GPIO 13
+#define VOLT_CHANNEL 2    //adc channel to read voltage
 //current sense pin
 #define I_SENSE_RESET_GPIO 27
 //power mux declaration
