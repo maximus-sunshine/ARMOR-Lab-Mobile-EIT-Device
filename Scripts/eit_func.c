@@ -18,7 +18,7 @@ int cur_gnd_config(int cur[],int gnd[]){
 	return 0;
 }
 
-int volt_samp_config(int cur[], int gnd[], int volt[]){
+int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]){
 	int k = 0;
 	int i,j;
 	for(i = 0; i < NODAL_NUM; i++){
