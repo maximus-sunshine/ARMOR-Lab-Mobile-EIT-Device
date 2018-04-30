@@ -5,7 +5,11 @@
 #define LOGIC_ROW 32
 #define LOGIC_COL 5
 
+<<<<<<< HEAD
 //TRUTH TABLE DECLARATION {A4,A3,A2,A1,A0}
+=======
+//TRUTH TABLE DECLARATION
+>>>>>>> 713e8941e0e222fe2a4ec93f72b4e2a5dbedd9d8
 int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1},
                                  {0,0,1,0,0},{0,0,1,0,1},{0,0,1,1,0},{0,0,1,1,1},
                                  {0,1,0,0,0},{0,1,0,0,1},{0,1,0,1,0},{0,1,0,1,1},
@@ -24,13 +28,19 @@ int cur_gnd_config(int cur_mux[],int gnd_mux[]);
 int volt_samp_config(int cur_mux[],int gnd_mux[],int volt[][NODAL_NUM-2]);
 
 
+<<<<<<< HEAD
 #define MAX_BUF 64	//max buffer length
+=======
+>>>>>>> 713e8941e0e222fe2a4ec93f72b4e2a5dbedd9d8
 
 
 ///////////////PIN DECLARATIONS////////////
 //adc pins
 #define ADC_RESET_GPIO 13
+<<<<<<< HEAD
 #define VOLT_CHANNEL 2    //adc channel to read voltage
+=======
+>>>>>>> 713e8941e0e222fe2a4ec93f72b4e2a5dbedd9d8
 //current sense pin
 #define I_SENSE_RESET_GPIO 27
 //power mux declaration
