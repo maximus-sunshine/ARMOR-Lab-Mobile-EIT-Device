@@ -93,6 +93,7 @@ float SAMPLE_RATE = 500000;
 
 int main()
 {
+<<<<<<< HEAD
 	// int loops = 1000;
 	// int j;
 	// int *fd=open("/sys/bus/iio/devices/iio:device1/", O_RDONLY);
@@ -114,4 +115,27 @@ int main()
 		// ti_adc_read_raw(2);
 	}
 	ti_adc_cleanup();
+=======
+	int loops = 1000;
+	int j;
+	int *fd=open("/sys/bus/iio/devices/iio:device1/", O_RDONLY);
+	for(j=0;j<loops;j++){
+		char buf[MAX_BUF];
+		lseek(fd,0,SEEK_SET);
+		fflush(fd);
+		read(fd,buf,sizeof(buf));
+		int x = atoi(buf);
+		printf("\n%d",x);
+	}
+
+	// ti_adc_init();
+	// int j;
+	// int loops = 100000;
+	// for(j=0;j<loops;j++){
+		
+	// 	// printf("%f V\n", adc_read_raw(2)*scale/1000);
+	// 	adc_read_raw(2);
+	// }
+	// adc_cleanup();
+>>>>>>> origin/bbb-local
 }
