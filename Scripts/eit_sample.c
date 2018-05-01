@@ -33,47 +33,31 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
+#include "eit_config.h"
+
 
 /************************************************************************************
 * DEFINES
 *************************************************************************************/
-#define NODAL_NUM 32			//# of nodes, can be 8,12,16,20,24,and 32
-#define side_len (NODAL_NUM/4)	//# of nodes per side
-#define MAX_BUF 64				//max buffer length
-#define VOLT_CHANNEL 2          //adc channel to read voltage
 
 /************************************************************************************
 * SETUP
 *************************************************************************************/
-
-/* MUX */
-//logic array declaration {A4, A3, A2, A1, A0}
-int chan[32][5] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1}, 
-                   {0,0,1,0,0},{0,0,1,0,1},{0,0,1,1,0},{0,0,1,1,1},
-                   {0,1,0,0,0},{0,1,0,0,1},{0,1,0,1,0},{0,1,0,1,1},
-                   {0,1,1,0,0},{0,1,1,0,1},{0,1,1,1,0},{0,1,1,1,1},
-                   {1,0,0,0,0},{1,0,0,0,1},{1,0,0,1,0},{1,0,0,1,1},
-                   {1,0,1,0,0},{1,0,1,0,1},{1,0,1,1,0},{1,0,1,1,1},
-                   {1,1,0,0,0},{1,1,0,0,1},{1,1,0,1,0},{1,1,0,1,1},
-                   {1,1,1,0,0},{1,1,1,0,1},{1,1,1,1,0},{1,1,1,1,1}};
 
 //mux array declarations
 int current_mux[NODAL_NUM];              // current?                                           
 int ground_mux[NODAL_NUM];               // ground?
 int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
 
-//geometry
-int node_index = 3*(side_len); //starting node_index of ground
-
 // gpio pin IDs, used for exporting pins 
 // gpio pin ID = gpio_bank*32 + gpio_pinmask (e.g. gpio 86 = gpio2_22 (86 = 2*32 + 22))
 // mux channels {A4, A3, A2, A1, A0}
-int current_mux_gpio[5] = { 86,  87, 10,  9,  8};
-int ground_mux_gpio[5]  = { 78,  76, 74, 72, 70};
-int voltage_mux_gpio[5] = {125, 117, 14, 49, 15};
+int current_mux_gpio[5] = CURRENT_MUX_GPIO;
+int ground_mux_gpio[5]  = GROUND_MUX_GPIO;
+int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 
-int adc_reset_gpio      = 13;
-int i_sense_reset_gpio  = 27;
+int adc_reset_gpio      = ADC_RESET_GPIO;
+int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
 //TODO: Add other GPIOs
 
@@ -95,31 +79,31 @@ int main(){
 	}
 
 	//setup for attaching gpio pins
-	struct gpio_info current_mux_gpio_info[sizeof(current_mux_gpio)];
-	struct gpio_info ground_mux_gpio_info[sizeof(current_mux_gpio)];
-	struct gpio_info voltage_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info current_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info ground_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info voltage_mux_gpio_info[sizeof(current_mux_gpio)];
 	
 	//attach current gpio pins
 	int i;
 	for(i=0;i<sizeof(current_mux_gpio);i++){
 		int bank = current_mux_gpio[i]/32;
-		int mask = current_mux_gpio[i]%32;
+		int mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
 	//attach ground gpio pins
-	int i;
+	
 	for(i=0;i<sizeof(ground_mux_gpio);i++){                            
 		int bank = ground_mux_gpio[i]/32;
-		int mask = ground_mux_gpio[i]%32;
+		int mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
 	//attach voltage gpio pins
-	int i;
+	
 	for(i=0;i<sizeof(voltage_mux_gpio);i++){                            
 		int bank = voltage_mux_gpio[i]/32;
-		int mask = voltage_mux_gpio[i]%32;
+		int mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
 
@@ -131,32 +115,12 @@ int main(){
 	* SET UP MUX SWITCHING PATTERN
 	***********************************/
 	//configures current and ground nodes according to # of nodes(NODAL_NUM)
-	int n;
-	for(n = 0; n < NODAL_NUM; n++){
-	  ground_mux[n] = node_index;				//ground starts at last node of third side
-	  current_mux[n] = n;						//current starts at first node and increments to the end
-	  node_index  = node_index - 1;				//ground moves CC
-	  if((node_index % (side_len))==0){			//once it passes an edge node it adds half the # of nodes to node_index
-	    node_index = node_index + (NODAL_NUM/2);
-	    if (node_index > NODAL_NUM){			//if node_index ends up being greater then NODAL_NUM it takes the remainder
-	      node_index = node_index % NODAL_NUM;
-	    }
-	  }
-	}
+	cur_gnd_config(current_mux,ground_mux);
 
+	
 	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
-	int k = 0;
-	int a,b;
-	for(a = 0; a < NODAL_NUM; a++){
-	  for(b = 0; b < NODAL_NUM; b++){
-	    if((a != b) && (ground_mux[a] != current_mux[b])){
-	      voltage_mux[a][k] = current_mux[b];
-	      k++;
-	    }
-	  }
-	  k = 0;
-	}
-
+	volt_samp_config(current_mux,ground_mux,voltage_mux);
+	
 	/**********************************
 	* EXECUTE SAMPLING
 	***********************************/
@@ -165,15 +129,16 @@ int main(){
 	while(flag < 200){
 	for(i = 0; i < NODAL_NUM; i++){
     	//power and ground distribution
+		int k;
 		for(k=0;k<sizeof(ground_mux_gpio);k++){                            
-			if(chan[current_mux[i]][k]==1){
+			if(CHAN[current_mux[i]][k]==1){
 				gpio_set(current_mux_gpio_info,current_mux_gpio[k]);
 			}
 			else{
 				gpio_clear(current_mux_gpio_info,current_mux_gpio[k]);
 			}
 
-			if(chan[ground_mux[i]-1][k]==1){
+			if(CHAN[ground_mux[i]-1][k]==1){
 				gpio_set(ground_mux_gpio_info,ground_mux_gpio[k]);
 			}
 			else{
@@ -183,8 +148,8 @@ int main(){
 
 		//inner loop controls sampling
 		int j;
-		for(j =0; j <= (NODAL_NUM-3); j++){
-			if(chan[volt_mux[i]][k]==1){
+		for(j =0; j < (NODAL_NUM-2); j++){
+			if(CHAN[volt_mux[i]][k]==1){
 				gpio_set(voltage_mux_gpio_info,voltage_mux_gpio[k]);
 			}
 			else{
