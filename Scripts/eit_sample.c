@@ -14,6 +14,7 @@
  * TODO: -find faster way to read ADC
  *		 -clean up code, move stuff to header file
  *       -error handling
+ *       -pthread, write data to .txt
  * 
  ************************************************************************************/
 
@@ -34,11 +35,13 @@
 #include <sys/time.h>
 #include "gpiolib.h"
 #include "eit_config.h"
-
+#include "eit.h"
+#include "ti-ads8684.h"
 
 /************************************************************************************
 * DEFINES
 *************************************************************************************/
+#define MUX_PINS 5
 
 /************************************************************************************
 * SETUP
@@ -64,7 +67,8 @@ int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main(){
+int main()
+{
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
@@ -79,13 +83,15 @@ int main(){
 	}
 
 	//setup for attaching gpio pins
-	gpio_info current_mux_gpio_info[sizeof(current_mux_gpio)];
-	gpio_info ground_mux_gpio_info[sizeof(current_mux_gpio)];
-	gpio_info voltage_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info *current_mux_gpio_info[MUX_PINS];
+	gpio_info *ground_mux_gpio_info[MUX_PINS];
+	gpio_info *voltage_mux_gpio_info[MUX_PINS];
+	gpio_info *adc_reset_gpio_info;
+	gpio_info *i_sense_reset_gpio_info;
 	
 	//attach current gpio pins
 	int i;
-	for(i=0;i<sizeof(current_mux_gpio);i++){
+	for(i=0;i<MUX_PINS;i++){
 		int bank = current_mux_gpio[i]/32;
 		int mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
@@ -93,7 +99,7 @@ int main(){
 
 	//attach ground gpio pins
 	
-	for(i=0;i<sizeof(ground_mux_gpio);i++){                            
+	for(i=0;i<MUX_PINS;i++){                            
 		int bank = ground_mux_gpio[i]/32;
 		int mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
@@ -101,15 +107,15 @@ int main(){
 
 	//attach voltage gpio pins
 	
-	for(i=0;i<sizeof(voltage_mux_gpio);i++){                            
+	for(i=0;i<MUX_PINS;i++){                            
 		int bank = voltage_mux_gpio[i]/32;
 		int mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
 
 	//attach other gpio pins
-	adc_reset_gpio_info = gpio_attach(adc_reset_gpio/32, adc_reset_gpio%32, GPIO_OUT);
-	i_sense_reset_gpio  = gpio_attach(i_sense_reset_gpio/32, i_sense_reset_gpio%32, GPIO_OUT);
+	adc_reset_gpio_info = gpio_attach(adc_reset_gpio/32, bit(adc_reset_gpio%32), GPIO_OUT);
+	i_sense_reset_gpio_info  = gpio_attach(i_sense_reset_gpio/32, bit(i_sense_reset_gpio%32), GPIO_OUT);
 	
 	/**********************************
 	* SET UP MUX SWITCHING PATTERN
@@ -120,6 +126,10 @@ int main(){
 	
 	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
 	volt_samp_config(current_mux,ground_mux,voltage_mux);
+
+	/**********************************
+	* TODO: TURN ON CURRENT SOURCE
+	***********************************/
 	
 	/**********************************
 	* EXECUTE SAMPLING
@@ -130,7 +140,7 @@ int main(){
 	for(i = 0; i < NODAL_NUM; i++){
     	//power and ground distribution
 		int k;
-		for(k=0;k<sizeof(ground_mux_gpio);k++){                            
+		for(k=0;k<MUX_PINS;k++){                            
 			if(CHAN[current_mux[i]][k]==1){
 				gpio_set(current_mux_gpio_info,current_mux_gpio[k]);
 			}
