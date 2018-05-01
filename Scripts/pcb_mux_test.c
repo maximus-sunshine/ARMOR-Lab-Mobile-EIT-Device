@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
 	//}
 
 	//Sleep
-	int sleep_time = 15;
+	int sleep_time = 5;
 
 	printf("Sleeping\n");
 	fflush(stdout);

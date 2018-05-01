@@ -9,6 +9,11 @@
 #ifndef TI_ADS8684_H
 #define TI_ADS8684_H
 
+//ADC characteristics
+#define CHANNELS 4
+#define IIO_DIR "/sys/bus/iio/devices/iio:device1"
+#define MAX_BUF 64
+
 /***************************************************************
 * FUNCTION DECLARATIONS
 ****************************************************************/
@@ -36,6 +41,30 @@ int ti_adc_init();
 int ti_adc_cleanup();
 
 /****************************************************************************
+* int ti_adc_enable()
+*
+* Set ADC Reset pin to high
+*
+* TODO: ERROR HANDLING 
+*
+* Inputs : 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_enable();
+
+/****************************************************************************
+* int ti_adc_disable()
+*
+* Set ADC Reset pin to low
+*
+* TODO: ERROR HANDLING 
+*
+* Inputs : 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_disable();
+
+/****************************************************************************
 * int ti_adc_set_offset(int ch, int offset)
 *
 * DESCRIPTION
@@ -55,7 +84,7 @@ int ti_adc_set_offset(int ch, int offset);
 * 
 * Outputs:	
 *****************************************************************************/
-int ti_adc_set_scale(int ch, float scale);
+int ti_adc_set_scale(int ch, double scale);
 
 /****************************************************************************
 * int ti_adc_read_raw(int ch)

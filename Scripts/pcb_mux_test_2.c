@@ -55,6 +55,7 @@
 
 //mux array declarations
 int current_mux[NODAL_NUM];              // current?                                           
+
 int ground_mux[NODAL_NUM];               // ground?
 int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
 
@@ -90,139 +91,39 @@ int main(int argc, char **argv) {
 	gpio_info *current_mux_gpio_info[MUX_PINS];
 	gpio_info *ground_mux_gpio_info[MUX_PINS];
 	gpio_info *voltage_mux_gpio_info[MUX_PINS];
+
+	for(i = 0; i < MUX_PINS; i++){
+		current_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		ground_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		voltage_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
 	printf("setup structs \n");
 	fflush(stdout);
-	
-	// //Setup gpiolib structures for mux pins
-	// gpio_info *current_A4;
-	// gpio_info *current_A3;
-	// gpio_info *current_A2;
-	// gpio_info *current_A1;
-	// gpio_info *current_A0;
-	// gpio_info *ground_A4;
-	// gpio_info *ground_A3;
-	// gpio_info *ground_A2;
-	// gpio_info *ground_A1;
-	// gpio_info *ground_A0;
-	// gpio_info *voltage_A4;
-	// gpio_info *voltage_A3;
-	// gpio_info *voltage_A2;
-	// gpio_info *voltage_A1;
-	// gpio_info *voltage_A0;
-	// printf("defined mux GPIO pins...\n");
-	// fflush(stdout);
 
-	// //Setup gpiolib structures for current source pins 
-	// gpio_info *i_source_A04;
-	// gpio_info *i_source_A05;
-	// gpio_info *i_source_A06;
-	// gpio_info *i_source_A07;
-	// gpio_info *i_source_A08;
-	// gpio_info *i_source_A09;
-	// gpio_info *i_source_A10;
-	// gpio_info *i_source_A11;
-	// gpio_info *i_source_A12;
-	// gpio_info *i_source_A13;
-	// printf("defined current source GPIO pins...\n");
-	// fflush(stdout);
-
-	// //Attach all GPIO pins 
-	// //Current
-	// int i, bank, mask;
-	// bank = current_mux_gpio[0]/32;
-	// mask = bit(current_mux_gpio[0]%32);
-	// current_A4 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = current_mux_gpio[1]/32;
-	// mask = bit(current_mux_gpio[1]%32);
-	// current_A3 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = current_mux_gpio[2]/32;
-	// mask = bit(current_mux_gpio[2]%32);
-	// current_A2 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = current_mux_gpio[3]/32;
-	// mask = bit(current_mux_gpio[3]%32);
-	// current_A1 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = current_mux_gpio[4]/32;
-	// mask = bit(current_mux_gpio[4]%32);
-	// current_A0 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// //Ground
-	// bank = ground_mux_gpio[0]/32;
-	// mask = bit(ground_mux_gpio[0]%32);
-	// ground_A4 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = ground_mux_gpio[1]/32;
-	// mask = bit(ground_mux_gpio[1]%32);
-	// ground_A3 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = ground_mux_gpio[2]/32;
-	// mask = bit(ground_mux_gpio[2]%32);
-	// ground_A2 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = ground_mux_gpio[3]/32;
-	// mask = bit(ground_mux_gpio[3]%32);
-	// ground_A1 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = ground_mux_gpio[4]/32;
-	// mask = bit(ground_mux_gpio[4]%32);
-	// ground_A0 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// //Voltage
-	// bank = voltage_mux_gpio[0]/32;
-	// mask = bit(voltage_mux_gpio[0]%32);
-	// voltage_A4 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = voltage_mux_gpio[1]/32;
-	// mask = bit(voltage_mux_gpio[1]%32);
-	// voltage_A3 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = voltage_mux_gpio[2]/32;
-	// mask = bit(voltage_mux_gpio[2]%32);
-	// voltage_A2 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = voltage_mux_gpio[3]/32;
-	// mask = bit(voltage_mux_gpio[3]%32);
-	// voltage_A1 = gpio_attach(bank, mask, GPIO_OUT);
-
-	// bank = voltage_mux_gpio[4]/32;
-	// mask = bit(voltage_mux_gpio[4]%32);
-	// voltage_A0 = gpio_attach(bank, mask, GPIO_OUT);
-	
-	// //Current Source
-	// i_source_A04 = gpio_attach(2,bit(2),GPIO_OUT);
-	// i_source_A05 = gpio_attach(1,bit(13),GPIO_OUT);
-	// i_source_A06 = gpio_attach(2,bit(3),GPIO_OUT);
-	// i_source_A07 = gpio_attach(1,bit(12),GPIO_OUT);
-	// i_source_A08 = gpio_attach(0,bit(23),GPIO_OUT);
-	// i_source_A09 = gpio_attach(2,bit(4),GPIO_OUT);
-	// i_source_A10 = gpio_attach(1,bit(15),GPIO_OUT);
-	// i_source_A11 = gpio_attach(2,bit(5),GPIO_OUT);
-	// i_source_A12 = gpio_attach(0,bit(26),GPIO_OUT);
-	// i_source_A13 = gpio_attach(1,bit(14),GPIO_OUT);
-	
-	// printf("attached all GPIO pins...\n");
-	// fflush(stdout);
 
 	//Attach mux logic pins
 	//Current
-	for(i=0;i<sizeof(current_mux_gpio);i++){                            
+	for(i = 0; i < MUX_PINS; i++){                            
+		printf("attaching current gpio%d_%d \n", current_mux_gpio[i]/32, current_mux_gpio[i]%32);
+		fflush(stdout);
 		bank = current_mux_gpio[i]/32;
 		mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}	
 
 	//Ground
-	for(i=0;i<sizeof(ground_mux_gpio);i++){                            
+	for(i = 0; i < MUX_PINS; i++){                            
+		printf("attaching ground gpio%d_%d \n", ground_mux_gpio[i]/32, ground_mux_gpio[i]%32);
+		fflush(stdout);
 		bank = ground_mux_gpio[i]/32;
 		mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
 	//Voltage
-	for(i=0;i<sizeof(voltage_mux_gpio);i++){                            
+	for(i = 0; i < MUX_PINS; i++){                            
+		printf("attaching voltage gpio%d_%d \n", voltage_mux_gpio[i]/32, voltage_mux_gpio[i]%32);
+		fflush(stdout);
 		bank = voltage_mux_gpio[i]/32;
 		mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
@@ -271,7 +172,7 @@ int main(int argc, char **argv) {
 	fflush(stdout);
 
 	//Sleep
-	int sleep_time = 5;
+	int sleep_time = 10;
 	printf("Sleeping...\n");
 	fflush(stdout);
 	usleep(sleep_time * 1000000);
@@ -290,3 +191,5 @@ int main(int argc, char **argv) {
 	printf("FINISHED!\n");
 	fflush(stdout);
 }
+
+//FUCKK
