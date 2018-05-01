@@ -23,7 +23,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
-#include "eit_sample.h" //project specific setup stuff
+#include "eit_config.h" //project specific setup stuff
 
 #define MUX_PINS 5
 

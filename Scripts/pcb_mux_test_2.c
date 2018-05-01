@@ -24,7 +24,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
-#include "eit_sample.h" //project specific setup stuff
+#include "eit_config.h" //project specific setup stuff
 
 #define MUX_PINS 5
 
@@ -271,7 +271,7 @@ int main(int argc, char **argv) {
 	fflush(stdout);
 
 	//Sleep
-	int sleep_time = 15;
+	int sleep_time = 5;
 	printf("Sleeping...\n");
 	fflush(stdout);
 	usleep(sleep_time * 1000000);
