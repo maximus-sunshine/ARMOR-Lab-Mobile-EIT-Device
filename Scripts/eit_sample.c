@@ -33,8 +33,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
-#include "eit_sample.h"
-#include "eit_func.c"
+#include "eit_config.h"
 
 
 /************************************************************************************
@@ -49,8 +48,6 @@
 int current_mux[NODAL_NUM];              // current?                                           
 int ground_mux[NODAL_NUM];               // ground?
 int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
-
-
 
 // gpio pin IDs, used for exporting pins 
 // gpio pin ID = gpio_bank*32 + gpio_pinmask (e.g. gpio 86 = gpio2_22 (86 = 2*32 + 22))
@@ -82,15 +79,15 @@ int main(){
 	}
 
 	//setup for attaching gpio pins
-	struct gpio_info current_mux_gpio_info[sizeof(current_mux_gpio)];
-	struct gpio_info ground_mux_gpio_info[sizeof(current_mux_gpio)];
-	struct gpio_info voltage_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info current_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info ground_mux_gpio_info[sizeof(current_mux_gpio)];
+	gpio_info voltage_mux_gpio_info[sizeof(current_mux_gpio)];
 	
 	//attach current gpio pins
 	int i;
 	for(i=0;i<sizeof(current_mux_gpio);i++){
 		int bank = current_mux_gpio[i]/32;
-		int mask = current_mux_gpio[i]%32;
+		int mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
@@ -98,7 +95,7 @@ int main(){
 	
 	for(i=0;i<sizeof(ground_mux_gpio);i++){                            
 		int bank = ground_mux_gpio[i]/32;
-		int mask = ground_mux_gpio[i]%32;
+		int mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
@@ -106,7 +103,7 @@ int main(){
 	
 	for(i=0;i<sizeof(voltage_mux_gpio);i++){                            
 		int bank = voltage_mux_gpio[i]/32;
-		int mask = voltage_mux_gpio[i]%32;
+		int mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
 
@@ -122,7 +119,6 @@ int main(){
 
 	
 	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
-
 	volt_samp_config(current_mux,ground_mux,voltage_mux);
 	
 	/**********************************

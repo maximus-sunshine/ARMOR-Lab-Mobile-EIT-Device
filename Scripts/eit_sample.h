@@ -1,11 +1,18 @@
 #ifndef eit_sample
 #define eit_sample
 
+////DATA text file
+//#define VOLT_DATA_TXT "/home/debian/eit_sample/first_text.txt"
+
 //TRUTH TABLE DIMENSIONS
 #define LOGIC_ROW 32
 #define LOGIC_COL 5
 
-//TRUTH TABLE DECLARATION {A4,A3,A2,A1,A0}
+#define CUR_ROW 20
+#define CUR_COL 10
+
+//MUX TRUTH TABLE DECLARATION
+//{A4,A3,A2,A1,A0}
 int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1},
                                  {0,0,1,0,0},{0,0,1,0,1},{0,0,1,1,0},{0,0,1,1,1},
                                  {0,1,0,0,0},{0,1,0,0,1},{0,1,0,1,0},{0,1,0,1,1},
@@ -14,6 +21,21 @@ int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1
                                  {1,0,1,0,0},{1,0,1,0,1},{1,0,1,1,0},{1,0,1,1,1},
                                  {1,1,0,0,0},{1,1,0,0,1},{1,1,0,1,0},{1,1,0,1,1},
                                  {1,1,1,0,0},{1,1,1,0,1},{1,1,1,1,0},{1,1,1,1,1}};
+
+//CURRENT LOGIC TABLE 
+//rows go from 100ma to 20000ma
+//columns {A4,A5,A6,A7,A8,A9,A10,A11,A12,A3}
+int CURRENT[CUR_ROW][CUR_COL] = {{0,0,1,0,0,0,0,0,0,0},{0,0,1,1,0,0,0,0,0,0},
+				{0,0,1,1,1,0,0,0,0,0},{0,0,1,1,1,1,0,0,0,0},
+				{0,0,1,1,1,1,1,0,0,0},{0,0,1,1,1,1,1,1,0,0},
+		        {1,0,1,1,1,1,1,1,0,0},{1,1,1,1,1,1,1,1,0,0},
+				{0,1,1,1,1,1,0,0,1,0},{1,1,1,1,1,1,0,0,1,0},
+		 		{0,1,1,1,1,1,1,0,0,1},{1,1,1,1,1,1,1,0,0,1},
+				{0,1,1,1,1,1,1,1,0,1},{1,1,1,1,1,1,1,1,0,1},
+		   		{0,1,1,1,1,0,1,0,1,1},{1,1,1,1,1,0,1,0,1,1},
+				{0,1,1,1,1,1,0,0,1,1},{1,1,1,1,1,1,0,0,1,1},
+				{0,1,1,1,1,1,1,0,1,1},{1,1,1,1,1,1,1,0,1,1}};
+
 //NUMBER OF NODES
 #define NODAL_NUM 32
 //NUMBER OF NODES PER SIDE
@@ -22,7 +44,7 @@ int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1
 //FUNCTION DECLARATIONS
 int cur_gnd_config(int cur_mux[],int gnd_mux[]);
 int volt_samp_config(int cur_mux[],int gnd_mux[],int volt[][NODAL_NUM-2]);
-
+//int data_file_export(int volt_data);
 
 #define MAX_BUF 64	//max buffer length
 
