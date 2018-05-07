@@ -254,7 +254,7 @@ int main()
 				//read ADC
 		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1, ti_adc_read_raw(0)*scale/1000);
 				//record adc raw voltage into buffer (must be an int)
-			insertArray(&a,i);
+			insertArray(&a,ti_adc_read_raw(0));
 		        usleep(1 * 1000000);
 	      	}
 	    }
