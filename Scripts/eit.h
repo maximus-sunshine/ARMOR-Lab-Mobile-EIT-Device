@@ -84,7 +84,7 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]);
 * 
 * Outputs:	TODO: Add safety checks, add current sensing measurements to data file 
 *****************************************************************************/
-int data_file_export(float volt_data[],size_t size)
+int data_file_export(float volt_data[],size_t size);
 
 	
 /****************************************************************************
