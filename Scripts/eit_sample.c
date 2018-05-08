@@ -86,6 +86,7 @@ void sigint(int s __attribute__((unused))) {
 	fflush(stdout);
 
 	//Cleanup
+	int i;
 	for(i=0;i<MUX_PINS;i++){
 		gpio_detach(current_mux_gpio_info[i]);
 		gpio_detach(ground_mux_gpio_info[i]);
