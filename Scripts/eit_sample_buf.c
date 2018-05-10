@@ -1,11 +1,11 @@
 /************************************************************************************
- * MAE 156B Spring 2018 Team 6
+ * MAE 156B Spring 2018 Team 6 (5/9/18)
  *	- Maxwell Sun
  *	- Matthew Williams
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * Script to sample sensing skin.
+ * Script to sample sensing skin using new ADC buffer.
  * 
  * Using gpio_lib (https://bitbucket.org/vanguardiasur/gpiolib) for GPIO toggling (~3 MHz)
  * 
@@ -71,6 +71,8 @@ int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
+int loop_flag = 0; //signal p_thread to stop
+
 //create structs for mux logic gpios
 gpio_info *current_mux_gpio_info[MUX_PINS];
 gpio_info *ground_mux_gpio_info[MUX_PINS];
@@ -106,12 +108,39 @@ int main()
 	printf("\n ADC reset pin set...");
 	fflush(stdout);
 
+	//Set scale
 	//TODO: put scales and offsets in header file
 	ti_adc_set_scale(0, scale);
 	ti_adc_set_offset(0, 0);
 
-	ti_adc_set_scale(1, scale);
-	ti_adc_set_offset(1, 0);
+	ti_adc_set_scale(2, scale);
+	ti_adc_set_offset(2, 0);
+
+	printf("\n ADC scales and offsets set...");
+	fflush(stdout);
+
+	//enable channels to be read by buffer, disable others
+	ti_adc_enable_channel(0);
+	ti_adc_enable_channel(1);
+	ti_adc_disable_channel(2);
+	ti_adc_disable_channel(3);
+
+	printf("\n ADC channels enabled to be read by buffer...");
+	fflush(stdout);
+
+	//set ADC sampling frequency
+	int sample_rate = 10; //Hz
+	ti_adc_set_sample_rate(sample_rate); 
+
+	printf("\n ADC sampling frequency set to %d Hz...", sample_rate);
+	fflush(stdout);
+
+	//Set ADC buffer length
+	int buf_length = 10000;
+	ti_adc_set_buf_length(buf_length);
+
+	printf("\n Buffer length set to %d...", buf_length);
+	fflush(stdout);
 
 	/**************************
 	* SET UP GPIO PINS
@@ -188,23 +217,32 @@ int main()
 	//Timing of one cycle
 	struct timeval t1, t2;
 
-	int flag = 0;
-	int cycles = 1000;
 	gettimeofday(&t1, NULL);
+
+	//enable ADC buffer
+	ti_adc_enable_buf();
+	printf("\n ADC buffer enabled...");
+	fflush(stdout);
+
+	int flag = 0;
+	int cycles = 100;
+	loop_flag = 1;
+
+	//start pthread
   	//runs "cycles" times
 	while(flag < cycles){
 		flag++;
 		// printf("\n\nFLAG: %d\n\n",flag);
 		// fflush(stdout);
 
-		// printf("\n\n\n******************** Cycle %d *************************",flag);
-		// fflush(stdout);
+		printf("\n\n\n******************** Cycle %d *************************",flag);
+		fflush(stdout);
 		
 		//Outer loop, move current and ground
 		for(i = 0; i < NODAL_NUM; i++){
 			
-			// printf("\n\n--------------Configuration: Current at node %d, GND at node %d -------------\n\n\tVOLTAGE (V)\tCURRENT (uA)\n", current_mux[i]+1, ground_mux[i]+1);
-			// fflush(stdout);
+			printf("\n\n--------------Configuration: Current at node %d, GND at node %d -------------\n\n\tVOLTAGE (V)\tCURRENT (uA)\n", current_mux[i]+1, ground_mux[i]+1);
+			fflush(stdout);
 
 			//Set current and ground mux logic pins
 			int k;
@@ -260,8 +298,10 @@ int main()
 					}
 				}
 
-				ti_adc_read_raw(0);
-				ti_adc_read_raw(1);
+
+
+				// ti_adc_read_raw(0);
+				// ti_adc_read_raw(1);
 
 				// // read ADC.
 				// printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1, ti_adc_read_raw(0)*scale/1000);
@@ -278,10 +318,12 @@ int main()
 
 				// printf("%0.9f\t%0.9f\n", ti_adc_read_raw(0)*scale/1000, ti_adc_read_raw(1)*scale/1000);
 				// fflush(stdout);
-
 			}
 		}
 	}
+
+	loop_flag = 0;
+
 	gettimeofday(&t2, NULL);
 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
 	printf("\n DONE SAMPLING %d nodes, %d cycles in %f seconds!\n\n avg. cyclic frequency:\t%f Hz\n avg. cyclic period:\t%f s\n\n", NODAL_NUM, cycles, usec/1e6, 1/(usec/1e6/cycles), usec/1e6/cycles);
@@ -340,3 +382,20 @@ void sigint(int s __attribute__((unused))) {
 
 	exit(0);
 }
+
+void* write_data(void *buff[]){
+	
+	
+	File *fp = fopen(VOLT_DATA_TXT, "a");
+	
+	int i = 0
+	while(loop_flag==1){
+		fprintf(fp, "%d", buff[i]);
+	}
+	fclose(fp);
+	return NULL;
+	
+
+	
+}
+

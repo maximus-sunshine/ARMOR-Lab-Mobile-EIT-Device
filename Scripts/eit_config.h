@@ -15,15 +15,15 @@
 ////DATA text file path
 //#define VOLT_DATA_TXT "/home/debian/eit_sample/first_text.txt"
 
-/************************************************************** 
-* SAMPLE GEOMETRY (Must be square sample with N nodes per edge)
-***************************************************************/
+// ************************************************************* 
+// * SAMPLE GEOMETRY (Must be square sample with N nodes per edge)
+// **************************************************************
 
-//NUMBER OF NODES
-#define NODAL_NUM 32
+// //NUMBER OF NODES
+// #define NODAL_NUM 8
 
-//NUMBER OF NODES PER SIDE
-#define SIDE_LEN (NODAL_NUM/4)                                 
+// //NUMBER OF NODES PER SIDE
+// #define SIDE_LEN (NODAL_NUM/4) 
 
 /************************************************************** 
 * GPIO PIN DECLARATIONS

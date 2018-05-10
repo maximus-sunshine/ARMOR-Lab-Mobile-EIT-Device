@@ -1,0 +1,1 @@
+cmd_/home/debian/MAE156B_Team6/adc_driver/ti-ads8688-trigbuf.ko := ld -EL -r  -T ./scripts/module-common.lds --build-id  -T ./arch/arm/kernel/module.lds -o /home/debian/MAE156B_Team6/adc_driver/ti-ads8688-trigbuf.ko /home/debian/MAE156B_Team6/adc_driver/ti-ads8688-trigbuf.o /home/debian/MAE156B_Team6/adc_driver/ti-ads8688-trigbuf.mod.o ;  true

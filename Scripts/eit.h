@@ -9,15 +9,18 @@
 #ifndef EIT_H
 #define EIT_H
 
+// #include "eit_config.h"
+
 /************************************************************** 
 * SAMPLE GEOMETRY (Must be square sample with N nodes per edge)
 ***************************************************************/
 
 //NUMBER OF NODES
-#define NODAL_NUM 32
+#define NODAL_NUM 8
 
 //NUMBER OF NODES PER SIDE
 #define SIDE_LEN (NODAL_NUM/4) 
+
 
 /************************************************************************************
 * FUNCTION DECLARATIONS

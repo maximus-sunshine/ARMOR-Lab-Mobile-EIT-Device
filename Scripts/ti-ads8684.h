@@ -87,6 +87,72 @@ int ti_adc_set_offset(int ch, int offset);
 int ti_adc_set_scale(int ch, double scale);
 
 /****************************************************************************
+* int ti_adc_enable_channel(int ch)
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_enable_channel(int ch);
+
+/****************************************************************************
+* int ti_adc_disable_channel(int ch)
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_disable_channel(int ch);
+
+/****************************************************************************
+* int ti_adc_set_buf_length()
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_set_buf_length(int length);
+
+/****************************************************************************
+* int ti_adc_set_sample_rate(int length)
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_set_sample_rate(int freq);
+
+/****************************************************************************
+* int ti_adc_enable_buf(int ch)
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_enable_buf();
+
+/****************************************************************************
+* int ti_adc_disable_buf(int ch)
+*
+* DESCRIPTION
+*
+* Inputs :	
+* 
+* Outputs:	
+*****************************************************************************/
+int ti_adc_disable_buf();
+
+/****************************************************************************
 * int ti_adc_read_raw(int ch)
 *
 * DESCRIPTION
