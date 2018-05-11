@@ -33,6 +33,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <pthread.h>
 
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
@@ -51,6 +52,12 @@
 * SETUP SIGINT HANDLER
 *************************************************************************************/
 void sigint(int s __attribute__((unused)));
+
+/************************************************************************************
+* SETUP PTHREADS
+*************************************************************************************/
+void* write_data(void *ptr);
+pthread_t write_data_thread;
 
 /************************************************************************************
 * SETUP
@@ -339,4 +346,27 @@ void sigint(int s __attribute__((unused))) {
 	fflush(stdout);
 
 	exit(0);
+}
+
+void* write_data(void *ptr){
+	
+	// File *fp_write = fopen(VOLT_DATA_TXT, "a");
+
+	// File *fp_read = fopen("/dev/iio:device1","r");
+
+	int i = 0;
+	while(flag == 1){
+		// fcontent = (char*)malloc(sizeof())
+
+		// fread(fp_write,sizeof(int),1,fp_read);
+		// fprintf(fp, "%d", buff[i]);
+		// i++;
+
+		printf("pthread ran %d times...\n",i);
+		i++;
+		usleep(0.5*1e6);
+	}
+
+	//fclose(fp);
+	return NULL;
 }
