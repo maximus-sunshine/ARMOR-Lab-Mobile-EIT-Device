@@ -12,7 +12,10 @@
  * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
  *
  * compile with "gcc -pthread eit_sample.c eit.c gpiolib.c ti-ads8684.c -o eit_sample"
+ * 
  * (5/13/18) Matthew updated to match the one we lost on BBB
+ * 			 -debugged on local machine
+ * 
  *
  * TODO: -find faster way to read ADC
  *		 -clean up code, move stuff to header file
@@ -432,28 +435,5 @@ void* data_exporting(void *ptr){
 	}
 	
 	printf("thread is returning\n");
-	return NULL;
-}
-
-void* write_data(void *ptr){
-	
-	// File *fp_write = fopen(VOLT_DATA_TXT, "a");
-
-	// File *fp_read = fopen("/dev/iio:device1","r");
-
-	int i = 0;
-	while(flag == 1){
-		// fcontent = (char*)malloc(sizeof())
-
-		// fread(fp_write,sizeof(int),1,fp_read);
-		// fprintf(fp, "%d", buff[i]);
-		// i++;
-
-		printf("pthread ran %d times...\n",i);
-		i++;
-		usleep(0.5*1e6);
-	}
-
-	//fclose(fp);
 	return NULL;
 }
