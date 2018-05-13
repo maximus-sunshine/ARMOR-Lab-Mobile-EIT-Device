@@ -47,10 +47,10 @@
 			/* default state has all gpios released and mode set to uart1 */
 			bb_spi0_pins: pinmux_bb_spi0_pins {
 				pinctrl-single,pins = <
-					0x150 0x30	/* spi0_sclk.spi0_sclk, INPUT_PULLUP | MODE0 */
-					0x154 0x30	/* spi0_d0.spi0_d0, INPUT_PULLUP | MODE0 */
-					0x158 0x10	/* spi0_d1.spi0_d1, OUTPUT_PULLUP | MODE0 */
-					0x15c 0x10	/* spi0_cs0.spi0_cs0, OUTPUT_PULLUP | MODE0 */
+					0x150 0x30	/* P9.22 spi0_sclk.spi0_sclk, INPUT_PULLUP | MODE0 */
+					0x154 0x30	/* P9.21 spi0_d0.spi0_d0, INPUT_PULLUP | MODE0 */
+					0x158 0x10	/* P9.18 spi0_d1.spi0_d1, OUTPUT_PULLUP | MODE0 */
+					0x15c 0x10	/* P9.17 spi0_cs0.spi0_cs0, OUTPUT_PULLUP | MODE0 */
 				>;
 			};
 		};
@@ -62,33 +62,45 @@
 			/*  */
 			EIT_gpio_pins: pinmux_EIT_gpio_pins{
 				pinctrl-single,pins = <
-					0x078 0x07 /* P9.12 gpio1_28 (gpio 60),  OUTPUT_PULLDOWN | MODE7 */				
-					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7 */
-					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7 */
-					0x09c 0x07 /* P8.9  gpio2_5  (gpio 69),  OUTPUT_PULLDOWN | MODE7 */
-					0x098 0x07 /* P8.10 gpio2_4  (gpio 68),  OUTPUT_PULLDOWN | MODE7 */
-					0x034 0x07 /* P8.11 gpio1_13 (gpio 45),  OUTPUT_PULLDOWN | MODE7 */
-					0x030 0x07 /* P8.12 gpio1_12 (gpio 44),  OUTPUT_PULLDOWN | MODE7 */
-					0x024 0x07 /* P8.13 gpio0_23 (gpio 23),  OUTPUT_PULLDOWN | MODE7 */
-					0x028 0x07 /* P8.14 gpio0_26 (gpio 26),  OUTPUT_PULLDOWN | MODE7 */
-					0x03c 0x07 /* P8.15 gpio1_15 (gpio 47),  OUTPUT_PULLDOWN | MODE7 */
-					0x038 0x07 /* P8.16 gpio1_14 (gpio 46),  OUTPUT_PULLDOWN | MODE7 */
-					0x02c 0x07 /* P8.17 gpio0_27 (gpio 27),  OUTPUT_PULLDOWN | MODE7 */
-					0x0e0 0x07 /* P8.27 gpio2_22 (gpio 86),  OUTPUT_PULLDOWN | MODE7 */
-					0x0e4 0x07 /* P8.29 gpio2_23 (gpio 87),  OUTPUT_PULLDOWN | MODE7 */
-					0x0d8 0x07 /* P8.31 gpio0_10 (gpio 10),  OUTPUT_PULLDOWN | MODE7 */
-					0x0d4 0x07 /* P8.33 gpio0_9  (gpio  9),  OUTPUT_PULLDOWN | MODE7 */
-					0x0d0 0x07 /* P8.35 gpio0_8, (gpio  8),  OUTPUT_PULLDOWN | MODE7 */
-					0x0c0 0x07 /* P8.37 gpio2_14 (gpio 78),  OUTPUT_PULLDOWN | MODE7 */
-					0x0b8 0x07 /* P8.39 gpio2_12 (gpio 76),  OUTPUT_PULLDOWN | MODE7 */
-					0x0b0 0x07 /* P8.41 gpio2_10 (gpio 74),  OUTPUT_PULLDOWN | MODE7 */
-					0x0a8 0x07 /* P8.43 gpio2_8  (gpio 72),  OUTPUT_PULLDOWN | MODE7 */
-					0x0a0 0x07 /* P8.45 gpio2_6  (gpio 70),  OUTPUT_PULLDOWN | MODE7 */
-					0x044 0x07 /* P9.23 gpio1_17 (gpio 49),  OUTPUT_PULLDOWN | MODE7 */
-					0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7 */
-					0x1ac 0x07 /* P9.25 gpio3_21 (gpio 117), OUTPUT_PULLDOWN | MODE7 */
-					0x180 0x07 /* P9.26 gpio0_14 (gpio 14),  OUTPUT_PULLDOWN | MODE7 */
-					0x1a4 0x07 /* P9.27 gpio3_19 (gpio 115), OUTPUT_PULLDOWN | MODE7 */
+				!	0x090 0x07 /* P8.3  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_8		 */
+				!	0x090 0x07 /* P8.4  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_11		 */
+				!	0x090 0x07 /* P8.5  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_7		 */
+				!	0x090 0x07 /* P8.6  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_4		 */
+
+					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_5		 */
+					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7, A0_12 	 */
+					0x09c 0x07 /* P8.9  gpio2_5  (gpio 69),  OUTPUT_PULLDOWN | MODE7, A0_9		 */
+					0x098 0x07 /* P8.10 gpio2_4  (gpio 68),  OUTPUT_PULLDOWN | MODE7, A0_6		 */
+					0x034 0x07 /* P8.11 gpio1_13 (gpio 45),  OUTPUT_PULLDOWN | MODE7, A0_10		 */
+					0x030 0x07 /* P8.12 gpio1_12 (gpio 44),  OUTPUT_PULLDOWN | MODE7, A0_13 	 */
+
+					0x02c 0x07 /* P8.17 gpio0_27 (gpio 27),  OUTPUT_PULLDOWN | MODE7, ISENSE_RST */
+				!	0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7, ADC_RESET  */
+
+				!	0x090 0x07 /* P8.21  gpio2_2 (gpio 66),  OUTPUT_PULLDOWN | MODE7, EN_VMEAS   */
+				!	0x090 0x07 /* P8.38  gpio2_2 (gpio 66),  OUTPUT_PULLDOWN | MODE7, EN_CURRENT */
+				!	0x090 0x07 /* P8.46  gpio2_2 (gpio 66),  OUTPUT_PULLDOWN | MODE7, EN_GND	 */
+					
+					0x0e0 0x07 /* P8.27 gpio2_22 (gpio 86),  OUTPUT_PULLDOWN | MODE7, A4_2		 */
+					0x0e4 0x07 /* P8.29 gpio2_23 (gpio 87),  OUTPUT_PULLDOWN | MODE7, A3_2		 */
+					0x0d8 0x07 /* P8.31 gpio0_10 (gpio 10),  OUTPUT_PULLDOWN | MODE7, A2_2		 */
+					0x0d4 0x07 /* P8.33 gpio0_9  (gpio  9),  OUTPUT_PULLDOWN | MODE7, A1_2  	 */
+					0x0d0 0x07 /* P8.35 gpio0_8, (gpio  8),  OUTPUT_PULLDOWN | MODE7, A0_2 		 */
+
+					0x0c0 0x07 /* P8.37 gpio2_14 (gpio 78),  OUTPUT_PULLDOWN | MODE7, A4_1 		 */
+					0x0b8 0x07 /* P8.39 gpio2_12 (gpio 76),  OUTPUT_PULLDOWN | MODE7, A3_1 		 */
+					0x0b0 0x07 /* P8.41 gpio2_10 (gpio 74),  OUTPUT_PULLDOWN | MODE7, A2_1 		 */
+					0x0a8 0x07 /* P8.43 gpio2_8  (gpio 72),  OUTPUT_PULLDOWN | MODE7, A1_1 		 */
+					0x0a0 0x07 /* P8.45 gpio2_6  (gpio 70),  OUTPUT_PULLDOWN | MODE7, A0_1 		 */
+
+					0x1a4 0x07 /* P9.27 gpio3_19 (gpio 115), OUTPUT_PULLDOWN | MODE7, A4_3		 */
+					0x1ac 0x07 /* P9.25 gpio3_21 (gpio 117), OUTPUT_PULLDOWN | MODE7, A3_3		 */
+					0x180 0x07 /* P9.26 gpio0_14 (gpio 14),  OUTPUT_PULLDOWN | MODE7, A2_3		 */
+				
+				!	0x090 0x07 /* P9.41  gpio2_2 (gpio 66),  OUTPUT_PULLDOWN | MODE7, A1_3 		 */
+				!	0x090 0x07 /* P9.42  gpio2_2 (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_3 		 */
+
+					
 				>;
 			};
 		};
