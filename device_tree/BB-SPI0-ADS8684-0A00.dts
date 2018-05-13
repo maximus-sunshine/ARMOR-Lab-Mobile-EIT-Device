@@ -15,6 +15,9 @@
  *  - enable in /boot/uEnv.txt with "uboot_overlay_addr0=/lib/firmware/BB-SPI0-ADS8684-0A00.dtbo"
  * 
  * 4/24/18 - NEED TO ADD GPIO PINS FOR MUXES AND CURRENT SOURCES
+ *
+ * 5/12/18 Edited by Max Sun
+ *  - added i2c pins for OLED display
  * 
  */
 /dts-v1/;
@@ -36,7 +39,7 @@
 		"P9.22",	/* spi0_sclk */
 		/* ADD GPIO PINS */
 		/* the hardware ip uses */
-		"spi0";
+		"spi0", "i2c2";
 
 	fragment@0 {
 		target = <&am33xx_pinmux>;
@@ -81,7 +84,6 @@
 					0x0b0 0x07 /* P8.41 gpio2_10 (gpio 74),  OUTPUT_PULLDOWN | MODE7 */
 					0x0a8 0x07 /* P8.43 gpio2_8  (gpio 72),  OUTPUT_PULLDOWN | MODE7 */
 					0x0a0 0x07 /* P8.45 gpio2_6  (gpio 70),  OUTPUT_PULLDOWN | MODE7 */
-					0x17c 0x07 /* P9.19 gpio0_13 (gpio 13),  OUTPUT_PULLDOWN | MODE7 */
 					0x044 0x07 /* P9.23 gpio1_17 (gpio 49),  OUTPUT_PULLDOWN | MODE7 */
 					0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7 */
 					0x1ac 0x07 /* P9.25 gpio3_21 (gpio 117), OUTPUT_PULLDOWN | MODE7 */
@@ -93,6 +95,18 @@
 	};
 
 	fragment@2 {
+		target = <&am33xx_pinmux>;
+		__overlay__ {
+			bb_i2c2_pins: pinmux_bb_i2c2_pins{
+				pinctrl-single,pins = <
+					0x17c 0x73 /* P9.19 I2C2_SCL */
+					0x178 0x73 /* P9.20 I2C2_SDA */
+				>;
+			};
+		};
+	};
+
+	fragment@3 {
 		target = <&ocp>;
 		__overlay__ {
 			test_helper: helper {
@@ -104,7 +118,7 @@
 		};
 	};
 
-	fragment@3 {
+	fragment@4 {
 		target = <&spi0>;
 		__overlay__ {
 			#address-cells = <1>;
@@ -130,4 +144,22 @@
 			};
 		};
 	};
+
+	// fragment@5 {
+	// 	target = <&i2c2>;
+	// 	__overlay__ {
+	// 		status = "okay";
+	// 		pinctrl-names = "default";
+	// 		pinctrl-0 = <&bb_i2c2_pins>;
+
+	// 		clock-frequency = <100000>;
+
+	// 		#address-cells = <1>;
+	// 		#size-cells = <0>;
+
+	// 		reg = <0>;
+
+	// 		/* add any i2c devices on the bus here */
+	// 	};
+	// };
 };

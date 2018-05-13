@@ -16,15 +16,16 @@
 ***************************************************************/
 
 //NUMBER OF NODES
-#define NODAL_NUM 32
+
+#define NODAL_NUM 8
 
 //NUMBER OF NODES PER SIDE
 #define SIDE_LEN (NODAL_NUM/4) 
 
+
 /************************************************************** 
 *ARRAY STRUCTURE FOR BUFFER
 ***************************************************************/
-
 typedef struct {
 	
 	size_t used; //# of elements that have been put into array
@@ -35,8 +36,8 @@ typedef struct {
 /************************************************************** 
 *DATA FILE EXPORT PATH
 ***************************************************************/
-
 #define VOLT_DATA_TXT "/home/debian/sampling_text.txt"
+
 
 /************************************************************************************
 * FUNCTION DECLARATIONS

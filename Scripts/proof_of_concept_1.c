@@ -1,11 +1,10 @@
 /* MAE 156B Team 6
 * 
-* Preliminary Mux Switching Test 2:
-* 	-attempt to clean up code using loops instead of hard coding
+* Proof of concept script for EIT DAQ device
 * 
-* User selects Current, GND, and Voltage nodes from command line
-* 
-* 4/30/18
+* compile with "gcc proof_of_concept_1.c eit.c gpiolib.c ti-ads8684.c -o proof_of_concept_1"
+*
+* 5/1/18
 */
 
 /************************************************************************************
@@ -24,6 +23,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "gpiolib.h"
+#include "eit.h"
+#include "ti-ads8684.h"
 #include "eit_config.h" //project specific setup stuff
 
 #define MUX_PINS 5
@@ -66,20 +67,38 @@ int current_mux_gpio[5] = CURRENT_MUX_GPIO;
 int ground_mux_gpio[5]  = GROUND_MUX_GPIO;
 int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 
+double scale = 0.078127104;
+
 /************************************************************************************
 * MAIN
 *************************************************************************************/
 int main(int argc, char **argv) {
 	int i, bank, mask;
+
 	printf("\nentered MAIN...\n");
 	fflush(stdout);
 
-	// //Sigint setup, needs work
-	// signal(SIGINT, sigint);
-	// printf("setup SIGINT...\n");
-	// fflush(stdout);
+	/**************************
+	* INITIALIZE ADC INTERFACE
+	**************************/	
+	ti_adc_init();
+	printf("\n ADC interface initialized...");
+	fflush(stdout);
 
-	//initialize gpiolib
+	ti_adc_enable();
+	printf("\n ADC reset pin set...");
+	fflush(stdout);
+
+	//TODO: put scales and offsets in header file
+	ti_adc_set_scale(0, scale);
+	ti_adc_set_offset(0, 0);
+
+	ti_adc_set_scale(1, scale);
+	ti_adc_set_offset(1, 0);
+
+	/**************************
+	* SET UP GPIO PINS
+	**************************/
 	if (gpio_init()) {
 		fprintf(stderr, "gpio_init failed with %i\n", gpio_errno);
 		exit(1);
@@ -104,8 +123,8 @@ int main(int argc, char **argv) {
 	//Attach mux logic pins
 	//Current
 	for(i = 0; i < MUX_PINS; i++){                            
-		printf("attaching current gpio%d_%d \n", current_mux_gpio[i]/32, current_mux_gpio[i]%32);
-		fflush(stdout);
+		// printf("attaching current gpio%d_%d \n", current_mux_gpio[i]/32, current_mux_gpio[i]%32);
+		// fflush(stdout);
 		bank = current_mux_gpio[i]/32;
 		mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
@@ -113,8 +132,8 @@ int main(int argc, char **argv) {
 
 	//Ground
 	for(i = 0; i < MUX_PINS; i++){                            
-		printf("attaching ground gpio%d_%d \n", ground_mux_gpio[i]/32, ground_mux_gpio[i]%32);
-		fflush(stdout);
+		// printf("attaching ground gpio%d_%d \n", ground_mux_gpio[i]/32, ground_mux_gpio[i]%32);
+		// fflush(stdout);
 		bank = ground_mux_gpio[i]/32;
 		mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
@@ -122,8 +141,8 @@ int main(int argc, char **argv) {
 
 	//Voltage
 	for(i = 0; i < MUX_PINS; i++){                            
-		printf("attaching voltage gpio%d_%d \n", voltage_mux_gpio[i]/32, voltage_mux_gpio[i]%32);
-		fflush(stdout);
+		// printf("attaching voltage gpio%d_%d \n", voltage_mux_gpio[i]/32, voltage_mux_gpio[i]%32);
+		// fflush(stdout);
 		bank = voltage_mux_gpio[i]/32;
 		mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
@@ -171,11 +190,21 @@ int main(int argc, char **argv) {
 	printf("set mux logic pins...\n");
 	fflush(stdout);
 
-	//Sleep
-	int sleep_time = 10;
-	printf("Sleeping...\n");
+
+	//read adc channel 0
+	printf("\n\nHERE COMES THE DATA, voltage from ADC channel 0 and 1\n\n");
 	fflush(stdout);
-	usleep(sleep_time * 1000000);
+	int loops = 10000;
+	for(i = 0; i < loops; i++){
+		printf("%0.9f\t%0.9f\n", ti_adc_read_raw(0)*scale/1000, ti_adc_read_raw(1)*scale/1000);
+	}
+
+
+	// //Sleep
+	// int sleep_time = 5;
+	// printf("Sleeping for %d s...\n", sleep_time);
+	// fflush(stdout);
+	// usleep(sleep_time * 1000000);
 
 	//Detach mux logic pins
 	for(i=0;i<MUX_PINS;i++){
@@ -188,6 +217,13 @@ int main(int argc, char **argv) {
 
 	//Finish up
 	gpio_finish();
+	printf("closed gpiolib cleanly...\n");
+	fflush(stdout);
+
+	ti_adc_cleanup();
+	printf("cleaned up ADC interface...\n");
+	fflush(stdout);
+
 	printf("FINISHED!\n");
 	fflush(stdout);
 }
