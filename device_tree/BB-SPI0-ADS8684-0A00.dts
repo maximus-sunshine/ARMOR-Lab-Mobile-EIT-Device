@@ -15,9 +15,14 @@
  *  - enable in /boot/uEnv.txt with "uboot_overlay_addr0=/lib/firmware/BB-SPI0-ADS8684-0A00.dtbo"
  * 
  * 4/24/18 - NEED TO ADD GPIO PINS FOR MUXES AND CURRENT SOURCES
+ *		   - (5/13/18) done
  *
  * 5/12/18 Edited by Max Sun
  *  - added i2c pins for OLED display
+ * 
+ * 5/13/18	- edited by Max Sun
+ *			- added and triple checked all new GPIO pins (Rev02)
+ *			- added all pins to "exclusive-use" 
  * 
  */
 /dts-v1/;
