@@ -193,7 +193,7 @@ int main()
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
 	//attach current switch gpio pins
-	for(i = 0; i < MUX_PINS; i++){                            
+	for(i = 0; i < 10; i++){                            
 		int bank = current_switch_gpio[i]/32;
 		int mask = bit(current_switch_gpio[i]%32);
 		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
