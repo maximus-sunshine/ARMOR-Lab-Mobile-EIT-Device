@@ -72,20 +72,6 @@ int cur_gnd_config(int cur[],int gnd[]);
 *****************************************************************************/
 int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]);
 
-
-/****************************************************************************
-* int data_file_export(float volt_data[],size_t size)
-*
-* Exports voltage measurements to a text file path: VOLT_DATA_TXT
-* Writes at maximum 9 decimal places to text file
-*
-* Inputs :	volt_data[], float array of voltage measurements
-*			size, size_t data type describing the length of volt_data array
-* 
-* Outputs:	TODO: Add safety checks, add current sensing measurements to data file 
-*****************************************************************************/
-int data_file_export(float volt_data[],size_t size);
-
 	
 /****************************************************************************
 * void initArray(Array *a, size_t initialSize)
