@@ -38,21 +38,24 @@
 #define I_SENSE_RESET_GPIO 27	//p8_17
 
 //CURRENT LOGIC PINS
-#define cur_source_A4  35   //p8_6
-#define cur_source_A5  66   //p8_7
-#define cur_source_A6  68   //p8_10
-#define cur_source_A7  34   //p8_5
-#define cur_source_A8  38   //p8_3
-#define cur_source_A9  69   //p8_9
-#define cur_source_A10 45   //p8_11
-#define cur_source_A11 39   //p8_4
-#define cur_source_A12 67   //p8_8
-#define cur_source_A13 44   //p8_12
+#define CUR_SOURCE_A4  35   //p8_6
+#define CUR_SOURCE_A5  66   //p8_7
+#define CUR_SOURCE_A6  68   //p8_10
+#define CUR_SOURCE_A7  34   //p8_5
+#define CUR_SOURCE_A8  38   //p8_3
+#define CUR_SOURCE_A9  69   //p8_9
+#define CUR_SOURCE_A10 45   //p8_11
+#define CUR_SOURCE_A11 39   //p8_4
+#define CUR_SOURCE_A12 67   //p8_8
+#define CUR_SOURCE_A13 44   //p8_12
 
 //mux enable pin
-#define cur_mux_enable  79    //p8_38
-#define gnd_mux_enable  71    //p8_46
-#define volt_mux_enable 62    //p8_21
+#define CUR_MUX_ENABLE  79    //p8_38
+#define GND_MUX_ENABLE  71    //p8_46
+#define VOLT_MUX_ENABLE 62    //p8_21
+
+#define MUX_ENABLE_GPIO {CUR_MUX_ENABLE, GND_MUX_ENABLE, VOLT_MUX_ENABLE}
+
 
 //MUX LOGIC PINS
 //power mux declaration
@@ -78,7 +81,7 @@
 #define GROUND_MUX_GPIO		{GND_MUX_A4, GND_MUX_A3, GND_MUX_A2, GND_MUX_A1, GND_MUX_A0}
 #define VOLTAGE_MUX_GPIO	{VOLT_MUX_A4,VOLT_MUX_A3,VOLT_MUX_A2,VOLT_MUX_A1,VOLT_MUX_A0}
 
-#define CURRENT_SWITCH_GPIO     {cur_source_A13,cur_source_A12,cur_source_A11,cur_source_A10,cur_source_A9,cur_source_A8,cur_source_A7,cur_source_A6,cur_source_A5,cur_source_A4}
+#define CURRENT_SWITCH_GPIO     {CUR_SOURCE_A4,CUR_SOURCE_A5,CUR_SOURCE_A6,CUR_SOURCE_A7,CUR_SOURCE_A8,CUR_SOURCE_A9,CUR_SOURCE_A10,CUR_SOURCE_A11,CUR_SOURCE_A12,CUR_SOURCE_A13}
 				
 
 /************************************************************** 
