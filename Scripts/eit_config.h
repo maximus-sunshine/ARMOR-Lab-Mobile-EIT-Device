@@ -77,6 +77,9 @@
 #define GROUND_MUX_GPIO		{GND_MUX_A4, GND_MUX_A3, GND_MUX_A2, GND_MUX_A1, GND_MUX_A0}
 #define VOLTAGE_MUX_GPIO	{VOLT_MUX_A4,VOLT_MUX_A3,VOLT_MUX_A2,VOLT_MUX_A1,VOLT_MUX_A0}
 
+#define CURRENT_SWITCH_GPIO     {cur_source_A13,cur_source_A12,cur_source_A11,cur_source_A10,cur_source_A9,cur_source_A8,cur_source_A7,cur_source_A6,cur_source_A5,cur_source_A4}
+				
+
 /************************************************************** 
 * TRUTH TABLES (mux and current switching)
 ***************************************************************/
