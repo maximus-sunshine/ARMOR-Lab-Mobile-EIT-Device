@@ -11,11 +11,13 @@
  * 
  * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
  *
+ * (5/13/18) Matthew updated to match the one we lost on BBB
+ *
  * TODO: -find faster way to read ADC
  *		 -clean up code, move stuff to header file
  *       -error handling
  *       -pthread, write data to .txt
- * 
+ *
  ************************************************************************************/
 
 /************************************************************************************
@@ -29,6 +31,7 @@
 #include <stdio.h>		
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
  
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
@@ -43,6 +46,15 @@
 *************************************************************************************/
 #define MUX_PINS 5
 
+
+/************************************************************************************
+* PTHREAD SETUP
+*************************************************************************************/
+pthread_t data_exporting_thread;
+//pthread function declaration
+void* data_exporting(void *ptr);
+//data file declaration
+//FILE* fp;
 /************************************************************************************
 * SETUP
 *************************************************************************************/
@@ -58,21 +70,133 @@ int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling?
 int current_mux_gpio[5] = CURRENT_MUX_GPIO;
 int ground_mux_gpio[5]  = GROUND_MUX_GPIO;
 int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
+int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
+int mux_enable_gpio[3] = MUX_ENABLE_GPIO;
+
+//current switches 
+int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
 
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
-//TODO: Add other GPIOs
+
+int chan0; //voltage adc reading channel
+
+//create structs for mux logic gpios
+gpio_info *current_mux_gpio_info[MUX_PINS];
+gpio_info *ground_mux_gpio_info[MUX_PINS];
+gpio_info *voltage_mux_gpio_info[MUX_PINS];
+gpio_info *current_switch_gpio_info[10];
+gpio_info *adc_reset_gpio_info;
+gpio_info *i_sense_reset_gpio_info;
+
+gpio_info *mux_enable_gpio_info[3]
+
+
+int i;
+for(i = 0; i < MUX_PINS; i++){
+		current_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		ground_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		voltage_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+}
+
+for(i = 0; i < 10; i++){
+		current_switch_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
+
+for(i = 0; i < 3; i++){
+		mux_enable_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
+
+double scale = 0.078127104;
+
+//struct declarations
+Array dynamic_buffer;
+size_t init_size = 100;
+int size = 0;
+int flag = 1;
+
+/************************************************************************************
+* SIGINT HANDLER, TODO: improve
+*************************************************************************************/
+void sigint(int s __attribute__((unused))) {
+	printf("\nReceived SIGINT:\n");
+	fflush(stdout);
+
+	printf("\n Done sampling...");
+	fflush(stdout);
+
+	//Cleanup
+	int i;
+	for(i=0;i<MUX_PINS;i++){
+		gpio_detach(current_mux_gpio_info[i]);
+		gpio_detach(ground_mux_gpio_info[i]);
+		gpio_detach(voltage_mux_gpio_info[i]);
+	}	
+
+	for(i=0;i<10;i++){
+		gpio_detach(current_switch_gpio_info[i]);
+		
+	}	
+	for(i=0;i<3;i++){
+		gpio_detach(mux_enable_gpio_info[i]);
+		
+	}	
+	gpio_detach(adc_reset_gpio_info);
+	gpio_detach(i_sense_reset_gpio_info);
+
+	printf("\n Detached all gpio pins");
+	fflush(stdout);
+
+	gpio_finish();
+	printf("\n closed gpiolib cleanly...");
+	fflush(stdout);
+
+	ti_adc_cleanup();
+	printf("\n cleaned up ADC interface...");
+	fflush(stdout);
+	
+	printf("waiting for pthread to join\n");
+	flag = 0;
+	pthread_join(data_exporting_thread, NULL);
+	printf("pthread has returned %d\n",size);
+	//fclose(fp);
+	printf("file has closed\n");
+	exit(0);
+}
 
 /************************************************************************************
 * MAIN
 *************************************************************************************/
 int main()
 {
+	printf("\n entered MAIN...");
+	fflush(stdout);
+	
+	//Sigint setup, needs work
+	signal(SIGINT, sigint);
+	printf("setup SIGINT...\n");
+	fflush(stdout);
+	
+	/**************************
+	* INITIALIZE BUFFER ARRAY
+	**************************/	
+	initArray(&dynamic_buffer,init_size);
+	
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
 	ti_adc_init();
+	printf("\n ADC interface initialized...");
+	fflush(stdout);
+
+	ti_adc_enable();
+	printf("\n ADC reset pin set...");
+	fflush(stdout);
+
+	//TODO: put scales and offsets in header file
+	ti_adc_set_scale(0, scale);
+	ti_adc_set_offset(0, 0);
 
 	/**************************
 	* SET UP GPIO PINS
@@ -81,104 +205,227 @@ int main()
 	if(gpio_init()){
 		fprintf(stderr, "gpio_init failed with %i\n", gpio_errno);
 	}
+	printf("\n gpiolib intialized...");
+	fflush(stdout);
 
-	//setup for attaching gpio pins
-	gpio_info *current_mux_gpio_info[MUX_PINS];
-	gpio_info *ground_mux_gpio_info[MUX_PINS];
-	gpio_info *voltage_mux_gpio_info[MUX_PINS];
-	gpio_info *adc_reset_gpio_info;
-	gpio_info *i_sense_reset_gpio_info;
-	
 	//attach current gpio pins
 	int i;
-	for(i=0;i<MUX_PINS;i++){
+	for(i = 0; i < MUX_PINS; i++){
 		int bank = current_mux_gpio[i]/32;
 		int mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
 	//attach ground gpio pins
-	
-	for(i=0;i<MUX_PINS;i++){                            
+	for(i = 0; i < MUX_PINS; i++){                            
 		int bank = ground_mux_gpio[i]/32;
 		int mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
 
 	//attach voltage gpio pins
-	
-	for(i=0;i<MUX_PINS;i++){                            
+	for(i = 0; i < 10; i++){                            
 		int bank = voltage_mux_gpio[i]/32;
 		int mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
+	//attach current switch gpio pins
+	for(i = 0; i < 10; i++){                            
+		int bank = current_switch_gpio[i]/32;
+		int mask = bit(current_switch_gpio[i]%32);
+		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	//attach mux enable gpio pins
+	for(i = 0; i < 3; i++){                            
+		int bank = mux_enable_gpio[i]/32;
+		int mask = bit(mux_enable_gpio[i]%32);
+		mux_enable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	//adc reset attach
+	int bank = adc_reset_gpio/32;
+	int mask = bit(adc_reset_gpio[i]%32);
+	adc_reset_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
+	//i sense reset attach
+	int bank = i_sense_reset_gpio/32;
+	int mask = bit(i_sense_reset_gpio[i]%32);
+	i_sense_reset_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
+	
 
-	//attach other gpio pins
-	adc_reset_gpio_info = gpio_attach(adc_reset_gpio/32, bit(adc_reset_gpio%32), GPIO_OUT);
-	i_sense_reset_gpio_info  = gpio_attach(i_sense_reset_gpio/32, bit(i_sense_reset_gpio%32), GPIO_OUT);
+
+	printf("\n mux logic gpio pins attached...");
+	fflush(stdout);
+
+	// //attach other gpio pins
+	// adc_reset_gpio_info = gpio_attach(adc_reset_gpio/32, bit(adc_reset_gpio%32), GPIO_OUT);
+	// i_sense_reset_gpio_info  = gpio_attach(i_sense_reset_gpio/32, bit(i_sense_reset_gpio%32), GPIO_OUT);
 	
 	/**********************************
 	* SET UP MUX SWITCHING PATTERN
 	***********************************/
 	//configures current and ground nodes according to # of nodes(NODAL_NUM)
 	cur_gnd_config(current_mux,ground_mux);
+	printf("\n current and ground switching patterns configured...");
+	fflush(stdout);
 
-	
 	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
 	volt_samp_config(current_mux,ground_mux,voltage_mux);
-
+	printf("\n voltage sampling pattern configured...");
+	fflush(stdout);
+	
+	
 	/**********************************
 	* TODO: TURN ON CURRENT SOURCE
 	***********************************/
-	
+	int current_setpoint = 0; //current setpoint 100uA-2000uA(0-19, 100uA)
+	for(i = 0; i< 10; i++){
+		if(Current[current_setpoint][i]==1){
+			gpio_set(current_switch_gpio_info[i]);
+		}
+		else{
+			gpio_clear(current_switch_gpio_info[i]);
+		}
+	}
 	/**********************************
 	* EXECUTE SAMPLING
 	***********************************/
-	int flag = 0;
-  	//runs 200 times
-	while(flag < 200){
-	for(i = 0; i < NODAL_NUM; i++){
-    	//power and ground distribution
-		int k;
-		for(k=0;k<MUX_PINS;k++){                            
-			if(CHAN[current_mux[i]][k]==1){
-				gpio_set(current_mux_gpio_info,current_mux_gpio[k]);
+	printf("\n beginning sample cycle...");
+	fflush(stdout);
+	
+
+	int flag_2 = 0;
+	int cycles = 1;
+  	//runs "cycles" times
+	/**********************************
+	* Disabling Muxs
+	***********************************/
+	int n;
+	for(n = 0;n < 3; n++){
+		gpio_clear(mux_enable_gpio_info[n]);
+	}
+
+	while(flag_2 < cycles){
+		
+		printf("\n\n\n******************** Cycle %d *************************\n\n",flag_2);
+
+	
+		
+		//Outer loop, move current and ground
+		for(i = 0; i < NODAL_NUM; i++){
+			
+			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+			fflush(stdout);
+
+			//mux disable
+
+
+			//Set current and ground mux logic pins
+			int k;
+			for(k = 0; k < MUX_PINS; k++){                            
+				if(CHAN[current_mux[i]][k]==1){
+					gpio_set(current_mux_gpio_info[k]);
+				}
+				else{
+					gpio_clear(current_mux_gpio_info[k]);
+				}
+
+				if(CHAN[ground_mux[i]][k]==1){
+					gpio_set(ground_mux_gpio_info[k]);
+				}
+				else{
+					gpio_clear(ground_mux_gpio_info[k]);
+				}
 			}
-			else{
-				gpio_clear(current_mux_gpio_info,current_mux_gpio[k]);
+
+			//mux enable
+
+			//Inner loop, measure voltage
+			int j;
+			for(j = 0; j < (NODAL_NUM-2); j++){
+				for(k = 0; k < MUX_PINS; k++){
+					if(CHAN[voltage_mux[i][j]][k]==1){
+						gpio_set(voltage_mux_gpio_info[k]);
+					}
+					else{
+						gpio_clear(voltage_mux_gpio_info[j]);
+					}
+				}
+				//enabling muxs
+				for(n = 0;n < 3; n++){
+					gpio_set(mux_enable_gpio_info[n]);
+				}
+				chan0 = ti_adc_read_raw(0);
+				//read ADC
+		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+				//record adc raw voltage into buffer (must be an int)
+			insertArray(&dynamic_buffer,chan0);
+			size++;
+			if(size==1){
+				pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
 			}
-
-			if(CHAN[ground_mux[i]-1][k]==1){
-				gpio_set(ground_mux_gpio_info,ground_mux_gpio[k]);
+			//disabling muxs
+			for(n = 0;n < 3; n++){
+				gpio_clear(mux_enable_gpio_info[n]);
 			}
-			else{
-				gpio_clear(ground_mux_gpio_info,ground_mux_gpio[k]);
-			}
-		}
+		        usleep(1 * 1e6);
+	      	}
+	    }
+	    cycles++;
+ 	}
+	printf("\n Done sampling...");
+	fflush(stdout);
 
-		//inner loop controls sampling
-		int j;
-		for(j =0; j < (NODAL_NUM-2); j++){
-			if(CHAN[volt_mux[i]][k]==1){
-				gpio_set(voltage_mux_gpio_info,voltage_mux_gpio[k]);
-			}
-			else{
-				gpio_clear(voltage_mux_gpio_info,voltage_mux_gpio[k]);
-			}
+	//Cleanup
+	int i;
+	for(i=0;i<MUX_PINS;i++){
+		gpio_detach(current_mux_gpio_info[i]);
+		gpio_detach(ground_mux_gpio_info[i]);
+		gpio_detach(voltage_mux_gpio_info[i]);
+	}	
 
-	        //reading adc
-	        //TODO: implement fast method to store values, (e.g. store values in temporary buffer and write to .txt file at low priority, pthread?)
-	        ti_adc_read_raw(VOLT_CHANNEL);
-      	}
+	for(i=0;i<10;i++){
+		gpio_detach(current_switch_gpio_info[i]);
+		
+	}	
+	for(i=0;i<3;i++){
+		gpio_detach(mux_enable_gpio_info[i]);
+		
+	}	
+	gpio_detach(adc_reset_gpio_info);
+	gpio_detach(i_sense_reset_gpio_info);
+	
+	printf("\n Detached all gpio pins");
+	fflush(stdout);
 
-        printf("\n");
-        //TODO: print correct configuration
-        printf("--------------Current Configuration: Current at node %d, GND at node %d, Measure at node %d ------------------ \n", i, i, i);
-    }
-      flag++;
-      printf(" ******************** Cycle %d *************************",flag);
-  }
+	gpio_finish();
+	printf("\n closed gpiolib cleanly...");
+	fflush(stdout);
+
+	ti_adc_cleanup();
+	printf("\n cleaned up ADC interface...");
+	fflush(stdout);
+	
+	printf("waiting for pthread to join\n");
+	flag = 0;
+	pthread_join(data_exporting_thread, NULL);
+	printf("pthread has returned %d\n",size);
+	//fclose(fp);
+	printf("file has closed\n");
+}
 
 
-
+void* data_exporting(void *ptr){
+	///fp = fopen(VOLT_DATA_TXT,"a");
+	int i = 0;
+	
+	while(i < size){
+	   // fprintf(fp,"%d\n",dyanamic_buffer.array[i]);
+	      printf("pthread recorded %d value", dynamic_buffer.array[i]);
+	    i++;
+	    if(flag ==1){
+	        usleep(30*1000);
+	    }    
+	}
+	
+	printf("thread is returning\n");
+	return NULL;
 }
