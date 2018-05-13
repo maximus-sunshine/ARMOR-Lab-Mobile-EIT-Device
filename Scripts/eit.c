@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "eit.h"
+#include <malloc.h>
 
 /************************************************************************************
 * FUNCTION DEFINITIONS
