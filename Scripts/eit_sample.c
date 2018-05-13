@@ -35,6 +35,7 @@
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
+#include <malloc.h>
  
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
@@ -62,13 +63,9 @@ void* data_exporting(void *ptr);
 /************************************************************************************
 * SETUP SIGINT HANDLER
 *************************************************************************************/
-void sigint(int s __attribute__((unused)));
+//void sigint(int s __attribute__((unused)));
 
-/************************************************************************************
-* SETUP PTHREADS
-*************************************************************************************/
-void* write_data(void *ptr);
-pthread_t write_data_thread;
+
 
 /************************************************************************************
 * SETUP
@@ -87,8 +84,7 @@ int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
 int mux_enable_gpio[3] = MUX_ENABLE_GPIO;
 
-//current switches 
-int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
+
 
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
@@ -104,23 +100,9 @@ gpio_info *current_switch_gpio_info[10];
 gpio_info *adc_reset_gpio_info;
 gpio_info *i_sense_reset_gpio_info;
 
-gpio_info *mux_enable_gpio_info[3]
+gpio_info *mux_enable_gpio_info[3];
 
-//allocate memory for gpio_info structs
-int i;
-for(i = 0; i < MUX_PINS; i++){
-		current_mux_gpio_info[i] = malloc(sizeof(gpio_info));
-		ground_mux_gpio_info[i] = malloc(sizeof(gpio_info));
-		voltage_mux_gpio_info[i] = malloc(sizeof(gpio_info));
-}
 
-for(i = 0; i < 10; i++){
-		current_switch_gpio_info[i] = malloc(sizeof(gpio_info));
-	}
-
-for(i = 0; i < 3; i++){
-		mux_enable_gpio_info[i] = malloc(sizeof(gpio_info));
-	}
 
 double scale = 0.078127104;
 
@@ -196,6 +178,23 @@ int main()
 	* INITIALIZE BUFFER ARRAY
 	**************************/	
 	initArray(&dynamic_buffer,init_size);
+
+
+	//allocate memory for gpio_info structs
+	int i;
+	for(i = 0; i < MUX_PINS; i++){
+		current_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		ground_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+		voltage_mux_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
+
+	for(i = 0; i < 10; i++){
+		current_switch_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
+
+	for(i = 0; i < 3; i++){
+		mux_enable_gpio_info[i] = malloc(sizeof(gpio_info));
+	}
 	
 	/**************************
 	* INITIALIZE ADC INTERFACE
@@ -223,7 +222,7 @@ int main()
 	fflush(stdout);
 
 	//attach current gpio pins
-	int i, bank, mask;
+	int bank, mask;
 	for(i = 0; i < MUX_PINS; i++){
 		bank = current_mux_gpio[i]/32;
 		mask = bit(current_mux_gpio[i]%32);
@@ -283,7 +282,7 @@ int main()
 	***********************************/
 	int current_setpoint = 0; //current setpoint 100uA-2000uA(0-19, 100uA)
 	for(i = 0; i< 10; i++){
-		if(Current[current_setpoint][i]==1){
+		if(CURRENT[current_setpoint][i]==1){
 			gpio_set(current_switch_gpio_info[i]);
 		}
 		else{
@@ -378,7 +377,7 @@ int main()
 	fflush(stdout);
 
 	//Cleanup
-	int i;
+	
 	for(i=0;i<MUX_PINS;i++){
 		gpio_detach(current_mux_gpio_info[i]);
 		gpio_detach(ground_mux_gpio_info[i]);
@@ -413,10 +412,11 @@ int main()
 	printf("pthread has returned %d\n",size);
 	//fclose(fp);
 	printf("file has closed\n");
-}
-
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
+}
+
+	
 
 void* data_exporting(void *ptr){
 	///fp = fopen(VOLT_DATA_TXT,"a");
