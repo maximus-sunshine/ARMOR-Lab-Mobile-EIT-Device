@@ -29,6 +29,7 @@
 #include <stdio.h>		
 #include <string.h>
 #include <errno.h>
+#include <pthread.h>
  
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
@@ -43,6 +44,14 @@
 *************************************************************************************/
 #define MUX_PINS 5
 
+/************************************************************************************
+* PTHREAD SETUP
+*************************************************************************************/
+pthread_t data_exporting_thread;
+//pthread function declaration
+void* data_exporting(void *ptr);
+//data file declaration
+FILE* fp;
 /************************************************************************************
 * SETUP
 *************************************************************************************/
@@ -59,6 +68,9 @@ int current_mux_gpio[5] = CURRENT_MUX_GPIO;
 int ground_mux_gpio[5]  = GROUND_MUX_GPIO;
 int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 
+//current switches 
+int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
+
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
@@ -66,14 +78,17 @@ int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 gpio_info *current_mux_gpio_info[MUX_PINS];
 gpio_info *ground_mux_gpio_info[MUX_PINS];
 gpio_info *voltage_mux_gpio_info[MUX_PINS];
+gpio_info *current_switch_gpio_info[10];
 // gpio_info *adc_reset_gpio_info;
 // gpio_info *i_sense_reset_gpio_info;
 
 double scale = 0.078127104;
 
 //struct declarations
-Array a;
-size_t size = 10000;
+Array dynamic_buffer;
+size_t init_size = 10000;
+int size = 0;
+int flag = 1;
 
 /************************************************************************************
 * SIGINT HANDLER, TODO: improve
@@ -103,14 +118,13 @@ void sigint(int s __attribute__((unused))) {
 	printf("\n cleaned up ADC interface...");
 	fflush(stdout);
 	
-	//DATA EXPORTING
-	printf("data is being put in a text file\n");
-	float temp_buff[a.used];
-	for(i = 0;i < a.used; i++){
-		temp_buff[i] = (scale/1000) * a.array[i];
-	}
-	data_file_export(temp_buff,a.used);
-	printf("data has succesfully been put in a text file\n");
+	printf("waiting for pthread to join\n");
+	flag = 0;
+	pthread_join(data_exporting_thread, NULL);
+	printf("pthread has returned %d\n",size);
+	fclose(fp);
+	printf("file has closed\n");
+	exit(0);
 	exit(0);
 }
 
@@ -130,7 +144,7 @@ int main()
 	/**************************
 	* INITIALIZE BUFFER ARRAY
 	**************************/	
-	initArray(&a,size);
+	initArray(&dynamic_buffer,init_size);
 	
 	/**************************
 	* INITIALIZE ADC INTERFACE
@@ -173,11 +187,18 @@ int main()
 	}
 
 	//attach voltage gpio pins
-	for(i = 0; i < MUX_PINS; i++){                            
+	for(i = 0; i < 10; i++){                            
 		int bank = voltage_mux_gpio[i]/32;
 		int mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
+	//attach current switch gpio pins
+	for(i = 0; i < MUX_PINS; i++){                            
+		int bank = current_switch_gpio[i]/32;
+		int mask = bit(current_switch_gpio[i]%32);
+		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	
 	printf("\n mux logic gpio pins attached...");
 	fflush(stdout);
 
@@ -208,6 +229,8 @@ int main()
 	***********************************/
 	printf("\n beginning sample cycle...");
 	fflush(stdout);
+	//current set to 100 uA
+	gpio_set(current_mux_gpio_info[0]);
 
 	int flag = 0;
 	int cycles = 1;
@@ -255,7 +278,11 @@ int main()
 				//read ADC
 		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1, ti_adc_read_raw(0)*scale/1000);
 				//record adc raw voltage into buffer (must be an int)
-			insertArray(&a,ti_adc_read_raw(0));
+			insertArray(&dynamic_buffer,ti_adc_read_raw(0));
+			size++;
+			if(size==1){
+				pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+			}
 		        usleep(1 * 1000000);
 	      	}
 	    }
@@ -283,4 +310,21 @@ int main()
 
 	printf("\n FINISHED!");
 	fflush(stdout);
+}
+
+
+void* data_exporting(void *ptr){
+	fp = fopen(VOLT_DATA_TXT,"a");
+	int i = 0;
+	
+	while(i < size){
+	    fprintf(fp,"%d\n",dyanamic_buffer.array[i]);
+	    i++;
+	    if(flag ==1){
+	        usleep(30*1000);
+	    }    
+	}
+	
+	printf("thread is returning\n");
+	return NULL;
 }
