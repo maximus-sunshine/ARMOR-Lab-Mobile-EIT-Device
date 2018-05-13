@@ -3,23 +3,40 @@
 *
 * Library header file for project specific functions (eit.c)
 *
-* 4/30/18
+* 4/30/18- created
+* 5/13/18- edited by Matthew
+*        - added initArray and insertArray
 ***************************************************************/
 
 #ifndef EIT_H
 #define EIT_H
-
-// #include "eit_config.h"
 
 /************************************************************** 
 * SAMPLE GEOMETRY (Must be square sample with N nodes per edge)
 ***************************************************************/
 
 //NUMBER OF NODES
+
 #define NODAL_NUM 8
 
 //NUMBER OF NODES PER SIDE
 #define SIDE_LEN (NODAL_NUM/4) 
+
+
+/************************************************************** 
+*ARRAY STRUCTURE FOR BUFFER
+***************************************************************/
+typedef struct {
+	
+	size_t used; //# of elements that have been put into array
+	size_t size; //size of array
+	int *array; // pointer array
+} Array; //name of struct
+
+/************************************************************** 
+*DATA FILE EXPORT PATH
+***************************************************************/
+#define VOLT_DATA_TXT "/home/debian/sampling_text.txt"
 
 
 /************************************************************************************
@@ -57,5 +74,48 @@ int cur_gnd_config(int cur[],int gnd[]);
 *				  -alternatively, just merge this into cur_gnd_config...
 *****************************************************************************/
 int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]);
+
+	
+/****************************************************************************
+* void initArray(Array *a, size_t initialSize)
+*
+* Initializes a dynamic array in heap memory through malloc
+* Initializes used elements to zero and ininital array size according to intialSize
+*
+* Inputs :	Array *a, a pointer to stuct Array
+*			initialSize, initialze size of array
+* 
+* TODO: Add safety checks
+*****************************************************************************/
+void initArray(Array *a, size_t initialSize);
+	
+
+/****************************************************************************
+* void insertArray(Array *a, int element)
+*
+* Inserts elements into array and updates # of elements used in array
+* If the array fills up, it doubles in size through realloc
+*
+* Inputs :	Array *a, a pointer to stuct Array
+*			element, an integer that will be added to array
+* 
+* TODO: Add safety checks
+*****************************************************************************/
+void insertArray(Array *a, int element);
+
+/****************************************************************************
+* void sigint(int s __attribute__((unused)))
+*
+* Awaits a signal(ctrl c) and preforms cleanup duties before exiting program
+* Cleans up gpio pins and adc
+* Writes data to text file
+* 
+* Inputs :		ctrl c, user entered keyboard signal
+*			
+* 
+* TODO: Add safety checks,improve documentation, add additional clean up steps
+*****************************************************************************/
+void sigint(int s __attribute__((unused)));
+	
 
 #endif //EIT_H
