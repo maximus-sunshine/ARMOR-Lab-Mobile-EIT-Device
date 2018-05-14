@@ -4,8 +4,9 @@
 * Library header file for project specific functions (eit.c)
 *
 * 4/30/18- created
-* 5/13/18- edited by Matthew
+* 5/13/18- edited by Matthew 
 *        - added initArray and insertArray
+*         -made text file a string
 ***************************************************************/
 
 #ifndef EIT_H
@@ -36,7 +37,7 @@ typedef struct {
 /************************************************************** 
 *DATA FILE EXPORT PATH
 ***************************************************************/
-#define VOLT_DATA_TXT "/home/debian/sampling_text.txt"
+char VOLT_DATA_TXT[60] = "/home/debian/";
 
 
 /************************************************************************************
