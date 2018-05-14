@@ -11,7 +11,10 @@
  * 
  * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
  *
- * compile with "gcc -pthread batt_read.c ti-ads8684.c -o batt_read"
+ * compile with "gcc -pthread batt_read.c gpiolib.c ti-ads8684.c -o batt_read"
+ * 
+ * 5/13/18	- edited by Max
+ 			- included gpiolib to handle ADC reset for Rev02
  *
  * TODO: -find faster way to read ADC
  *		 -clean up code, move stuff to header file
@@ -40,6 +43,7 @@
 #include <sys/time.h>
 #include "eit_config.h"
 #include "ti-ads8684.h"
+#include "gpiolib.h"
 
 #define VOLT_DATA_TXT "~/MAE156B_Team6/"
 
@@ -60,6 +64,9 @@ pthread_t write_data_thread;
 double scale = 0.078127104;
 int flag = 0;                //flag so pthread knows when to stop
 
+int adc_reset_gpio = ADC_RESET_GPIO;
+gpio_info *adc_reset_gpio_info;
+
 /************************************************************************************
 * MAIN
 *************************************************************************************/
@@ -69,7 +76,6 @@ int main()
 	//creating pthread
 	
 	pthread_create(&write_data_thread,NULL,write_data,(void *) NULL);
-
 
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -84,12 +90,16 @@ int main()
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
-	ti_adc_init();
-	printf("\n ADC interface initialized...");
+	//adc reset attach
+	int bank = adc_reset_gpio/32;
+	int mask = bit(adc_reset_gpio%32);
+	adc_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+	gpio_set(adc_reset_gpio_info);
+	printf("\n ADC GPIO pin enable...");
 	fflush(stdout);
 
-	ti_adc_enable();
-	printf("\n ADC reset pin set...");
+	ti_adc_init();
+	printf("\n ADC interface initialized...");
 	fflush(stdout);
 
 	//Set scale
@@ -110,7 +120,7 @@ int main()
 		// read ADC.
 		printf("Battery Voltage:  %0.5f V\n", ti_adc_read_raw(2)*scale/1000);
 		fflush(stdout);
-		usleep(1*1e6);
+		usleep(0.5*1e6);
 	}
 
 	/**********************************
@@ -154,13 +164,18 @@ void sigint(int s __attribute__((unused))) {
 	printf("\n cleaned up ADC interface...");
 	fflush(stdout);
 
-	printf("\n FINISHED!\n\n");
+	gpio_detach(adc_reset_gpio_info);
+	gpio_finish();
+	printf("\n closed gpiolib cleanly...");
 	fflush(stdout);
 
 	printf("(waiting for pthread to join)\n");
 	flag = 0;
 	pthread_join(write_data_thread, NULL);
 	printf("pthread joined \n");
+
+	printf("\n FINISHED!\n\n");
+	fflush(stdout);
 
 	exit(0);
 }

@@ -31,8 +31,8 @@
 ***************************************************************/
 
 //ADC PINS
-#define ADC_RESET_GPIO   15	//p9_24
-#define VOLT_CHANNEL 2		//adc channel to read voltage
+#define ADC_RESET_GPIO 15 //p9_24
+#define VOLT_CHANNEL 	2 //adc channel to read voltage
 
 //CURRENT SENSE PINS
 #define I_SENSE_RESET_GPIO 27	//p8_17
