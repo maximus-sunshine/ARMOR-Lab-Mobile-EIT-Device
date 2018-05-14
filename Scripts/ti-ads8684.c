@@ -120,56 +120,56 @@ int ti_adc_init()
 		fd_enable[i]=temp_fd;
 	}
 
-	//open file descriptors for ADC reset pins and set direction to out
-	char buf1[MAX_BUF];
-	char buf2[MAX_BUF];
+	// //open file descriptors for ADC reset pins and set direction to out
+	// char buf1[MAX_BUF];
+	// char buf2[MAX_BUF];
 	
-	snprintf(buf1, sizeof(buf1), "/sys/class/gpio/gpio13/direction");
-	snprintf(buf2, sizeof(buf2), "/sys/class/gpio/gpio13/value");
+	// snprintf(buf1, sizeof(buf1), "/sys/class/gpio/gpio13/direction");
+	// snprintf(buf2, sizeof(buf2), "/sys/class/gpio/gpio13/value");
 	
-	adc_rst_dir_fd = open(buf1, O_WRONLY);
-	adc_rst_val_fd = open(buf2, O_WRONLY);
+	// adc_rst_dir_fd = open(buf1, O_WRONLY);
+	// adc_rst_val_fd = open(buf2, O_WRONLY);
 	
-	if(adc_rst_dir_fd<0 || adc_rst_val_fd<0){
-		perror("ERROR in ti_adc_init, failed to open adc interface for reset pin\n");
-		fprintf(stderr, "maybe kernel or device tree is too old\n");
-		return -1;
-	}
+	// if(adc_rst_dir_fd<0 || adc_rst_val_fd<0){
+	// 	perror("ERROR in ti_adc_init, failed to open adc interface for reset pin\n");
+	// 	fprintf(stderr, "maybe kernel or device tree is too old\n");
+	// 	return -1;
+	// }
 
-	char dir_buf_wr[MAX_BUF];
-	snprintf(dir_buf_wr, sizeof(dir_buf_wr), "out");
-	write(adc_rst_dir_fd, dir_buf_wr, sizeof(dir_buf_wr));
+	// char dir_buf_wr[MAX_BUF];
+	// snprintf(dir_buf_wr, sizeof(dir_buf_wr), "out");
+	// write(adc_rst_dir_fd, dir_buf_wr, sizeof(dir_buf_wr));
 
-	//open file descriptors for buffer. (length and enable)
-	snprintf(buf1, sizeof(buf1), IIO_DIR "/buffer/length");
-	snprintf(buf2, sizeof(buf2), IIO_DIR "/buffer/enable");
+	// //open file descriptors for buffer. (length and enable)
+	// snprintf(buf1, sizeof(buf1), IIO_DIR "/buffer/length");
+	// snprintf(buf2, sizeof(buf2), IIO_DIR "/buffer/enable");
 	
-	buf_length_fd = open(buf1, O_WRONLY);
-	buf_enable_fd = open(buf2, O_WRONLY);
+	// buf_length_fd = open(buf1, O_WRONLY);
+	// buf_enable_fd = open(buf2, O_WRONLY);
 	
-	if(buf_length_fd<0 || buf_enable_fd<0){
-		perror("ERROR in ti_adc_init, failed to open adc interface for buffer\n");
-		fprintf(stderr, "maybe kernel or device tree is too old\n");
-		return -1;
-	}
+	// if(buf_length_fd<0 || buf_enable_fd<0){
+	// 	perror("ERROR in ti_adc_init, failed to open adc interface for buffer\n");
+	// 	fprintf(stderr, "maybe kernel or device tree is too old\n");
+	// 	return -1;
+	// }
 
-	//open file descriptor for hrtimer trigger frequency
-	snprintf(buf, sizeof(buf), "/sys/bus/iio/devices/trigger0/sampling_frequency");
+	// //open file descriptor for hrtimer trigger frequency
+	// snprintf(buf, sizeof(buf), "/sys/bus/iio/devices/trigger0/sampling_frequency");
 	
-	hrt_frequency_fd = open(buf, O_WRONLY);
+	// hrt_frequency_fd = open(buf, O_WRONLY);
 	
-	if(hrt_frequency_fd<0){
-		perror("ERROR in ti_adc_init, failed to open adc interface for hrtimer trigger frequency\n");
-		fprintf(stderr, "maybe kernel or device tree is too old\n");
-		return -1;
-	}
+	// if(hrt_frequency_fd<0){
+	// 	perror("ERROR in ti_adc_init, failed to open adc interface for hrtimer trigger frequency\n");
+	// 	fprintf(stderr, "maybe kernel or device tree is too old\n");
+	// 	return -1;
+	// }
 
-	//set ADC trigger to be hrtimer trigger
-	snprintf(buf, sizeof(buf), IIO_DIR "/trigger/current_trigger");
-	current_trigger_fd = open(buf, O_WRONLY);
+	// //set ADC trigger to be hrtimer trigger
+	// snprintf(buf, sizeof(buf), IIO_DIR "/trigger/current_trigger");
+	// current_trigger_fd = open(buf, O_WRONLY);
 
-	snprintf(buf, sizeof(buf), "trigger0");
-	write(current_trigger_fd, buf, sizeof(buf));
+	// snprintf(buf, sizeof(buf), "trigger0");
+	// write(current_trigger_fd, buf, sizeof(buf));
 
 	//raise init flag and return
 	init_flag = 1;
@@ -317,11 +317,11 @@ int ti_adc_enable_channel(int ch)
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in rc_adc_read_raw, please initialize with rc_adc_init() first\n");
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
 		return -1;
 	}
 	if(unlikely(ch<0 || ch>=CHANNELS)){
-		fprintf(stderr,"ERROR: in rc_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
+		fprintf(stderr,"ERROR: in ti_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}
 
@@ -350,11 +350,11 @@ int ti_adc_disable_channel(int ch)
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in rc_adc_read_raw, please initialize with rc_adc_init() first\n");
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
 		return -1;
 	}
 	if(unlikely(ch<0 || ch>=CHANNELS)){
-		fprintf(stderr,"ERROR: in rc_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
+		fprintf(stderr,"ERROR: in ti_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}
 
@@ -439,7 +439,7 @@ int ti_adc_enable_buf()
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in rc_adc_read_raw, please initialize with rc_adc_init() first\n");
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
 		return -1;
 	}
 
@@ -468,7 +468,7 @@ int ti_adc_disable_buf()
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in rc_adc_read_raw, please initialize with rc_adc_init() first\n");
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
 		return -1;
 	}
 
@@ -497,26 +497,26 @@ int ti_adc_read_raw(int ch)
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in rc_adc_read_raw, please initialize with rc_adc_init() first\n");
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
 		return -1;
 	}
 	if(unlikely(ch<0 || ch>=CHANNELS)){
-		fprintf(stderr,"ERROR: in rc_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
+		fprintf(stderr,"ERROR: in ti_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}
 
 	if(unlikely(lseek(fd_raw[ch],0,SEEK_SET)<0)){
-		perror("ERROR: in rc_adc_read_raw, failed to seek to beginning of FD");
+		perror("ERROR: in ti_adc_read_raw, failed to seek to beginning of FD");
 		return -1;
 	}
 
 	if(unlikely(read(fd_raw[ch], buf, sizeof(buf))==-1)){
-		perror("ERROR in rc_adc_read_raw, can't read iio adc fd");
+		perror("ERROR in ti_adc_read_raw, can't read iio adc fd");
 		return -1;
 	}
 	i=atoi(buf);
 	// if(i>RAW_MAX || i< RAW_MIN){
-	// 	fprintf(stderr, "ERROR: in rc_adc_read_raw, value out of bounds: %d\n", i);
+	// 	fprintf(stderr, "ERROR: in ti_adc_read_raw, value out of bounds: %d\n", i);
 	// 	return -1;
 	// }
 	return i;
