@@ -91,6 +91,7 @@ int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
 int chan0; //voltage adc reading channel
+int chan1; //current sense channel
 
 //create structs for mux logic gpios
 gpio_info *current_mux_gpio_info[MUX_PINS];
@@ -163,7 +164,7 @@ void sigint(int s __attribute__((unused))) {
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main(int arc, char **argv)
+int main()
 {
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -172,19 +173,15 @@ int main(int arc, char **argv)
 	signal(SIGINT, sigint);
 	printf("setup SIGINT...\n");
 	fflush(stdout);
-	
-	 /**************************
-	 * INITIALIZE DATA TEXT FILE	
-	**************************/
-	snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "~/MAE156B_Team6/data/",argv[1]);
 
 	/**************************
 	* INITIALIZE BUFFER ARRAY
 	**************************/	
 	initArray(&dynamic_buffer,init_size);
 
-
-	//allocate memory for gpio_info structs
+	/**************************
+	* allocate memory for gpio_info structs
+	**************************/	
 	int i;
 	for(i = 0; i < MUX_PINS; i++){
 		current_mux_gpio_info[i] = malloc(sizeof(gpio_info));
@@ -269,8 +266,11 @@ int main(int arc, char **argv)
 	// fflush(stdout);
 
 	//TODO: put scales and offsets in header file
-	ti_adc_set_scale(0, scale);
+	ti_adc_set_scale(0, scale); //chan0
 	ti_adc_set_offset(0, 0);
+
+	ti_adc_set_scale(2, scale); //chan2
+	ti_adc_set_offset(2, 0);
 	
 	/**********************************
 	* SET UP MUX SWITCHING PATTERN
@@ -370,41 +370,49 @@ int main(int arc, char **argv)
 					gpio_clear(mux_disable_gpio_info[n]);
 				}
 
-				//test current switches
-				printf("\n Switching currents...");
-				fflush(stdout);
-				int q;
-				for(q=0;q<20;q++){
-					printf("\n\n current set to %d uA...",(q+1)*100);
-					fflush(stdout);
-					for(i = 0; i< 10; i++){
-						if(CURRENT[q][i]==1){
-							gpio_set(current_switch_gpio_info[i]);
-						}
-						else{
-							gpio_clear(current_switch_gpio_info[i]);
-						}
-					}
-					usleep(2*1e6);
-				}
+				// //test current switches
+				// printf("\n Switching currents...");
+				// fflush(stdout);
+				// int q;
+				// for(q=0;q<20;q++){
+				// 	printf("\n\n current set to %d uA...",(q+1)*100);
+				// 	fflush(stdout);
+				// 	for(i = 0; i< 10; i++){
+				// 		if(CURRENT[q][i]==1){
+				// 			gpio_set(current_switch_gpio_info[i]);
+				// 		}
+				// 		else{
+				// 			gpio_clear(current_switch_gpio_info[i]);
+				// 		}
+				// 	}
+				// 	usleep(2*1e6);
+				// }
 
 				//read ADC
 				chan0 = ti_adc_read_raw(0);
+				chan1 = ti_adc_read_raw(2);
 		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+		        fflush(stdout);
 				
 				//record adc raw voltage into buffer (must be an int)
 				insertArray(&dynamic_buffer,chan0);
 				size++;
+		        printf("\ninserted Array...");
+		        fflush(stdout);
 
 				if(size==1){
 					pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
 				}
+				printf("\npthread created...");
+		        fflush(stdout);
 
 				//disabling muxs
 				for(n = 0;n < 3; n++){
 					gpio_set(mux_disable_gpio_info[n]);
 				}
 		        usleep(1 * 1e6);
+		        printf("\nmuxes disabled...");
+		        fflush(stdout);
 	      	}
 	    }
  	}
@@ -455,11 +463,13 @@ int main(int arc, char **argv)
 
 void* data_exporting(void *ptr){
 	fp = fopen(VOLT_DATA_TEXT,"a");
+	printf("file opened\n");	
 	int i = 0;
 	
 	while(i < size){
-	     fprintf(fp,"%d\n",dynamic_buffer.array[i]);
+	      
 	      printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
+	      fprintf(fp,"%d\n",dynamic_buffer.array[i]);
 	    i++;
 	    if(flag ==1){
 	        usleep(2*1e6);
