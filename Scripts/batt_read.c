@@ -45,7 +45,7 @@
 #include "ti-ads8684.h"
 #include "gpiolib.h"
 
-#define VOLT_DATA_TXT "~/MAE156B_Team6/"
+// #define VOLT_DATA_TXT "~/MAE156B_Team6/"
 
 /************************************************************************************
 * SETUP SIGINT HANDLER
@@ -55,8 +55,8 @@ void sigint(int s __attribute__((unused)));
 /************************************************************************************
 * DECLARE PTHREAD FUNCTIONS
 *************************************************************************************/
-void* write_data(void *ptr);
-pthread_t write_data_thread;
+// void* write_data(void *ptr);
+// pthread_t write_data_thread;
 
 /************************************************************************************
 * SETUP
@@ -72,10 +72,12 @@ gpio_info *adc_reset_gpio_info;
 *************************************************************************************/
 int main()
 {
-	flag = 1;
-	//creating pthread
+	// flag = 1;
 	
-	pthread_create(&write_data_thread,NULL,write_data,(void *) NULL);
+	// //creating pthread
+	// pthread_create(&write_data_thread,NULL,write_data,(void *) NULL);
+	// printf("\n pthread created...");
+	// fflush(stdout);
 
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -113,7 +115,7 @@ int main()
 	/**********************************
 	* EXECUTE SAMPLING
 	***********************************/
-	printf("\n BEGIN SAMPLING...\n\n");
+	printf("\n BEGIN SAMPLING, will run until SIGINT...\n\n");
 	fflush(stdout);
 
 	while(1){
@@ -137,26 +139,6 @@ int main()
 /************************************************************************************
 * SETUP SIGINT HANDLER
 *************************************************************************************/
-void* write_data(void *ptr){
-	
-	printf(VOLT_DATA_TXT);
-	// File *fp_write = fopen(VOLT_DATA_TXT, "a");
-
-	//File *fp_read = fopen("/dev/iio:device1","r");
-	int i = 0;
-	while(flag == 1){
-		// fread(buffer,sizeof)
-		// fprintf(fp, "%d", buff[i]);
-		// i++;
-		printf("pthread ran %d times...\n",i);
-		i++;
-		usleep(0.5*1e6);
-	}
-
-	//fclose(fp);
-	return NULL;
-}
-
 void sigint(int s __attribute__((unused))) {
 	printf("\n\n received SIGINT, exiting cleanly...\n");
 
@@ -169,10 +151,10 @@ void sigint(int s __attribute__((unused))) {
 	printf("\n closed gpiolib cleanly...");
 	fflush(stdout);
 
-	printf("(waiting for pthread to join)\n");
-	flag = 0;
-	pthread_join(write_data_thread, NULL);
-	printf("pthread joined \n");
+	// printf("(waiting for pthread to join)\n");
+	// flag = 0;
+	// pthread_join(write_data_thread, NULL);
+	// printf("pthread joined \n");
 
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
@@ -180,3 +162,25 @@ void sigint(int s __attribute__((unused))) {
 	exit(0);
 }
 
+/************************************************************************************
+* PTHREAD
+*************************************************************************************/
+// void* write_data(void *ptr){
+	
+// 	printf(VOLT_DATA_TXT);
+// 	// File *fp_write = fopen(VOLT_DATA_TXT, "a");
+
+// 	//File *fp_read = fopen("/dev/iio:device1","r");
+// 	int i = 0;
+// 	while(flag == 1){
+// 		// fread(buffer,sizeof)
+// 		// fprintf(fp, "%d", buff[i]);
+// 		// i++;
+// 		printf("pthread ran %d times...\n",i);
+// 		i++;
+// 		usleep(0.5*1e6);
+// 	}
+
+// 	//fclose(fp);
+// 	return NULL;
+// }
