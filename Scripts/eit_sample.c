@@ -167,7 +167,7 @@ void sigint(int s __attribute__((unused))) {
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main(int arc, char **argv)
+int main()
 {
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -177,10 +177,10 @@ int main(int arc, char **argv)
 	printf("setup SIGINT...\n");
 	fflush(stdout);
 	
-	/**************************
-	* INITIALIZE DATA TEXT FILE	
-	**************************/
-	snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "/home/debian/eit_sample/%s",argv[1]);
+	// /**************************
+	// * INITIALIZE DATA TEXT FILE	
+	// **************************/
+	// snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "/home/debian/eit_sample/%s",argv[1]);
 
 	/**************************
 	* INITIALIZE BUFFER ARRAY
@@ -303,9 +303,9 @@ int main(int arc, char **argv)
 	printf("\n beginning sample cycle...");
 	fflush(stdout);
 
-	int flag_2 = 0;
+	int count = 0;
 	int cycles = 1;
-  //runs "cycles" times
+  	//runs "cycles" times
   
 	/**********************************
 	* Disabling Muxs
@@ -315,20 +315,16 @@ int main(int arc, char **argv)
 		gpio_clear(mux_enable_gpio_info[n]);
 	}
 
-	while(flag_2 < cycles){
-		
-		printf("\n\n\n******************** Cycle %d *************************\n\n",flag_2);
+	while(count < cycles){
+		count++;
 
-	
-		
+		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+
 		//Outer loop, move current and ground
 		for(i = 0; i < NODAL_NUM; i++){
 			
 			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
 			fflush(stdout);
-
-			//mux disable
-
 
 			//Set current and ground mux logic pins
 			int k;
@@ -359,27 +355,31 @@ int main(int arc, char **argv)
 						gpio_clear(voltage_mux_gpio_info[j]);
 					}
 				}
+
 				//enabling muxs
 				for(n = 0;n < 3; n++){
 					gpio_set(mux_enable_gpio_info[n]);
 				}
-				chan0 = ti_adc_read_raw(0);
+
 				//read ADC
+				chan0 = ti_adc_read_raw(0);
 		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+				
 				//record adc raw voltage into buffer (must be an int)
-			insertArray(&dynamic_buffer,chan0);
-			size++;
-			if(size==1){
-				pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
-			}
-			//disabling muxs
-			for(n = 0;n < 3; n++){
-				gpio_clear(mux_enable_gpio_info[n]);
-			}
+				insertArray(&dynamic_buffer,chan0);
+				size++;
+
+				if(size==1){
+					pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+				}
+
+				//disabling muxs
+				for(n = 0;n < 3; n++){
+					gpio_clear(mux_enable_gpio_info[n]);
+				}
 		        usleep(1 * 1e6);
 	      	}
 	    }
-	    cycles++;
  	}
 	printf("\n Done sampling...");
 	fflush(stdout);
@@ -435,7 +435,7 @@ void* data_exporting(void *ptr){
 	      printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
 	    i++;
 	    if(flag ==1){
-	        usleep(30*1000);
+	        usleep(2*1e6);
 	    }    
 	}
 	
