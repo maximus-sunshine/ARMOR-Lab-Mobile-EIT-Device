@@ -43,10 +43,11 @@
 		"P9.21",	/* spi0_d0 */
 		"P9.22",	/* spi0_sclk */
 		
-		"P8.3" ,	/* GPIO */
-		"P8.4" ,	/* GPIO */
-		"P8.5" ,	/* GPIO */
-		"P8.6" ,	/* GPIO */
+	/*	"P8.3" ,	 GPIO EMMC*/
+	/*	"P8.4" ,	 GPIO EMMC*/
+	/*	"P8.5" ,	 GPIO EMMC*/
+	/*	"P8.6" ,	 GPIO EMMC*/
+		
 		"P8.7" ,	/* GPIO */
 		"P8.8" ,	/* GPIO */
 		"P8.9" ,	/* GPIO */
@@ -55,7 +56,9 @@
 		"P8.12",	/* GPIO */
 		"P8.17",	/* GPIO */
 		"P9.24",	/* GPIO */
-		"P8.21",	/* GPIO */
+	
+	/*	"P8.21",	 GPIO EMMC*/
+	
 		"P8.38",	/* GPIO */
 		"P8.46",	/* GPIO */
 		"P8.27",	/* GPIO */
@@ -101,10 +104,11 @@
 			/*  */
 			EIT_gpio_pins: pinmux_EIT_gpio_pins{
 				pinctrl-single,pins = <
-					0x018 0x07 /* P8.3  gpio1_6  (gpio 38),  OUTPUT_PULLDOWN | MODE7, A0_8		 */
-					0x01c 0x07 /* P8.4  gpio1_7  (gpio 39),  OUTPUT_PULLDOWN | MODE7, A0_11		 */
-					0x008 0x07 /* P8.5  gpio1_2  (gpio 34),  OUTPUT_PULLDOWN | MODE7, A0_7		 */
-					0x00c 0x07 /* P8.6  gpio1_3  (gpio 35),  OUTPUT_PULLDOWN | MODE7, A0_4		 */
+				/*	0x018 0x07    P8.3  gpio1_6  (gpio 38),  OUTPUT_PULLDOWN | MODE7, A0_8	EMMC	 */
+				/*	0x01c 0x07    P8.4  gpio1_7  (gpio 39),  OUTPUT_PULLDOWN | MODE7, A0_11	EMMC	 */
+				/*	0x008 0x07    P8.5  gpio1_2  (gpio 34),  OUTPUT_PULLDOWN | MODE7, A0_7	EMMC	 */
+				/*	0x00c 0x07    P8.6  gpio1_3  (gpio 35),  OUTPUT_PULLDOWN | MODE7, A0_4	EMMC	 */
+					
 					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_5		 */
 					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7, A0_12 	 */
 					0x09c 0x07 /* P8.9  gpio2_5  (gpio 69),  OUTPUT_PULLDOWN | MODE7, A0_9		 */
@@ -115,7 +119,7 @@
 					0x02c 0x07 /* P8.17 gpio0_27 (gpio 27),  OUTPUT_PULLDOWN | MODE7, ISENSE_RST */
 					0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7, ADC_RESET  */
 
-					0x080 0x07 /* P8.21 gpio1_30 (gpio 62),  OUTPUT_PULLDOWN | MODE7, EN_VMEAS   */
+				/*	0x080 0x07    P8.21 gpio1_30 (gpio 62),  OUTPUT_PULLDOWN | MODE7, EN_VMEAS EMMC   */
 					0x0c4 0x07 /* P8.38 gpio2_15 (gpio 79),  OUTPUT_PULLDOWN | MODE7, EN_CURRENT */
 					0x0a4 0x07 /* P8.46 gpio2_7  (gpio 71),  OUTPUT_PULLDOWN | MODE7, EN_GND	 */
 					
