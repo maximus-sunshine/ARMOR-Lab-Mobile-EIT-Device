@@ -11,7 +11,7 @@
  * 
  * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
  *
- * compile with "gcc -pthread batt_read.c gpiolib.c ti-ads8684.c -o batt_read"
+ * compile with "gcc -pthread batt_read.c gpiolib.c ti-ads8684.c eit.c -o batt_read"
  * 
  * 5/13/18	- edited by Max
  			- included gpiolib to handle ADC reset for Rev02
@@ -35,22 +35,18 @@
 #include <stdio.h>		
 #include <string.h>
 #include <errno.h>
-#include <sys/time.h>
 #include <pthread.h>
-
+#include <malloc.h>
+ 
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
 #include <sys/time.h>
-#include "eit_config.h"
-#include "ti-ads8684.h"
 #include "gpiolib.h"
+#include "eit_config.h"
+#include "eit.h"
+#include "ti-ads8684.h"
 
 // #define VOLT_DATA_TXT "~/MAE156B_Team6/"
-
-/************************************************************************************
-* SETUP SIGINT HANDLER
-*************************************************************************************/
-void sigint(int s __attribute__((unused)));
 
 /************************************************************************************
 * DECLARE PTHREAD FUNCTIONS
@@ -92,14 +88,23 @@ int main()
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
+	//initialize gpio_lib
+	if(gpio_init()){
+		fprintf(stderr, "gpio_init failed with %i\n", gpio_errno);
+	}
+	printf("\n gpiolib intialized...");
+	fflush(stdout);
+
 	//adc reset attach
 	int bank = adc_reset_gpio/32;
 	int mask = bit(adc_reset_gpio%32);
 	adc_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
 	gpio_set(adc_reset_gpio_info);
-	printf("\n ADC GPIO pin enable...");
+	printf("\n ADC enabled...");
 	fflush(stdout);
 
+
+	//intialize adc library
 	ti_adc_init();
 	printf("\n ADC interface initialized...");
 	fflush(stdout);
@@ -120,7 +125,8 @@ int main()
 
 	while(1){
 		// read ADC.
-		printf("Battery Voltage:  %0.5f V\n", ti_adc_read_raw(2)*scale/1000);
+		// printf("Battery Voltage:  %0.5f V\n", ti_adc_read_raw(2)*scale/1000);
+		printf("Battery Voltage:  %d V\n", ti_adc_read_raw(2));
 		fflush(stdout);
 		usleep(0.5*1e6);
 	}
