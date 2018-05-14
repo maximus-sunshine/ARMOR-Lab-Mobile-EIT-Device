@@ -7,7 +7,7 @@
 * 5/13/18- edited by Matthew 
 *        - added initArray and insertArray
 *         -made text file a string
-***************************************************************/
+****************************************************************/
 
 #ifndef EIT_H
 #define EIT_H

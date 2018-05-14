@@ -253,8 +253,9 @@ int main()
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
+	//Enable ADC pin
 	gpio_set(adc_reset_gpio_info);
-	printf("\n ADC GPIO pin enabled...");
+	printf("\n ADC enabled");
 	fflush(stdout);
 
 	ti_adc_init();
@@ -271,6 +272,9 @@ int main()
 
 	ti_adc_set_scale(2, scale); //chan2
 	ti_adc_set_offset(2, 0);
+
+	printf("\n ADC scales and offsets configured...");
+	fflush(stdout);
 	
 	/**********************************
 	* SET UP MUX SWITCHING PATTERN
@@ -284,6 +288,14 @@ int main()
 	volt_samp_config(current_mux,ground_mux,voltage_mux);
 	printf("\n voltage sampling pattern configured...");
 	fflush(stdout);
+
+	/**********************************
+	* Disable Muxs
+	***********************************/
+	int n;
+	for(n = 0;n < 3; n++){
+		gpio_set(mux_disable_gpio_info[n]);
+	}
 
 	/**********************************
 	* TURN ON CURRENT SOURCE
@@ -310,30 +322,25 @@ int main()
 	printf("\n beginning sample cycle...");
 	fflush(stdout);
 
-	//Enable ADC
-
 	int count = 0;
-	int cycles = 1;
-  	//runs "cycles" times
-  
-	/**********************************
-	* Disabling Muxs
-	***********************************/
-	int n;
-	for(n = 0;n < 3; n++){
-		gpio_set(mux_disable_gpio_info[n]);
-	}
+	int cycles = 1; //runs "cycles" times
+	gettimeofday(&t1, NULL);
+  	
+	//start pthread
+	pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+	printf("\n pthread created...");
+	fflush(stdout);
 
 	while(count < cycles){
 		count++;
 
-		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+		// printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 
 		//Outer loop, move current and ground
 		for(i = 0; i < NODAL_NUM; i++){
 
-			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
-			fflush(stdout);
+			// printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+			// fflush(stdout);
 
 			//Set current and ground mux logic pins
 			int k;
@@ -390,33 +397,36 @@ int main()
 
 				//read ADC
 				chan0 = ti_adc_read_raw(0);
-				chan1 = ti_adc_read_raw(2);
-		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+				chan1 = ti_adc_read_raw(1);
+		        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
 		        fflush(stdout);
 				
 				//record adc raw voltage into buffer (must be an int)
 				insertArray(&dynamic_buffer,chan0);
 				size++;
-		        printf("\ninserted Array...");
-		        fflush(stdout);
+		        // printf("\ninserted Array...");
+		        // fflush(stdout);
 
-				if(size==1){
-					pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
-				}
-				printf("\npthread created...");
-		        fflush(stdout);
+				// if(size==1){
+				// 	pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+				// }
+				// printf("\npthread created...");
+		  		// fflush(stdout);
 
 				//disabling muxs
 				for(n = 0;n < 3; n++){
 					gpio_set(mux_disable_gpio_info[n]);
 				}
-		        usleep(1 * 1e6);
-		        printf("\nmuxes disabled...");
-		        fflush(stdout);
+		        // usleep(1 * 1e6);
+		        // printf("\nmuxes disabled...");
+		        // fflush(stdout);
 	      	}
 	    }
  	}
-	printf("\n Done sampling...");
+ 	//Print timing data to screen!
+ 	gettimeofday(&t2, NULL);
+ 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
+	printf("\n Done sampling %d nodes, %d cycles in %0.5f seconds...\n Avg. cyclic frequency: %0.5f",cycles, NODAL_NUM, usec/1e6, cycles/(usec/1e6));
 	fflush(stdout);
 
 	//Cleanup
@@ -463,19 +473,19 @@ int main()
 
 void* data_exporting(void *ptr){
 	fp = fopen(VOLT_DATA_TEXT,"a");
-	printf("file opened\n");	
+	printf("Data file opened...\n");	
 	int i = 0;
+	usleep(2*1e6); //delay to make sure pthread enters while loop
 	
-	while(i < size){
-	      
-	      printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
+	while(i < size && size > 1){
+	      // printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
 	      fprintf(fp,"%d\n",dynamic_buffer.array[i]);
 	    i++;
-	    if(flag ==1){
-	        usleep(2*1e6);
-	    }    
+	    // if(flag ==1){
+	    //     usleep(2*1e6);
+	    // }    
 	}
 	
-	printf("thread is returning\n");
+	printf("waiting for pthread to finish...\n");
 	return NULL;
 }
