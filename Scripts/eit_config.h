@@ -55,13 +55,13 @@
 #define CUR_SOURCE_A12 67   //p8_8
 #define CUR_SOURCE_A13 44   //p8_12
 
-//mux enable pin
-#define CUR_MUX_ENABLE  79    //p8_38
-#define GND_MUX_ENABLE  71    //p8_46
-// #define VOLT_MUX_ENABLE 62    //p8_21
-#define VOLT_MUX_ENABLE 22    //p8_19
+//mux disable pin
+#define CUR_MUX_DISABLE  79    //p8_38
+#define GND_MUX_DISABLE  71    //p8_46
+// #define VOLT_MUX_DISABLE 62    //p8_21
+#define VOLT_MUX_DISABLE 22    //p8_19
 
-#define MUX_ENABLE_GPIO {CUR_MUX_ENABLE, GND_MUX_ENABLE, VOLT_MUX_ENABLE}
+#define MUX_DISABLE_GPIO {CUR_MUX_DISABLE, GND_MUX_DISABLE, VOLT_MUX_DISABLE}
 
 
 //MUX LOGIC PINS

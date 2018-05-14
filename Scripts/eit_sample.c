@@ -85,7 +85,7 @@ int current_mux_gpio[5] = CURRENT_MUX_GPIO;
 int ground_mux_gpio[5]  = GROUND_MUX_GPIO;
 int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
-int mux_enable_gpio[3] = MUX_ENABLE_GPIO;
+int mux_disable_gpio[3] = MUX_DISABLE_GPIO;
 
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
@@ -101,7 +101,7 @@ gpio_info *current_switch_gpio_info[10];
 gpio_info *adc_reset_gpio_info;
 gpio_info *i_sense_reset_gpio_info;
 
-gpio_info *mux_enable_gpio_info[3];
+gpio_info *mux_disable_gpio_info[3];
 
 double scale = 0.078127104;
 
@@ -134,7 +134,7 @@ void sigint(int s __attribute__((unused))) {
 		
 	}	
 	for(i=0;i<3;i++){
-		gpio_detach(mux_enable_gpio_info[i]);
+		gpio_detach(mux_disable_gpio_info[i]);
 		
 	}	
 	gpio_detach(adc_reset_gpio_info);
@@ -197,7 +197,7 @@ int main()
 	}
 
 	for(i = 0; i < 3; i++){
-		mux_enable_gpio_info[i] = malloc(sizeof(gpio_info));
+		mux_disable_gpio_info[i] = malloc(sizeof(gpio_info));
 	}
 
 	/**************************
@@ -237,9 +237,9 @@ int main()
 	}
 	//attach mux enable gpio pins
 	for(i = 0; i < 3; i++){                            
-		int bank = mux_enable_gpio[i]/32;
-		int mask = bit(mux_enable_gpio[i]%32);
-		mux_enable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+		int bank = mux_disable_gpio[i]/32;
+		int mask = bit(mux_disable_gpio[i]%32);
+		mux_disable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
 	//adc reset attach
 	bank = adc_reset_gpio/32;
@@ -288,7 +288,7 @@ int main()
 	/**********************************
 	* TURN ON CURRENT SOURCE
 	***********************************/
-	int current_setpoint = 5; //current setpoint 100uA-2000uA(0-19, 100uA)
+	int current_setpoint = 8; //current setpoint 100uA-2000uA(0-19, 100uA)
 	printf("\n current set at 0 (0-19)...");
 	fflush(stdout);
 
@@ -321,7 +321,7 @@ int main()
 	***********************************/
 	int n;
 	for(n = 0;n < 3; n++){
-		gpio_clear(mux_enable_gpio_info[n]);
+		gpio_set(mux_disable_gpio_info[n]);
 	}
 
 	while(count < cycles){
@@ -331,7 +331,7 @@ int main()
 
 		//Outer loop, move current and ground
 		for(i = 0; i < NODAL_NUM; i++){
-			
+
 			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
 			fflush(stdout);
 
@@ -367,7 +367,25 @@ int main()
 
 				//enabling muxs
 				for(n = 0;n < 3; n++){
-					gpio_set(mux_enable_gpio_info[n]);
+					gpio_clear(mux_disable_gpio_info[n]);
+				}
+
+				//test current switches
+				printf("\n Switching currents...");
+				fflush(stdout);
+				int q;
+				for(q=0;q<20;q++){
+					printf("\n\n current set to %d uA...",(q+1)*100);
+					fflush(stdout);
+					for(i = 0; i< 10; i++){
+						if(CURRENT[q][i]==1){
+							gpio_set(current_switch_gpio_info[i]);
+						}
+						else{
+							gpio_clear(current_switch_gpio_info[i]);
+						}
+					}
+					usleep(2*1e6);
 				}
 
 				//read ADC
@@ -384,7 +402,7 @@ int main()
 
 				//disabling muxs
 				for(n = 0;n < 3; n++){
-					gpio_clear(mux_enable_gpio_info[n]);
+					gpio_set(mux_disable_gpio_info[n]);
 				}
 		        usleep(1 * 1e6);
 	      	}
@@ -406,7 +424,7 @@ int main()
 		
 	}	
 	for(i=0;i<3;i++){
-		gpio_detach(mux_enable_gpio_info[i]);
+		gpio_detach(mux_disable_gpio_info[i]);
 		
 	}	
 	gpio_detach(adc_reset_gpio_info);
