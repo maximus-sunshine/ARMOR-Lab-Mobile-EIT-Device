@@ -24,6 +24,9 @@
  *			- added and triple checked all new GPIO pins (Rev02)
  *			- added all pins to "exclusive-use" 
  * 
+ * 5/13/18	- edited by Max Sun
+ * 			- changed GPIO pins that conflict with eMMC pins
+ * 
  */
 /dts-v1/;
 /plugin/;
@@ -108,6 +111,13 @@
 				/*	0x01c 0x07    P8.4  gpio1_7  (gpio 39),  OUTPUT_PULLDOWN | MODE7, A0_11	EMMC	 */
 				/*	0x008 0x07    P8.5  gpio1_2  (gpio 34),  OUTPUT_PULLDOWN | MODE7, A0_7	EMMC	 */
 				/*	0x00c 0x07    P8.6  gpio1_3  (gpio 35),  OUTPUT_PULLDOWN | MODE7, A0_4	EMMC	 */
+
+					0x03c 0x07 /* P8.15  gpio1_15 (gpio 47),  OUTPUT_PULLDOWN | MODE7, A0_8		 */	
+					0x038 0x07 /* P8.16  gpio1_14 (gpio 46),  OUTPUT_PULLDOWN | MODE7, A0_11		 */	 
+					0x024 0x07 /* P8.13  gpio0_23 (gpio 23),  OUTPUT_PULLDOWN | MODE7, A0_7		 */	 
+					0x028 0x07 /* P8.14  gpio0_26 (gpio 26),  OUTPUT_PULLDOWN | MODE7, A0_4		 */	 
+
+
 					
 					0x090 0x07 /* P8.7  gpio2_2  (gpio 66),  OUTPUT_PULLDOWN | MODE7, A0_5		 */
 					0x094 0x07 /* P8.8  gpio2_3  (gpio 67),  OUTPUT_PULLDOWN | MODE7, A0_12 	 */
@@ -120,6 +130,8 @@
 					0x184 0x07 /* P9.24 gpio0_15 (gpio 15),  OUTPUT_PULLDOWN | MODE7, ADC_RESET  */
 
 				/*	0x080 0x07    P8.21 gpio1_30 (gpio 62),  OUTPUT_PULLDOWN | MODE7, EN_VMEAS EMMC   */
+					
+					0x020 0x07 /* P8.19 gpio0_22 (gpio 22),  OUTPUT_PULLDOWN | MODE7, EN_VMEAS   */
 					0x0c4 0x07 /* P8.38 gpio2_15 (gpio 79),  OUTPUT_PULLDOWN | MODE7, EN_CURRENT */
 					0x0a4 0x07 /* P8.46 gpio2_7  (gpio 71),  OUTPUT_PULLDOWN | MODE7, EN_GND	 */
 					
