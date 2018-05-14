@@ -38,21 +38,28 @@
 #define I_SENSE_RESET_GPIO 27	//p8_17
 
 //CURRENT LOGIC PINS
-#define CUR_SOURCE_A4  35   //p8_6
+
+#define CUR_SOURCE_A4  26   //p8_14
+#define CUR_SOURCE_A7  23   //p8_13
+#define CUR_SOURCE_A8  47   //p8_15
+#define CUR_SOURCE_A11 46   //p8_16
+
+// #define CUR_SOURCE_A4  46   //p8_6
 #define CUR_SOURCE_A5  66   //p8_7
 #define CUR_SOURCE_A6  68   //p8_10
-#define CUR_SOURCE_A7  34   //p8_5
-#define CUR_SOURCE_A8  38   //p8_3
+// #define CUR_SOURCE_A7  34   //p8_5
+// #define CUR_SOURCE_A8  38   //p8_3
 #define CUR_SOURCE_A9  69   //p8_9
 #define CUR_SOURCE_A10 45   //p8_11
-#define CUR_SOURCE_A11 39   //p8_4
+// #define CUR_SOURCE_A11 39   //p8_4
 #define CUR_SOURCE_A12 67   //p8_8
 #define CUR_SOURCE_A13 44   //p8_12
 
 //mux enable pin
 #define CUR_MUX_ENABLE  79    //p8_38
 #define GND_MUX_ENABLE  71    //p8_46
-#define VOLT_MUX_ENABLE 62    //p8_21
+// #define VOLT_MUX_ENABLE 62    //p8_21
+#define VOLT_MUX_ENABLE 22    //p8_19
 
 #define MUX_ENABLE_GPIO {CUR_MUX_ENABLE, GND_MUX_ENABLE, VOLT_MUX_ENABLE}
 
@@ -86,7 +93,7 @@
 
 /************************************************************** 
 * TRUTH TABLES (mux and current switching)
-***************************************************************/
+****************************************************************/
 
 //TRUTH TABLE DIMENSIONS
 #define LOGIC_ROW 32

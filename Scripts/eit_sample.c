@@ -87,8 +87,6 @@ int voltage_mux_gpio[5] = VOLTAGE_MUX_GPIO;
 int current_switch_gpio[10] = CURRENT_SWITCH_GPIO;
 int mux_enable_gpio[3] = MUX_ENABLE_GPIO;
 
-
-
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
@@ -104,8 +102,6 @@ gpio_info *adc_reset_gpio_info;
 gpio_info *i_sense_reset_gpio_info;
 
 gpio_info *mux_enable_gpio_info[3];
-
-
 
 double scale = 0.078127104;
 
@@ -203,21 +199,6 @@ int main()
 	for(i = 0; i < 3; i++){
 		mux_enable_gpio_info[i] = malloc(sizeof(gpio_info));
 	}
-	
-	/**************************
-	* INITIALIZE ADC INTERFACE
-	**************************/	
-	ti_adc_init();
-	printf("\n ADC interface initialized...");
-	fflush(stdout);
-
-	ti_adc_enable();
-	printf("\n ADC reset pin set...");
-	fflush(stdout);
-
-	//TODO: put scales and offsets in header file
-	ti_adc_set_scale(0, scale);
-	ti_adc_set_offset(0, 0);
 
 	/**************************
 	* SET UP GPIO PINS
@@ -271,6 +252,25 @@ int main()
 
 	printf("\n gpio pins attached...");
 	fflush(stdout);
+
+	/**************************
+	* INITIALIZE ADC INTERFACE
+	**************************/	
+	gpio_set(adc_reset_gpio_info);
+	printf("\n ADC GPIO pin enabled...");
+	fflush(stdout);
+
+	ti_adc_init();
+	printf("\n ADC interface initialized...");
+	fflush(stdout);
+
+	// ti_adc_enable();
+	// printf("\n ADC reset pin set...");
+	// fflush(stdout);
+
+	//TODO: put scales and offsets in header file
+	ti_adc_set_scale(0, scale);
+	ti_adc_set_offset(0, 0);
 	
 	/**********************************
 	* SET UP MUX SWITCHING PATTERN
@@ -286,15 +286,22 @@ int main()
 	fflush(stdout);
 
 	/**********************************
-	* TODO: TURN ON CURRENT SOURCE
+	* TURN ON CURRENT SOURCE
 	***********************************/
-	int current_setpoint = 0; //current setpoint 100uA-2000uA(0-19, 100uA)
+	int current_setpoint = 5; //current setpoint 100uA-2000uA(0-19, 100uA)
+	printf("\n current set at 0 (0-19)...");
+	fflush(stdout);
+
 	for(i = 0; i< 10; i++){
 		if(CURRENT[current_setpoint][i]==1){
 			gpio_set(current_switch_gpio_info[i]);
+			printf("\n current switch A%d set to 1...",i+4);
+			fflush(stdout);
 		}
 		else{
 			gpio_clear(current_switch_gpio_info[i]);
+			printf("\n current switch A%d set to 0...",i+4);
+			fflush(stdout);
 		}
 	}
 	/**********************************
@@ -302,6 +309,8 @@ int main()
 	***********************************/
 	printf("\n beginning sample cycle...");
 	fflush(stdout);
+
+	//Enable ADC
 
 	int count = 0;
 	int cycles = 1;
@@ -352,7 +361,7 @@ int main()
 						gpio_set(voltage_mux_gpio_info[k]);
 					}
 					else{
-						gpio_clear(voltage_mux_gpio_info[j]);
+						gpio_clear(voltage_mux_gpio_info[k]);
 					}
 				}
 

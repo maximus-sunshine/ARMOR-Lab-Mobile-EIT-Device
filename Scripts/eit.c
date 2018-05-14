@@ -26,7 +26,7 @@
 *			gnd[], zero gnd node array     (size = N*4)
 * 
 * Outputs:	TODO: return -1 on failure
-*****************************************************************************/
+******************************************************************************/
 int cur_gnd_config(int cur[],int gnd[]){
 	int i;
 	int node_index = 3*SIDE_LEN;
