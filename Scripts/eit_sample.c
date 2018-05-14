@@ -427,12 +427,12 @@ int main(int arc, char **argv)
 	
 
 void* data_exporting(void *ptr){
-	///fp = fopen(VOLT_DATA_TXT,"a");
+	///fp = fopen(VOLT_DATA_TEXT,"a");
 	int i = 0;
 	
 	while(i < size){
 	   // fprintf(fp,"%d\n",dyanamic_buffer.array[i]);
-	      printf("pthread recorded %d value", dynamic_buffer.array[i]);
+	      printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
 	    i++;
 	    if(flag ==1){
 	        usleep(30*1000);
