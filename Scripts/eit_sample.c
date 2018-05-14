@@ -104,7 +104,9 @@ gpio_info *i_sense_reset_gpio_info;
 
 gpio_info *mux_disable_gpio_info[3];
 
+//Variables
 double scale = 0.078127104;
+int current_setpoint = 11; //current setpoint 100uA-2000uA(0-19, 100uA) TODO, make this better
 
 //struct declarations
 Array dynamic_buffer;
@@ -300,20 +302,15 @@ int main()
 	/**********************************
 	* TURN ON CURRENT SOURCE
 	***********************************/
-	int current_setpoint = 8; //current setpoint 100uA-2000uA(0-19, 100uA)
-	printf("\n current set at 0 (0-19)...");
+	printf("\n\n current set to %d uA...",(current_setpoint+1)*100);
 	fflush(stdout);
 
 	for(i = 0; i< 10; i++){
 		if(CURRENT[current_setpoint][i]==1){
 			gpio_set(current_switch_gpio_info[i]);
-			printf("\n current switch A%d set to 1...",i+4);
-			fflush(stdout);
 		}
 		else{
 			gpio_clear(current_switch_gpio_info[i]);
-			printf("\n current switch A%d set to 0...",i+4);
-			fflush(stdout);
 		}
 	}
 	/**********************************
@@ -323,7 +320,9 @@ int main()
 	fflush(stdout);
 
 	int count = 0;
-	int cycles = 1; //runs "cycles" times
+	int cycles = 1000; //runs "cycles" times
+
+	struct timeval t1, t2; //time stuff 
 	gettimeofday(&t1, NULL);
   	
 	//start pthread
@@ -403,7 +402,8 @@ int main()
 				
 				//record adc raw voltage into buffer (must be an int)
 				insertArray(&dynamic_buffer,chan0);
-				size++;
+				insertArray(&dynamic_buffer,chan1);
+				size=size+2;
 		        // printf("\ninserted Array...");
 		        // fflush(stdout);
 
@@ -461,15 +461,16 @@ int main()
 	
 	printf("waiting for pthread to join\n");
 	flag = 0;
+
 	pthread_join(data_exporting_thread, NULL);
-	printf("pthread has returned %d\n",size);
+	printf("# samples: %d\n",size);
+	
 	fclose(fp);
+
 	printf("file has closed\n");
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
 }
-
-	
 
 void* data_exporting(void *ptr){
 	fp = fopen(VOLT_DATA_TEXT,"a");
@@ -479,8 +480,8 @@ void* data_exporting(void *ptr){
 	
 	while(i < size && size > 1){
 	      // printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
-	      fprintf(fp,"%d\n",dynamic_buffer.array[i]);
-	    i++;
+	      fprintf(fp,"%0.5f\t%0.5f\n",dynamic_buffer.array[i]*scale/1000,dynamic_buffer.array[i+1]*scale/1000);
+	    i=i+2;
 	    // if(flag ==1){
 	    //     usleep(2*1e6);
 	    // }    
