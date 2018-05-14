@@ -61,7 +61,7 @@ pthread_t data_exporting_thread;
 //pthread function declaration
 void* data_exporting(void *ptr);
 //data file declaration
-//FILE* fp;
+FILE* fp;
 
 /************************************************************************************
 * SETUP SIGINT HANDLER
@@ -155,7 +155,7 @@ void sigint(int s __attribute__((unused))) {
 	flag = 0;
 	pthread_join(data_exporting_thread, NULL);
 	printf("pthread has returned %d\n",size);
-	//fclose(fp);
+	fclose(fp);
 	printf("file has closed\n");
 	exit(0);
 }
@@ -163,7 +163,7 @@ void sigint(int s __attribute__((unused))) {
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main()
+int main(int arc, char **argv)
 {
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -173,10 +173,10 @@ int main()
 	printf("setup SIGINT...\n");
 	fflush(stdout);
 	
-	// /**************************
-	// * INITIALIZE DATA TEXT FILE	
-	// **************************/
-	// snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "/home/debian/eit_sample/%s",argv[1]);
+	 /**************************
+	 * INITIALIZE DATA TEXT FILE	
+	**************************/
+	snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "~/MAE156B_Team6/data/",argv[1]);
 
 	/**************************
 	* INITIALIZE BUFFER ARRAY
@@ -445,7 +445,7 @@ int main()
 	flag = 0;
 	pthread_join(data_exporting_thread, NULL);
 	printf("pthread has returned %d\n",size);
-	//fclose(fp);
+	fclose(fp);
 	printf("file has closed\n");
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
@@ -454,11 +454,11 @@ int main()
 	
 
 void* data_exporting(void *ptr){
-	///fp = fopen(VOLT_DATA_TEXT,"a");
+	fp = fopen(VOLT_DATA_TEXT,"a");
 	int i = 0;
 	
 	while(i < size){
-	   // fprintf(fp,"%d\n",dyanamic_buffer.array[i]);
+	     fprintf(fp,"%d\n",dynamic_buffer.array[i]);
 	      printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
 	    i++;
 	    if(flag ==1){
