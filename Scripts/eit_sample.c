@@ -167,7 +167,7 @@ void sigint(int s __attribute__((unused))) {
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main()
+int main(int arc, char **argv)
 {
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -177,6 +177,11 @@ int main()
 	printf("setup SIGINT...\n");
 	fflush(stdout);
 	
+	/**************************
+	* INITIALIZE DATA TEXT FILE	
+	**************************/
+	snprintf(VOLT_DATA_TEXT, sizeof(VOLT_DATA_TEXT), "/home/debian/eit_sample/%s",argv[1]);
+
 	/**************************
 	* INITIALIZE BUFFER ARRAY
 	**************************/	
