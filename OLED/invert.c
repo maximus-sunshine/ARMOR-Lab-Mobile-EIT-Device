@@ -67,6 +67,7 @@ void ALARMhandler(int sig)
  
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
+#define DEBOUNCE 0*1e6       // 1 seconds
 #define MAX_BUF 64
 
 /****************************************************************
@@ -244,13 +245,14 @@ int gpio_fd_close(int fd)
  ****************************************************************/
 int main(int argc, char **argv, char **envp)
 {
-        struct pollfd fdset[2];
-        int nfds = 2;
+        struct pollfd fdset[1];
+        int nfds = 1;
         int gpio_fd, timeout, rc;
         char *buf[MAX_BUF];
         unsigned int gpio;
         int len;
         int n = 0;
+        double debounce = DEBOUNCE;
 
         /* Initialize I2C bus and connect to the I2C Device */
         if(init_i2c_dev2(SSD1306_OLED_ADDR) == 0)
@@ -298,16 +300,23 @@ int main(int argc, char **argv, char **envp)
         while (1) {
                 memset((void*)fdset, 0, sizeof(fdset));
 
-                fdset[0].fd = STDIN_FILENO;
-                fdset[0].events = POLLIN;
+                // fdset[0].fd = STDIN_FILENO;
+                // fdset[0].events = POLLIN;
       
-                fdset[1].fd = gpio_fd;
-                fdset[1].events = POLLPRI;
+                // fdset[1].fd = gpio_fd;
+                // fdset[1].events = POLLPRI;
+
+                fdset[0].fd = gpio_fd;
+                fdset[0].events = POLLPRI;
 
                 rc = poll(fdset, nfds, timeout);      
 
                 if (rc < 0) {
-                        printf("\npoll() failed!\n");
+                        if (errno == EINTR) {
+                                printf("\nInterrupted system call... continuing\n");
+                                continue;
+                        }
+                        perror("\npoll() failed!\n");
                         return -1;
                 }
       
@@ -316,9 +325,9 @@ int main(int argc, char **argv, char **envp)
                 }
                 
                 //Invert display on button press and print to screen
-                if (fdset[1].revents & POLLPRI) {
-                        lseek(fdset[1].fd, 0, SEEK_SET);
-                        len = read(fdset[1].fd, buf, MAX_BUF);
+                if (fdset[0].revents & POLLPRI) {
+                        lseek(fdset[0].fd, 0, SEEK_SET);
+                        len = read(fdset[0].fd, buf, MAX_BUF);
                         printf("\npoll() GPIO %d interrupt occurred %d times!\n", gpio, n);
                         if (n % 2 == 0){
                                 invertDisplay(SSD1306_NORMALIZE_DISPLAY);
@@ -331,15 +340,17 @@ int main(int argc, char **argv, char **envp)
                         n++;
                 }
 
-                if (fdset[0].revents & POLLIN) {
-                        (void)read(fdset[0].fd, buf, 1);
-                        printf("\npoll() stdin read 0x%2.2X\n", (unsigned int) buf[0]);
-                }
-
+                // if (fdset[0].revents & POLLIN) {
+                //         (void)read(fdset[0].fd, buf, 1);
+                //         printf("\npoll() stdin read 0x%2.2X\n", (unsigned int) buf[0]);
+                // }
+                //debounce
+                usleep(debounce);
                 fflush(stdout);
         }
 
         clearDisplay();
+        gpio_unexport(gpio);
         gpio_fd_close(gpio_fd);
         return 0;
 }
