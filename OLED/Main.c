@@ -6,7 +6,7 @@
  *  Description : Example usage of the SSD1306 Driver API's
  *  Website     : www.deeplyembedded.org
  *
- *  compile with "gcc Main.c example_app.c SSD1306_OLED.c I2C.c -o Main"
+ *  compile with "gcc Main.c example_app.c I2C.c SSD1306_OLED.c -o Main"
  *
  */
 
@@ -20,7 +20,6 @@
 /* Header Files */
 #include "I2C.h"
 #include "SSD1306_OLED.h"
-#include "example_app.h"
 
 /* Externs - I2C.c */
 extern I2C_DeviceT I2C_DEV_2;
@@ -53,30 +52,25 @@ int main()
 
     /* Run SDD1306 Initialization Sequence */
     display_Init_seq();
-    printf("here 1\n");
 
     /* Clear display */
     clearDisplay();
-    printf("here 2\n");
 
     // // draw a single pixel
     // drawPixel(0, 1, WHITE);
     // Display();
     // usleep(1000000);
     // clearDisplay();
-    // printf("here 3\n");
 
     // // draw many lines
     // testdrawline();
     // usleep(1000000);
     // clearDisplay();
-    // printf("here 4\n");
 
     // // draw rectangles
     // testdrawrect();
     // usleep(1000000);
     // clearDisplay();
-    // printf("here 5\n");
 
     // // draw multiple rectangles
     // testfillrect();
@@ -150,7 +144,7 @@ int main()
     // usleep(1000000);
     // Display();
 
-    // Good bye fellas :)
-    deeplyembedded_credits();
-    Display();
+    // // Good bye fellas :)
+    // deeplyembedded_credits();
+    // Display();
 }

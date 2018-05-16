@@ -32,9 +32,6 @@ SOFTWARE.
 
 /*Libs Includes*/
 #include<stdio.h>
-#include<stdlib.h>
-#include<fcntl.h>		// for open
-#include<unistd.h>		// for close
 #include<fcntl.h>
 #include<sys/ioctl.h>
 #include<linux/i2c.h>
