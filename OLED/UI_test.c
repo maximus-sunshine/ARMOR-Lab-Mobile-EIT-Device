@@ -6,7 +6,7 @@
  *  Description : Example usage of the SSD1306 Driver API's
  *  Website     : www.deeplyembedded.org
  *
- *  compile with "gcc UI_test.c example_app.c I2C.c SSD1306_OLED.c -o UI_test"
+ *  compile with "gcc -pthread UI_test.c example_app.c I2C.c SSD1306_OLED.c -o UI_test"
  *
  */
 
@@ -19,6 +19,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
+#include <pthread.h>
 
 
 /* Header Files */
@@ -79,8 +80,13 @@ typedef struct state_t{
 state_t state;
 int button;
 int menu;
+pthread_t button_thread;
 
-
+/************************************************************************************
+* SETUP SIGINT HANDLER
+*************************************************************************************/
+void sigint(int s __attribute__((unused)));
+void* button_poll(void* ptr);
 
 void printCenter(const unsigned char *text, int size)
 {
@@ -195,6 +201,7 @@ void prevSelect()
     setCursor(x1,y1);
     print_str("<");
     Display();
+    button = -1;
 }
 
 void nextSelect()
@@ -225,6 +232,7 @@ void nextSelect()
     setCursor(x1,y1);
     print_str(">");
     Display();
+    button = -1;
 }
 
 void backSelect()
@@ -255,6 +263,7 @@ void backSelect()
     setCursor(x1,y1);
     print_str(">");
     Display();
+    button = -1;
 }
 
 void printBattery(float batt)
@@ -303,6 +312,7 @@ void mainSelect(){
 
     printCenter(state.menu_main,2);
     Display();
+    button = -1;
 }
 
 /****************************************************************
@@ -476,29 +486,35 @@ int gpio_fd_close(int fd)
 }
 
 
-void* select_poll(void* ptr){
-    struct pollfd fdset[1];
-    int nfds = 1;
-    int gpio_fd, timeout, rc;
+void* button_poll(void* ptr){
+    struct pollfd fdset[4];
+    int nfds = 4;
+    int gpio_fd[4], timeout, rc;
     char *buf[MAX_BUF];
-    unsigned int gpio;
+    unsigned int gpio[4];
     int len;
-    int n = 0;
-    double debounce = DEBOUNCE;
 
-    gpio = 61;
+    gpio[0] = 61; // button select
+    gpio[1] = 88; // button previous
+    gpio[2] = 89; // button next
+    gpio[3] = 11; // button back
 
-    gpio_export(gpio);
-    gpio_set_dir(gpio, 0);
-    gpio_set_edge(gpio, "rising");
-    gpio_fd = gpio_fd_open(gpio);
+    for(int i=0;i<4;i++){
+        gpio_export(gpio[i]);
+        gpio_set_dir(gpio[i], 0);
+        gpio_set_edge(gpio[i], "rising");
+        gpio_fd[i] = gpio_fd_open(gpio[i]);
+    }
 
     timeout = POLL_TIMEOUT;
 
     while(state.system){
         memset((void*)fdset, 0, sizeof(fdset));
-        fdset[0].fd = gpio_fd;
-        fdset[0].events = POLLPRI;
+        
+        for(int i=0;i<4;i++){
+            fdset[i].fd = gpio_fd[i];
+            fdset[i].events = POLLPRI;
+        }
 
         rc = poll(fdset, nfds, timeout);
 
@@ -515,138 +531,44 @@ void* select_poll(void* ptr){
             printf(".");
         }
 
-        if (fdset[0].revents & POLLPRI) {
-            lseek(fdset[0].fd, 0, SEEK_SET);
-            len = read(fdset[0].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO %d interrupt occurred %d times!\n", gpio, n);
-             button = SELECT;
-            if (n % 2 == 0){
-                
-            }
-            n++;
+        if (fdset[SELECT].revents & POLLPRI) {
+            lseek(fdset[SELECT].fd, 0, SEEK_SET);
+            len = read(fdset[SELECT].fd, buf, MAX_BUF);
+            printf("\npoll() GPIO select %d interrupt occurred!\n", gpio[SELECT]);
+            button = SELECT;
         }
-        usleep(debounce);
+
+        if (fdset[PREV].revents & POLLPRI) {
+            lseek(fdset[PREV].fd, 0, SEEK_SET);
+            len = read(fdset[PREV].fd, buf, MAX_BUF);
+            printf("\npoll() GPIO prev %d interrupt occurred!\n", gpio[PREV]);
+            button = PREV;
+        }
+
+        if (fdset[NEXT].revents & POLLPRI) {
+            lseek(fdset[NEXT].fd, 0, SEEK_SET);
+            len = read(fdset[NEXT].fd, buf, MAX_BUF);
+            printf("\npoll() GPIO next %d interrupt occurred!\n", gpio[NEXT]);
+            button = NEXT;
+        }     
+
+        if (fdset[BACK].revents & POLLPRI) {
+            lseek(fdset[BACK].fd, 0, SEEK_SET);
+            len = read(fdset[BACK].fd, buf, MAX_BUF);
+            printf("\npoll() GPIO back %d interrupt occurred!\n", gpio[BACK]);
+            button = BACK;
+        }
         fflush(stdout);
     }
-    gpio_unexport(gpio);
-    gpio_fd_close(gpio_fd);
-    return NULL;
-}
 
-void* prev_poll(void* ptr){
-    struct pollfd fdset[1];
-    int nfds = 1;
-    int gpio_fd, timeout, rc;
-    char *buf[MAX_BUF];
-    unsigned int gpio;
-    int len;
-    int n = 0;
-    double debounce = DEBOUNCE;
 
-    gpio = 88;
-
-    gpio_export(gpio);
-    gpio_set_dir(gpio, 0);
-    gpio_set_edge(gpio, "rising");
-    gpio_fd = gpio_fd_open(gpio);
-
-    timeout = POLL_TIMEOUT;
-
-    while(state.system){
-        memset((void*)fdset, 0, sizeof(fdset));
-        fdset[0].fd = gpio_fd;
-        fdset[0].events = POLLPRI;
-
-        rc = poll(fdset, nfds, timeout);
-
-        if (rc < 0) {
-            if (errno == EINTR) {
-                printf("\nInterrupted system call... continuing\n");
-                continue;
-            }
-            perror("\npoll() failed!\n");
-            return NULL;
-        }
-
-        if (rc == 0) {
-            printf(".");
-        }
-
-        if (fdset[0].revents & POLLPRI) {
-            lseek(fdset[0].fd, 0, SEEK_SET);
-            len = read(fdset[0].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO %d interrupt occurred %d times!\n", gpio, n);
-             button = PREV;
-            if (n % 2 == 0){
-                
-            }
-            n++;
-        }
-        usleep(debounce);
-        fflush(stdout);
+    for(int i=0;i<4;i++){
+        gpio_unexport(gpio[i]);
+        gpio_fd_close(gpio_fd[i]);
     }
-    gpio_unexport(gpio);
-    gpio_fd_close(gpio_fd);
+
     return NULL;
 }
-
-void* next_poll(void* ptr){
-    struct pollfd fdset[1];
-    int nfds = 1;
-    int gpio_fd, timeout, rc;
-    char *buf[MAX_BUF];
-    unsigned int gpio;
-    int len;
-    int n = 0;
-    double debounce = DEBOUNCE;
-
-    gpio = 89;
-
-    gpio_export(gpio);
-    gpio_set_dir(gpio, 0);
-    gpio_set_edge(gpio, "rising");
-    gpio_fd = gpio_fd_open(gpio);
-
-    timeout = POLL_TIMEOUT;
-
-    while(state.system){
-        memset((void*)fdset, 0, sizeof(fdset));
-        fdset[0].fd = gpio_fd;
-        fdset[0].events = POLLPRI;
-
-        rc = poll(fdset, nfds, timeout);
-
-        if (rc < 0) {
-            if (errno == EINTR) {
-                printf("\nInterrupted system call... continuing\n");
-                continue;
-            }
-            perror("\npoll() failed!\n");
-            return NULL;
-        }
-
-        if (rc == 0) {
-            printf(".");
-        }
-
-        if (fdset[0].revents & POLLPRI) {
-            lseek(fdset[0].fd, 0, SEEK_SET);
-            len = read(fdset[0].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO %d interrupt occurred %d times!\n", gpio, n);
-             button = NEXT;
-            if (n % 2 == 0){
-                
-            }
-            n++;
-        }
-        usleep(debounce);
-        fflush(stdout);
-    }
-    gpio_unexport(gpio);
-    gpio_fd_close(gpio_fd);
-    return NULL;
-}
-
 
 
 
@@ -671,24 +593,16 @@ int main()
     display_Init_seq();
     state.batt = 69.0;
     state.system = RUNNING;
-
-    pthread_t  select_thread;
-    pthread_create(&select_thread, NULL, select_poll, (void*) NULL);
+    menu = START;
 
 
-    pthread_t  next_thread;
-    pthread_create(&next_thread, NULL, next_poll, (void*) NULL);
+    pthread_create(&button_thread, NULL, button_poll, (void*) NULL);
 
-    pthread_t  prev_thread;
-    pthread_create(&prev_thread, NULL, prev_poll, (void*) NULL);
-    // pthread_t  next_thread;
-    // pthread_create(&next_thread, NULL, next_poll, (void*) NULL);
-
-    // pthread_t  prev_thread;
-    // pthread_create(&prev_thread, NULL, prev_poll, (void*) NULL);
+    signal(SIGINT,sigint);
 
 
 
+    int next_menu, next_button;
     while(state.system){
         switch(menu) {
             // LEVEL 1
@@ -703,525 +617,344 @@ int main()
 
             switch(button) {
                 case SELECT:
-                    mainSelect();
-                    button = -1;
-                    break;
+                mainSelect();
+                break;
                 case PREV:
-                    prevSelect();
-                    button = -1;
-                    break;
+                prevSelect();
+                break;
                 case NEXT:
-                    nextSelect();
-                    menu = SETTINGS;
-                    button = -1;
-                    break;
+                menu = SETTINGS;
+                nextSelect();
+                    // button = -1;
+                break;
                 case BACK:
-                    button = -1;
-                    break;
+                button = -1;
+                break;
             }
             break;
 
             case SETTINGS:
-                
-                clearDisplay();
-                state.menu_main = "SETTINGS";
-                state.menu_prev = "START";
-                state.menu_next = "";
-                state.menu_back = "HOME";
-                printUI();
-                Display();
 
-                switch(button) {
-                    case SELECT:
-                        mainSelect();
-                        menu = NODES;
-                        button = -1;
-                        break;
-                    case PREV:
-                        prevSelect();
-                        menu = START;
-                        button = -1;
-                        break;
-                    case NEXT:
-                        nextSelect();
-                        button = -1;
-                        break;
-                    case BACK:
-                        menu = START;
-                        button = -1;
-                        break;
-                }
+            clearDisplay();
+            state.menu_main = "SETTINGS";
+            state.menu_prev = "START";
+            state.menu_next = "";
+            state.menu_back = "HOME";
+            printUI();
+            Display();
+
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                menu = NODES;
+
+                break;
+                case PREV:
+                prevSelect();
+                menu = START;
+                        // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                        // button = -1;
+                break;
+                case BACK:
+                menu = START;
+                button = -1;
+                break;
+            }
+            break;
 
             //LEVEL 2
 
             case NODES:
-                
-                clearDisplay();
-                state.menu_main = "NODES";
-                state.menu_prev = "";
-                state.menu_next = "CURRENT";
-                state.menu_back = "SETTINGS";
-                printUI();
-                Display();
 
-                switch(button) {
-                    case SELECT:
-                        mainSelect();
-                        menu = NUM_NODES8;
-                        button = -1;
-                        break;
-                    case PREV:
-                        prevSelect();
-                        button = -1;
-                        break;
-                    case NEXT:
-                        nextSelect();
-                        menu = CURRENT;
-                        button = -1;
-                        break;
-                    case BACK:
-                        menu = SETTINGS;
-                        button = -1;
-                        break;
-                }
+            clearDisplay();
+            state.menu_main = "NODES";
+            state.menu_prev = "";
+            state.menu_next = "CURRENT";
+            state.menu_back = "SETTINGS";
+            printUI();
+            Display();
 
-                case NUM_NODES8:
-                    
-                    
-                    clearDisplay();
-                    state.menu_main = "8";
-                    state.menu_prev = "";
-                    state.menu_next = "16";
-                    state.menu_back = "NODES";
-                    printUI();
-                    Display();
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                menu = NUM_NODES8;
+                        // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                        // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                menu = CURRENT;
+                        // button = -1;
+                break;
+                case BACK:
+                menu = SETTINGS;
+                button = -1;
+                break;                      
+            }
+            break;
 
-                    switch(button) {
-                        case SELECT:
-                            mainSelect();
-                            button = -1;
-                            break;
-                        case PREV:
-                            prevSelect();
-                            button = -1;
-                            break;
-                        case NEXT:
-                            nextSelect();
-                            menu = NUM_NODES16;
-                            button = -1;
-                            break;
-                        case BACK:
-                            menu = NODES;
-                            button = -1;
-                            break;
-                    }
-
-                case NUM_NODES16:
-
-                    
-                    clearDisplay();
-                    state.menu_main = "16";
-                    state.menu_prev = "8";
-                    state.menu_next = "32";
-                    state.menu_back = "NODES";
-                    printUI();
-                    Display();
-
-                    switch(button) {
-                        case SELECT:
-                            mainSelect();
-                            button = -1;
-                            break;
-                        case PREV:
-                            prevSelect();
-                            menu = NUM_NODES8;
-                            button = -1;
-                            break;
-                        case NEXT:
-                            nextSelect();
-                            menu = NUM_NODES32;
-                            button = -1;
-                            break;
-                        case BACK:
-                            menu = NODES;
-                            button = -1;
-                            break;
-                    }       
-
-                case NUM_NODES32:
+            case NUM_NODES8:
 
 
-                    clearDisplay();
-                    state.menu_main = "32";
-                    state.menu_prev = "16";
-                    state.menu_next = "";
-                    state.menu_back = "NODES";
-                    printUI();
-                    Display();
+            clearDisplay();
+            state.menu_main = "8";
+            state.menu_prev = "";
+            state.menu_next = "16";
+            state.menu_back = "NODES";
+            printUI();
+            Display();
 
-                    switch(button) {
-                        case SELECT:
-                            mainSelect();
-                            button = -1;
-                            break;
-                        case PREV:
-                            prevSelect();
-                            menu = NUM_NODES16;
-                            button = -1;
-                            break;
-                        case NEXT:
-                            nextSelect();
-                            button = -1;
-                            break;
-                        case BACK:
-                            menu = NODES;
-                            button = -1;
-                            break;
-                    }             
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                            // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                            // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                menu = NUM_NODES16;
+                            // button = -1;
+                break;
+                case BACK:
+                menu = NODES;
+                button = -1;
+                break;
+            }
+            break;
+
+            case NUM_NODES16:
+
+
+            clearDisplay();
+            state.menu_main = "16";
+            state.menu_prev = "8";
+            state.menu_next = "32";
+            state.menu_back = "NODES";
+            printUI();
+            Display();
+
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                            // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                menu = NUM_NODES8;
+                            // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                menu = NUM_NODES32;
+                            // button = -1;
+                break;
+                case BACK:
+                menu = NODES;
+                button = -1;
+                break;
+            } 
+            break;     
+
+            case NUM_NODES32:
+
+
+            clearDisplay();
+            state.menu_main = "32";
+            state.menu_prev = "16";
+            state.menu_next = "";
+            state.menu_back = "NODES";
+            printUI();
+            Display();
+
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                            // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                menu = NUM_NODES16;
+                            // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                            // button = -1;
+                break;
+                case BACK:
+                menu = NODES;
+                button = -1;
+                break;
+            }  
+            break;           
 
             case CURRENT:
 
 
-                clearDisplay();
-                state.menu_main = "CURRENT";
-                state.menu_prev = "NODES";
-                state.menu_next = "CONFIG";
-                state.menu_back = "SETTINGS";
-                printUI();
-                Display();
+            clearDisplay();
+            state.menu_main = "CURRENT";
+            state.menu_prev = "NODES";
+            state.menu_next = "CONFIG";
+            state.menu_back = "SETTINGS";
+            printUI();
+            Display();
 
-                switch(button) {
-                    case SELECT:
-                        mainSelect();
-                        menu = CURRENT_AUTO;
-                        button = -1;
-                        break;
-                    case PREV:
-                        prevSelect();
-                        button = -1;
-                        break;
-                    case NEXT:
-                        nextSelect();
-                        menu = CONFIG;
-                        button = -1;
-                        break;
-                    case BACK:
-                        menu = SETTINGS;
-                        button = -1;
-                        break;
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                menu = CURRENT_AUTO;
+                        // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                menu = NODES;
+                        // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                menu = CONFIG;
+                        // button = -1;
+                break;
+                case BACK:
+                menu = SETTINGS;
+                button = -1;
+                break;
+            }
+            break;
 
-                case CURRENT_AUTO:
-                    
-                    clearDisplay();
-                    state.menu_main = "AUTO";
-                    state.menu_prev = "";
-                    state.menu_next = "MANUAL";
-                    state.menu_back = "CURRENT";
-                    printUI();
-                    Display();
+            case CURRENT_AUTO:
 
-                    switch(button) {
-                        case SELECT:
-                            mainSelect();
-                            button = -1;
-                            break;
-                        case PREV:
-                            prevSelect();
-                            button = -1;
-                            break;
-                        case NEXT:
-                            nextSelect();
-                            menu = CURRENT_MANUAL;
-                            button = -1;
-                            break;
-                        case BACK:
-                            menu = NODES;
-                            button = -1;
-                            break;
-                    }
+            clearDisplay();
+            state.menu_main = "AUTO";
+            state.menu_prev = "";
+            state.menu_next = "MANUAL";
+            state.menu_back = "CURRENT";
+            printUI();
+            Display();
 
-                case CURRENT_MANUAL:
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                            // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                            // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                menu = CURRENT_MANUAL;
+                            // button = -1;
+                break;
+                case BACK:
+                menu = NODES;
+                button = -1;
+                break;
+            }
+            break;
 
-                    clearDisplay();
-                    state.menu_main = "MANUAL";
-                    state.menu_prev = "AUTO";
-                    state.menu_next = "";
-                    state.menu_back = "CURRENT";
-                    printUI();
-                    Display();
+            case CURRENT_MANUAL:
 
-                    switch(button) {
-                        case SELECT:
-                            mainSelect();
-                            button = -1;
-                            break;
-                        case PREV:
-                            prevSelect();
-                            menu = CURRENT_AUTO;
-                            button = -1;
-                            break;
-                        case NEXT:
-                            nextSelect();
-                            break;
-                        case BACK:
-                            menu = CURRENT;
-                            button = -1;
-                            break;
-                    }                  }   
+            clearDisplay();
+            state.menu_main = "MANUAL";
+            state.menu_prev = "AUTO";
+            state.menu_next = "";
+            state.menu_back = "CURRENT";
+            printUI();
+            Display();
 
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                            // button = -1;
+                break;
+                case PREV:
+                prevSelect();
+                menu = CURRENT_AUTO;
+                            // button = -1;
+                break;
+                case NEXT:
+                nextSelect();
+                break;
+                case BACK:
+                menu = CURRENT;
+                button = -1;
+                break;
+            }
+            break;
+
+            case CONFIG:
+
+            clearDisplay();
+            state.menu_main = "CONFIG";
+            state.menu_prev = "CURRENT";
+            state.menu_next = "";
+            state.menu_back = "SETTINGS";
+            printUI();
+            Display();
+
+            switch(button) {
+                case SELECT:
+                mainSelect();
+                break;
+                case PREV:
+                prevSelect();
+                menu = CURRENT;
+                break;
+                case NEXT:
+                nextSelect();
+                break;
+                case BACK:
+                menu = SETTINGS;
+                button = -1;
+                break;
+            }
+            break;                  
+            printf("BUTTON IS %d", button);
+            fflush(stdout);
         }
     }
 
-    pthread_join(select_thread, NULL);
-    pthread_join(next_thread, NULL);
-    pthread_join(prev_thread, NULL);
+    pthread_join(button_thread, NULL);
+
     printf("\n EXITED CLEANLY \n");
 
+    state.system = STOPPED;
 
 
 
 
+    // alarm(20);
 
 
-    // /* Clear display */
-    // clearDisplay();
-    // state.batt = 12;
-    // state.menu_main = "START";
-    // state.menu_prev = "SETTINGS";
-    // state.menu_next = "NODES";
-    // state.menu_back = "HOME";
-    // printUI();
-    // Display();
+}
 
+void sigint(int s __attribute__((unused))) {
+    printf("\n Received SIGINT: \n");
+    fflush(stdout);
 
-    // usleep(1e6);
-    // mainSelect();
-    // clearDisplay();
-    // state.batt = 13;
-    // state.menu_main = "SETTINGS";
-    // state.menu_prev = "START";
-    // state.menu_next = "CURRENT";
-    // state.menu_back = "HOME";
-    // printUI();
-    // Display();
-    // usleep(1e6);
-
-    // prevSelect();
-    // usleep(1e6);
-    // nextSelect();
-
-    // usleep(1e6);
-    // mainSelect();
-
-    // // draw a single pixel
-    // drawPixel(0, 1, WHITE);
-    // Display();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw many lines
-    // testdrawline();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw rectangles
-    // testdrawrect();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw multiple rectangles
-    // testfillrect();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw mulitple circles
-    // testdrawcircle();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw a white circle, 10 pixel radius
-    // fillCircle(SSD1306_LCDWIDTH/2, SSD1306_LCDHEIGHT/2, 10, WHITE);
-    // Display();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw a white circle, 10 pixel radius
-    // testdrawroundrect();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // Fill the round rectangle
-    // testfillroundrect();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // Draw triangles
-    // testdrawtriangle();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // Fill triangles
-    // testfilltriangle();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // draw the first ~12 characters in the font
-    // testdrawchar();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // Display "scroll" and scroll around
-    // testscrolltext();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // // Display Texts and Numbers
-    // display_texts();
-    // Display();
-    // usleep(1000000);
-    // clearDisplay();
-
-    // Display miniature bitmap
-    // display_bitmap();
-
-    // clearDisplay();
-    // // printRight("50%",0,1);
-    // // printLeft("Battery",0,1);
-    // printBattery(69.431);
-    // printCenter(state.menu_loc,2);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printLeft("SETTINGS",1,1);
-    // printCenter("SETTINGS",2);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printCenterSelect("SETTINGS",2);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printCenter("# NODES",2);
-    // printLeft("SETTINGS",1,1);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printCenter("CURRENT",2);
-    // printLeft("SETTINGS",1,1);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printLeft("SETTINGS",1,1);
-    // printCenter("CONFIG",2);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-    // clearDisplay();
-    // printBattery(69.431);
-    // printLeft("SETTINGS",1,1);
-    // printCenter("SAMPLES",2);
-    // printLeft("<-",SSD1306_LCDHEIGHT-9-8,1);
-    // printRight("->",SSD1306_LCDHEIGHT-9-8,1);
-    // Display();
-    // usleep(1e6);
-
-
-
-    // printf("\n %d \n",x1);
-    // printf("\n %d \n",x2-x1);
-    // printf("\n %d \n",y1);
-    // printf("\n %d \n",y2);
-
-    // setTextSize(2);
-    // drawRect(x1,y1,(x2 - x1),(y2 - y1),WHITE);
-    // setTextColor(WHITE);
-    // setCursor(x1,y1);
-    // print_str("START");
-    // Display();
-    // usleep(1000000);
-    // fillRect(x1,y1,(x2 - x1),(y2 - y1),BLACK);
-    // Display();
-
-
-    // fillRect(15,15,100,30,WHITE);
-    // setTextColor(INVERSE);
-    // setCursor(21,20);
-    // print_str("START");
-    // Display();
-
-    // usleep(1000000);
-
-    // fillRect(15,15,100,30,BLACK);
-    // setTextColor(INVERSE);
-    // setCursor(21,20);
-    // print_str("START");
-    // Display();
-
-    // setTextWrap(0);
-    // setTextSize(3);
-    // fillRect(15,15,100,30,BLACK);
-    // setTextColor(WHITE);
-    // setCursor(21,20);
-    // print_str("START");
-    // Display();
-
-    // usleep(1000000);
-    // startscrollright(0x02, 0x07);
-    // usleep(1000000);
-    // stopscroll();
-
-
-
-
-
-    // // Display Inverted image and normalize it back
-    // display_invert_normal();
-    // clearDisplay();
-    // usleep(1000000);
-    // Display();
-
-    // Generate Signal after 20 Seconds
-        alarm(20);
-
-    // // draw a bitmap icon and 'animate' movement
-    // testdrawbitmap_eg();
-    // clearDisplay();
-    // usleep(1000000);
-    // Display();
-
-    // // Good bye fellas :)
-    // deeplyembedded_credits();
-    // Display();
-    }
+    printf("\n Exiting cleanly...");
+    fflush(stdout);
+    state.system = STOPPED;
+    pthread_join(button_thread, NULL);
+    printf("\n pthread has returned");
+    exit(0);
+}
 
 /* Alarm Signal Handler */
 void ALARMhandler(int sig)
 {
     /* Set flag */
     flag = 5;
-    state.system = STOPPED;
+    
 
     clearDisplay();
 }
