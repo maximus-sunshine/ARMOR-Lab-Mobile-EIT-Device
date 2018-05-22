@@ -5,25 +5,11 @@
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * Script to sample sensing skin.
- * 
- * Using gpio_lib (https://bitbucket.org/vanguardiasur/gpiolib) for GPIO toggling (~3 MHz)
- * 
- * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
+ * (5/20/18) Edited eit_sample.c to run performace tests on Rev02
+ *	- Gets rid of pthreads and just prints timing data to screen
  *
  * compile with "gcc -pthread performance_test.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o performance_test"
  * 
- * (5/13/18) Matthew updated to match the one we lost on BBB
- * 			 -debugged on local machine
- * 
- *
- * TODO: -find faster way to read ADC
- *		 -clean up code, move stuff to header file
- *       -error handling
- *       -pthread, write data to .txt
- *       -write Makefile
- *
- *
  ************************************************************************************/
 
 /************************************************************************************

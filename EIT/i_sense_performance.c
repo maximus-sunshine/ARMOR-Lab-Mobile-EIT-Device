@@ -5,24 +5,13 @@
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * Script to sample sensing skin.
- * 
- * Using gpio_lib (https://bitbucket.org/vanguardiasur/gpiolib) for GPIO toggling (~3 MHz)
- * 
- * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
- *
+ * (5/20/18) edited version of eit_sample.c to run current sensor performance test
+ *	- sets up muxes in first config and turns on current source to desired setpoint
+ *	- takes 1 argument, current source setpoint (0-19, 100-2000uA)
+ *	- example usage: "sudo ./i_sense_performance.c 4" 
+ *		-runs script with 500uA
+ *	
  * compile with "gcc -pthread i_sense_performance.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o i_sense_performance"
- * 
- * (5/13/18) Matthew updated to match the one we lost on BBB
- * 			 -debugged on local machine
- * 
- *
- * TODO: -find faster way to read ADC
- *		 -clean up code, move stuff to header file
- *       -error handling
- *       -pthread, write data to .txt
- *       -write Makefile
- *
  *
  ************************************************************************************/
 
@@ -98,6 +87,14 @@ int cycles = 1000;			//specify how many cycles to run
 *************************************************************************************/
 int main(int argc, char **argv)
 {
+	/*******************************
+	* Error handling for input args
+	********************************/
+	if (argc != 2) {
+		fprintf(stderr, "\nWARNING: incorrect usage\n\n usage: sudo %s <current setpoint>\n\n", argv[0]);
+		exit(1);
+	}
+
 	printf("\n entered MAIN...");
 	fflush(stdout);
 	
@@ -256,6 +253,8 @@ int main(int argc, char **argv)
 	for(n = 0;n < 3; n++){
 		gpio_clear(mux_disable_gpio_info[n]);
 	}
+	printf("\n muxes enabled...");
+	fflush(stdout);
 
 	//set current
 	int current_setpoint = atoi(argv[1]);	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
