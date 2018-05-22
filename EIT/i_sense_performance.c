@@ -96,7 +96,7 @@ int cycles = 1000;			//specify how many cycles to run
 /************************************************************************************
 * MAIN
 *************************************************************************************/
-int main()
+int main(int argc, char **argv)
 {
 	printf("\n entered MAIN...");
 	fflush(stdout);
@@ -177,6 +177,14 @@ int main()
 	printf("\n gpio pins attached...");
 	fflush(stdout);
 
+	/**********************************
+	* Disable Muxs
+	***********************************/
+	int n,k;
+	for(n = 0;n < 3; n++){
+		gpio_set(mux_disable_gpio_info[n]);
+	}
+
 	/**************************
 	* INITIALIZE ADC INTERFACE
 	**************************/	
@@ -197,12 +205,17 @@ int main()
 	fflush(stdout);
 
 	/**********************************
-	* Disable Muxs
+	* SET UP MUX SWITCHING PATTERN
 	***********************************/
-	int n,k;
-	for(n = 0;n < 3; n++){
-		gpio_set(mux_disable_gpio_info[n]);
-	}
+	//configures current and ground nodes according to # of nodes(NODAL_NUM)
+	cur_gnd_config(current_mux,ground_mux);
+	printf("\n current and ground switching patterns configured...");
+	fflush(stdout);
+
+	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
+	volt_samp_config(current_mux,ground_mux,voltage_mux);
+	printf("\n voltage sampling pattern configured...");
+	fflush(stdout);
 
 	/**********************************
 	* EXECUTE SAMPLING
@@ -228,7 +241,7 @@ int main()
 	}
 
 	//Inner loop, measure voltage
-	int j;
+	int j=0;
 	for(k = 0; k < MUX_PINS; k++){
 		if(CHAN[voltage_mux[i][j]][k]==1){
 			gpio_set(voltage_mux_gpio_info[k]);
@@ -244,30 +257,35 @@ int main()
 		gpio_clear(mux_disable_gpio_info[n]);
 	}
 
-	//test current switches
-	printf("\n Switching currents...");
+	//set current
+	int current_setpoint = atoi(argv[1]);	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
+	printf("\n current set to %d uA...",(current_setpoint+1)*100);
 	fflush(stdout);
-	int q;
-	for(q=0;q<20;q++){
-		printf("\n\n current set to %d uA...",(q+1)*100);
-		fflush(stdout);
-		for(i = 0; i< 10; i++){
-			if(CURRENT[q][i]==1){
-				gpio_set(current_switch_gpio_info[i]);
-			}
-			else{
-				gpio_clear(current_switch_gpio_info[i]);
-			}
+
+	for(i = 0; i< 10; i++){
+		if(CURRENT[current_setpoint][i]==1){
+			gpio_set(current_switch_gpio_info[i]);
 		}
-		usleep(2*1e6);
+		else{
+			gpio_clear(current_switch_gpio_info[i]);
+		}
 	}
 
-	//read ADC
-	printf("Current sensor voltage: %0.5f V\n", ti_adc_read_raw(1)*scale/1000);
+	printf("\n\n Current sensor voltage (V):\n");
 	fflush(stdout);
+	
+	//read ADC
+	for(int q=0;q<1000;q++){
+		printf("%0.5f\n", ti_adc_read_raw(1)*scale/1000);
+		fflush(stdout);
+	}
+
+	printf("\n\n setpoint: %d uA. Pausing for manual ammeter reading...\n",(current_setpoint+1)*100);
+	fflush(stdout);
+	usleep(3*1e6);
 
 	//Cleanup
-	printf("\nDone current switching, cleaning up...");
+	printf("\n\nDone, cleaning up...");
 	fflush(stdout);
 
 	for(i=0;i<MUX_PINS;i++){
