@@ -91,9 +91,15 @@ int main(int argc, char **argv)
 	* Error handling for input args
 	********************************/
 	if (argc != 2) {
-		fprintf(stderr, "\nWARNING: incorrect usage\n\n usage: sudo %s <current setpoint>\n\n", argv[0]);
+		fprintf(stderr, "\nWARNING: incorrect usage, wrong number of arguments\n\n usage: sudo %s <current setpoint (0-19)>\n\n", argv[0]);
 		exit(1);
 	}
+
+	if (atoi(argv[1]) < 0 || atoi(argv[1]) > 19) {
+		fprintf(stderr, "\nWARNING: incorrect usage, current setpoint out of bounds\n\n usage: sudo %s <current setpoint (0-19)>\n\n", argv[0]);
+		exit(1);
+	}
+
 
 	printf("\n entered MAIN...");
 	fflush(stdout);
