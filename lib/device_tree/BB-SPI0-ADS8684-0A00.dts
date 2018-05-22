@@ -167,7 +167,7 @@
 					0x0ec 0x27 /* P8.30 gpio2_25 (gpio 89), INPUT_PULLDOWN | MODE7, Button2	 */
 					0x0dc 0x27 /* P8.32 gpio0_11 (gpio 11), INPUT_PULLDOWN | MODE7, Button3	 */
 					0x0cc 0x07 /* P8.34 gpio2_17 (gpio 81), OUPUT_PULLDOWN | MODE7, OLED RST */
-
+					0x0c8 0x07 /* P8.36 gpio2_16 (gpio 80), OUPUT_PULLDOWN | MODE7, OLED PWR */
 				>;
 			};
 		};
