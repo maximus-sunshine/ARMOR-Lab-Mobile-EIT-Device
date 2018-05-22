@@ -4,9 +4,9 @@
 * Library header file for project specific functions (eit.c)
 *
 * 4/30/18- created
-* 5/13/18- edited by Matthew 
-*        - added initArray and insertArray
-*         -made text file a string
+* 5/22/18- edited by Matthew 
+*        - added ring buffer fucntion and struct declarations
+*         
 ****************************************************************/
 
 #ifndef EIT_H
