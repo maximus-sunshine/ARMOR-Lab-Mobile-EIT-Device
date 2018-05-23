@@ -90,8 +90,8 @@
 		"P8.28",	/* GPIO */
 		"P8.30",	/* GPIO */
 
-		"P9.19",	/* I2C2_SCL */
-		"P9.20",	/* I2C2_SDA */		
+		// "P9.19",	/* I2C2_SCL */
+		// "P9.20",	/* I2C2_SDA */		
 
 		/* the hardware ip uses */
 		"spi0", "i2c2", "gpio0", "gpio1", "gpio2", "gpio3";
@@ -173,17 +173,17 @@
 		};
 	};
 
-	fragment@2 {
-		target = <&am33xx_pinmux>;
-		__overlay__ {
-			bb_i2c2_pins: pinmux_bb_i2c2_pins{
-				pinctrl-single,pins = <
-					0x17c 0x73 /* P9.19 I2C2_SCL */
-					0x178 0x73 /* P9.20 I2C2_SDA */
-				>;
-			};
-		};
-	};
+	// fragment@2 {
+	// 	target = <&am33xx_pinmux>;
+	// 	__overlay__ {
+	// 		bb_i2c2_pins: pinmux_bb_i2c2_pins{
+	// 			pinctrl-single,pins = <
+	// 				0x17c 0x73 /* P9.19 I2C2_SCL */
+	// 				0x178 0x73 /* P9.20 I2C2_SDA */
+	// 			>;
+	// 		};
+	// 	};
+	// };
 
 	fragment@3 {
 		target = <&ocp>;

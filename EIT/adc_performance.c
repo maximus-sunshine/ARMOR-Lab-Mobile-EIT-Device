@@ -304,7 +304,7 @@ int main()
 		// 	gpio_clear(current_mux_gpio_info[k]);
 		// }
 
-		if(CHAN[ground_node][k]==1)
+		if(CHAN[ground_node-1][k]==1)
 		{
 			gpio_set(ground_mux_gpio_info[k]);
 		}
@@ -360,7 +360,7 @@ int main()
 	//set ADC mux
 	for(k = 0; k < MUX_PINS; k++)
 	{
-		if(CHAN[voltage_node][k]==1)
+		if(CHAN[voltage_node-1][k]==1)
 		{
 			gpio_set(voltage_mux_gpio_info[k]);
 		}
@@ -377,11 +377,9 @@ int main()
 	gettimeofday(&t1, NULL);
 	for(int q=0;q<num_samples;q++)
 	{
-		//adc_data[q]=ti_adc_read_raw(0);
-		ti_adc_read_raw(0);
-		
-		// gettimeofday(&t, NULL);
-		// adc_time[q] = t.tv_usec/1e6;
+		adc_data[q]=ti_adc_read_raw(0);		
+		gettimeofday(&t, NULL);
+		adc_time[q] = t.tv_usec/1e6;
 	}
 	gettimeofday(&t2, NULL);
 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
@@ -390,22 +388,22 @@ int main()
 	fflush(stdout);
 
 
-	// //write data to .txt file
-	// fp = fopen(DATA_PATH,"a");
-	// printf("\n Data file opened...\n");	
+	//write data to .txt file
+	fp = fopen(DATA_PATH,"a");
+	printf("\n Data file opened...\n");	
 
-	// for(int q=0;q<num_samples;q++)
-	// {
-	// 	fprintf(fp,"%0.9f\t%0.9f\n", adc_data[q]*scale/1000, adc_time[q]);
-	// }
+	for(int q=0;q<num_samples;q++)
+	{
+		fprintf(fp,"%0.9f\t%0.9f\n", adc_data[q]*scale/1000, adc_time[q]);
+	}
 
 	//Cleanup
 	printf("\n\nDone, cleaning up...");
 	fflush(stdout);
 
-	// fclose(fp);
-	// printf("\n closed data file...");
-	// fflush(stdout);
+	fclose(fp);
+	printf("\n closed data file...");
+	fflush(stdout);
 
 	for(i=0;i<MUX_PINS;i++)
 	{

@@ -5,7 +5,7 @@ Copyright (c) 2017 DeeplyEmbedded
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
+in the SSD1306_DBG without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
@@ -40,7 +40,7 @@ SOFTWARE.
 #include "gfxfont.h"
 
 /* Enable or Disable DEBUG Prints */
-//#define SSD1306_DBG
+#define SSD1306_DBG
 
 /* MACROS */
 #define SWAP(x,y)     {short temp; temp = x; x = y; y = temp;}

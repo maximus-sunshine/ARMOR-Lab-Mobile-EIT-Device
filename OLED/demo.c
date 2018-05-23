@@ -230,6 +230,7 @@ pthread_t button_thread;
 * SETUP SIGINT HANDLER
 *************************************************************************************/
 void sigint(int s __attribute__((unused)));
+void ALARMhandler(int sig);
 
 /************************************************************************************
 * DECLARE PTHREADS
@@ -784,13 +785,17 @@ int main()
         exit(1);
     }
 
-    /* Register the Alarm Handler */
 
+    // Register the Alarm Handler 
+    signal(SIGALRM, ALARMhandler);
+    printf("\n Alarm handler registered...");
+    fflush(stdout);
 
     /* Run SDD1306 Initialization Sequence */
     display_Init_seq();
+    printf("\n init sequence displayed...");
+    fflush(stdout);
     state.batt = 99.0;
-    state.system = PAUSED;
     menu = START;
     printf("\n OLED initialized...");
     fflush(stdout);
