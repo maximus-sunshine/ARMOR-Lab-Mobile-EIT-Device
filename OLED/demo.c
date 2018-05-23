@@ -62,8 +62,8 @@ volatile unsigned char flag = 0;
 #define PAUSED 0
 
 //GPIO pin IDs
-int oled_rst_gpio   = 81;
-int oled_pwr_gpio   = 80;
+int oled_rst_gpio   = 80;
+int oled_pwr_gpio   = 81;
 
 gpio_info *oled_rst_gpio_info;  //OLED reset pin, pull low for a few milliseconds to reinitialize display
 gpio_info *oled_pwr_gpio_info;  //OLED power pin, pull high to turn on display
@@ -174,7 +174,7 @@ UI_state_t UI_current_auto = {
     .menu_back = "CURRENT",
     .button_select = START,
     .button_prev = CURRENT_MANUAL,
-    .button_next = CURRENT_AUTO,
+    .button_next = CURRENT_MANUAL,
     .button_back = SETTINGS,  
 };
 
@@ -185,7 +185,7 @@ UI_state_t UI_current_manual = {
     .menu_back = "CURRENT",
     .button_select = START, 
     .button_prev = CURRENT_AUTO,
-    .button_next = CURRENT_MANUAL,
+    .button_next = CURRENT_AUTO,
     .button_back = SETTINGS,   
 };
 
@@ -222,7 +222,7 @@ UI_state_t UI_config = {
 };
 
 state_t state;
-int button;
+int button = -1;
 int menu;
 pthread_t button_thread;
 
@@ -469,6 +469,7 @@ int process_button(UI_state_t UI_state){
         case SELECT:
             mainSelect(UI_state);
             menu = UI_state.button_select;
+            button = -1;
             return 1;
             break;
         case PREV:
@@ -487,6 +488,8 @@ int process_button(UI_state_t UI_state){
             menu = UI_state.button_back;
             button = -1;
             return 0;
+            break;
+        case -1:
             break;
     }
 }
@@ -786,10 +789,10 @@ int main()
     }
 
 
-    // Register the Alarm Handler 
-    signal(SIGALRM, ALARMhandler);
-    printf("\n Alarm handler registered...");
-    fflush(stdout);
+    // // Register the Alarm Handler 
+    // signal(SIGALRM, ALARMhandler);
+    // printf("\n Alarm handler registered...");
+    // fflush(stdout);
 
     /* Run SDD1306 Initialization Sequence */
     display_Init_seq();
@@ -797,10 +800,13 @@ int main()
     fflush(stdout);
     state.batt = 99.0;
     menu = START;
+
     printf("\n OLED initialized...");
     fflush(stdout);
 
     /* Display ARMOR logo */
+    printf("\n Displaying ARMOR logo...");
+    fflush(stdout);
     display_bitmap();
     Display();
     usleep(2*1e6);
@@ -809,6 +815,7 @@ int main()
     pthread_create(&button_thread, NULL, button_poll, (void*) NULL);
     printf("\n polling buttons...");
     fflush(stdout);
+    
 
     /* register sigint */
     signal(SIGINT,sigint);
@@ -819,8 +826,13 @@ int main()
     printf("\n entering menu interface...");
     fflush(stdout);
 
-    state.system == RUNNING;
-    int next_menu, next_button;
+
+    
+    state.system = RUNNING;
+    usleep(0.5*1e6);
+    button = -1;
+    
+    // int next_menu, next_button;
     while(state.system == RUNNING){
         switch(menu) {
             // LEVEL 1
@@ -895,8 +907,11 @@ int main()
     }
 
     /* Display ARMOR logo */
+    printf("\n displaying ARMOR logo");
+    fflush(stdout);
     display_bitmap();
     Display();
+    usleep(2*1e6);
 
     /* clean up */
     gpio_detach(oled_rst_gpio_info);
@@ -920,8 +935,10 @@ void sigint(int s __attribute__((unused))) {
     fflush(stdout);
 
     /* Display ARMOR logo */
+    clearDisplay();
     display_bitmap();
     Display();
+    usleep(2*1e6);
 
     state.system = STOPPED;
     
@@ -938,10 +955,10 @@ void sigint(int s __attribute__((unused))) {
     exit(0);
 }
 
-/* Alarm Signal Handler */
-void ALARMhandler(int sig)
-{
-    /* Set flag */
-    flag = 5;
-    clearDisplay();
-}
+// /* Alarm Signal Handler */
+// void ALARMhandler(int sig)
+// {
+//     /* Set flag */
+//     flag = 5;
+//     clearDisplay();
+// }

@@ -40,7 +40,7 @@ SOFTWARE.
 #include "gfxfont.h"
 
 /* Enable or Disable DEBUG Prints */
-#define SSD1306_DBG
+//#define SSD1306_DBG
 
 /* MACROS */
 #define SWAP(x,y)     {short temp; temp = x; x = y; y = temp;}
