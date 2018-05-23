@@ -1,7 +1,7 @@
 /*****************************************************************
  * MAE 156B Spring 2018 Team 6
  *
- *	UI demo script for Preliminary Design presentation on 5/23/18
+ *  UI demo script for Preliminary Design presentation on 5/23/18
  * 
  *  compile with "gcc -pthread demo.c gpiolib.c example_app.c I2C.c SSD1306_OLED.c -o demo"
  *
@@ -38,7 +38,7 @@ volatile unsigned char flag = 0;
 *******************************************************************************/
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
-#define DEBOUNCE 0*1e6       	// 1 seconds
+#define DEBOUNCE 0*1e6          // 1 seconds
 #define MAX_BUF 64
 
 #define SELECT 0
@@ -59,13 +59,14 @@ volatile unsigned char flag = 0;
 
 #define RUNNING 1
 #define STOPPED 0
+#define PAUSED 0
 
 //GPIO pin IDs
-int oled_rst_gpio	= 81;
-int oled_pwr_gpio	= 80;
+int oled_rst_gpio   = 81;
+int oled_pwr_gpio   = 80;
 
-gpio_info *oled_rst_gpio_info;	//OLED reset pin, pull low for a few milliseconds to reinitialize display
-gpio_info *oled_pwr_gpio_info;	//OLED power pin, pull high to turn on display
+gpio_info *oled_rst_gpio_info;  //OLED reset pin, pull low for a few milliseconds to reinitialize display
+gpio_info *oled_pwr_gpio_info;  //OLED power pin, pull high to turn on display
 
 /*******************************************************************************
 * state_t
@@ -87,105 +88,105 @@ typedef struct UI_state_t{
 typedef struct state_t{
     float batt;
     int system;
-}
+} state_t;
 
 UI_state_t UI_start = {
-    .menu_main = "START";
-    .menu_prev = "";
-    .menu_next = "SETTINGS";
-    .menu_back = "HOME";
-    .button_select = START;
-    .button_prev = SETTINGS;
-    .button_next = SETTINGS;
-    .button_back = START;
+    .menu_main = "START",
+    .menu_prev = "",
+    .menu_next = "SETTINGS",
+    .menu_back = "HOME",
+    .button_select = START,
+    .button_prev = SETTINGS,
+    .button_next = SETTINGS,
+    .button_back = START,
 };
 
 UI_state_t UI_settings = {
-    .menu_main = "SETTINGS";
-    .menu_prev = "START";
-    .menu_next = "";
-    .menu_back = "HOME";
-    .button_select = NODES;
-    .button_prev = START;
-    .button_next = START;
-    .button_back = START;  
+    .menu_main = "SETTINGS",
+    .menu_prev = "START",
+    .menu_next = "",
+    .menu_back = "HOME",
+    .button_select = NODES,
+    .button_prev = START,
+    .button_next = START,
+    .button_back = START, 
 };
 
 UI_state_t UI_nodes = {
-    .menu_main = "NODES";
-    .menu_prev = "";
-    .menu_next = "CURRENT";
-    .menu_back = "SETTINGS";
-    .button_select = NUM_NODES8;
-    .button_prev = NODES;
-    .button_next = CURRENT;
-    .button_back = SETTINGS;   
+    .menu_main = "NODES",
+    .menu_prev = "",
+    .menu_next = "CURRENT",
+    .menu_back = "SETTINGS",
+    .button_select = NUM_NODES8,
+    .button_prev = NODES,
+    .button_next = CURRENT,
+    .button_back = SETTINGS,  
 };
 
 UI_state_t UI_nodes8 = {
-    .menu_main = "8";
-    .menu_prev = "";
-    .menu_next = "16";
-    .menu_back = "NODES";
-    .button_select = START;
-    .button_prev = NUM_NODES32;
-    .button_next = NUM_NODES16;
-    .button_back = NODES;    
+    .menu_main = "8",
+    .menu_prev = "",
+    .menu_next = "16",
+    .menu_back = "NODES",
+    .button_select = START,
+    .button_prev = NUM_NODES32,
+    .button_next = NUM_NODES16,
+    .button_back = NODES,
 };
 
 UI_state_t UI_nodes16 = {
-    .menu_main = "16";
-    .menu_prev = "8";
-    .menu_next = "32";
-    .menu_back = "NODES";
-    .button_select = START;
-    .button_prev = NUM_NODES16;
-    .button_next = NUM_NODES32;
-    .button_back = NODES;  
+    .menu_main = "16",
+    .menu_prev = "8",
+    .menu_next = "32",
+    .menu_back = "NODES",
+    .button_select = START,
+    .button_prev = NUM_NODES16,
+    .button_next = NUM_NODES32,
+    .button_back = NODES, 
 };
 
 UI_state_t UI_nodes32 = {
-    .menu_main = "32";
-    .menu_prev = "16";
-    .menu_next = "8";
-    .menu_back = "NODES";
-    .button_select = START;
-    .button_prev = NUM_NODES16;
-    .button_next = NUM_NODES8;
-    .button_back = NODES;   
+    .menu_main = "32",
+    .menu_prev = "16",
+    .menu_next = "8",
+    .menu_back = "NODES",
+    .button_select = START,
+    .button_prev = NUM_NODES16,
+    .button_next = NUM_NODES8,
+    .button_back = NODES,   
 };
 
 UI_state_t UI_current = {
-    .menu_main = "CURRENT";
-    .menu_prev = "NODES";
-    .menu_next = "CONFIG";
-    .menu_back = "SETTINGS";
-    .button_select = CURRENT_AUTO; 
-    .button_prev = NODES;
-    .button_next = CONFIG;
-    .button_back = SETTINGS;    
+    .menu_main = "CURRENT",
+    .menu_prev = "NODES",
+    .menu_next = "CONFIG",
+    .menu_back = "SETTINGS",
+    .button_select = CURRENT_AUTO, 
+    .button_prev = NODES,
+    .button_next = CONFIG,
+    .button_back = SETTINGS,    
 };
 
 UI_state_t UI_current_auto = {
-    .menu_main = "AUTO";
-    .menu_prev = "";
-    .menu_next = "MANUAL";
-    .menu_back = "CURRENT";
-    .button_select = START;
-    .button_prev = CURRENT_MANUAL;
-    .button_next = CURRENT_AUTO;
-    .button_back = SETTINGS;  
+    .menu_main = "AUTO",
+    .menu_prev = "",
+    .menu_next = "MANUAL",
+    .menu_back = "CURRENT",
+    .button_select = START,
+    .button_prev = CURRENT_MANUAL,
+    .button_next = CURRENT_AUTO,
+    .button_back = SETTINGS,  
 };
 
 UI_state_t UI_current_manual = {
-    .menu_main = "MANUAL";
-    .menu_prev = "AUTO";
-    .menu_next = "";
-    .menu_back = "CURRENT";
-    .button_select = START; 
-    .button_prev = CURRENT_AUTO;
-    .button_next = CURRENT_MANUAL;
-    .button_back = SETTINGS;   
+    .menu_main = "MANUAL",
+    .menu_prev = "AUTO",
+    .menu_next = "",
+    .menu_back = "CURRENT",
+    .button_select = START, 
+    .button_prev = CURRENT_AUTO,
+    .button_next = CURRENT_MANUAL,
+    .button_back = SETTINGS,   
 };
 
 UI_state_t UI_current_100;
@@ -210,14 +211,14 @@ UI_state_t UI_current_1900;
 UI_state_t UI_current_2000;
 
 UI_state_t UI_config = {
-    .menu_main = "CONFIG";
-    .menu_prev = "CURRENT";
-    .menu_next = "SAMPLING";
-    .menu_back = "SETTINGS";
-    .button_select = START;
-    .button_prev = CURRENT;
-    .button_next = CONFIG;
-    .button_back = SETTINGS;    
+    .menu_main = "CONFIG",
+    .menu_prev = "CURRENT",
+    .menu_next = "SAMPLING",
+    .menu_back = "SETTINGS",
+    .button_select = START,
+    .button_prev = CURRENT,
+    .button_next = CONFIG,
+    .button_back = SETTINGS,    
 };
 
 state_t state;
@@ -740,35 +741,35 @@ void* button_poll(void* ptr){
 int main()
 {
     /* initialize gpiolib */
-	if(gpio_init()){
-		fprintf(stderr, "\n gpio_init failed with %i", gpio_errno);
-	}
-	printf("\n gpiolib intialized...");
-	fflush(stdout);
+    if(gpio_init()){
+        fprintf(stderr, "\n gpio_init failed with %i", gpio_errno);
+    }
+    printf("\n gpiolib intialized...");
+    fflush(stdout);
 
-	/* attach OLED RST and PWR buttons */
-	bank = oled_rst_gpio/32;
-	mask = bit(oled_rst_gpio%32);
-	oled_rst_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+    /* attach OLED RST and PWR buttons */
+    int bank = oled_rst_gpio/32;
+    int mask = bit(oled_rst_gpio%32);
+    oled_rst_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
 
-	bank = oled_pwr_gpio/32;
-	mask = bit(oled_pwr_gpio%32);
-	oled_pwr_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
-	printf("\n OLED power and reset pins attached...");
-	fflush(stdout);
+    bank = oled_pwr_gpio/32;
+    mask = bit(oled_pwr_gpio%32);
+    oled_pwr_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+    printf("\n OLED power and reset pins attached...");
+    fflush(stdout);
 
-	/* power on OLED */
-	gpio_set(oled_pwr_gpio_info);
-	gpio_set(oled_rst_gpio_info);
-	printf("\n OLED power and reset pins set high...");
-	fflush(stdout);
+    /* power on OLED */
+    gpio_set(oled_pwr_gpio_info);
+    gpio_set(oled_rst_gpio_info);
+    printf("\n OLED power and reset pins set high...");
+    fflush(stdout);
 
-	/* reset OLED */
-	gpio_clear(oled_rst_gpio_info);
-	usleep(0.5*1e6);
-	gpio_set(oled_rst_gpio_info);
-	printf("\n OLED display reset...");
-	fflush(stdout);
+    /* reset OLED */
+    gpio_clear(oled_rst_gpio_info);
+    usleep(0.5*1e6);
+    gpio_set(oled_rst_gpio_info);
+    printf("\n OLED display reset...");
+    fflush(stdout);
 
     /* Initialize I2C bus and connect to the I2C Device */
     if(init_i2c_dev2(SSD1306_OLED_ADDR) == 0)
@@ -792,22 +793,28 @@ int main()
     state.system = PAUSED;
     menu = START;
     printf("\n OLED initialized...");
-	fflush(stdout);
+    fflush(stdout);
+
+    /* Display ARMOR logo */
+    display_bitmap();
+    Display();
+    usleep(2*1e6);
 
     /* start button poll pthread */
     pthread_create(&button_thread, NULL, button_poll, (void*) NULL);
     printf("\n polling buttons...");
-	fflush(stdout);
+    fflush(stdout);
 
     /* register sigint */
     signal(SIGINT,sigint);
     printf("\n SIGINT registered...");
-	fflush(stdout);
+    fflush(stdout);
 
     /* enter menu interface */
     printf("\n entering menu interface...");
-	fflush(stdout);
+    fflush(stdout);
 
+    state.system == RUNNING;
     int next_menu, next_button;
     while(state.system == RUNNING){
         switch(menu) {
@@ -882,37 +889,45 @@ int main()
         }
     }
 
-    /* clean up */
-	gpio_detach(oled_rst_gpio_info);
-	gpio_detach(oled_pwr_gpio_info);
-	printf("\n detached gpio pins");
-	fflush(stdout);
+    /* Display ARMOR logo */
+    display_bitmap();
+    Display();
 
-	gpio_finish();
-	printf("\n closed gpiolib cleanly...");
-	fflush(stdout);
+    /* clean up */
+    gpio_detach(oled_rst_gpio_info);
+    gpio_detach(oled_pwr_gpio_info);
+    printf("\n detached gpio pins");
+    fflush(stdout);
+
+    gpio_finish();
+    printf("\n closed gpiolib cleanly...");
+    fflush(stdout);
 
     pthread_join(button_thread, NULL);
     printf("\n EXITED CLEANLY \n");
 }
 
-/************************************************************************************
+/*************************************************************************************
 * DECLARE SIGINT
 *************************************************************************************/
 void sigint(int s __attribute__((unused))) {
     printf("\n Received SIGINT: Exiting cleanly...");
     fflush(stdout);
 
+    /* Display ARMOR logo */
+    display_bitmap();
+    Display();
+
     state.system = STOPPED;
     
     gpio_detach(oled_rst_gpio_info);
-	gpio_detach(oled_pwr_gpio_info);
-	printf("\n detached gpio pins");
-	fflush(stdout);
+    gpio_detach(oled_pwr_gpio_info);
+    printf("\n detached gpio pins");
+    fflush(stdout);
 
-	gpio_finish();
-	printf("\n closed gpiolib cleanly...");
-	fflush(stdout);
+    gpio_finish();
+    printf("\n closed gpiolib cleanly...");
+    fflush(stdout);
 
     pthread_join(button_thread, NULL);
     exit(0);

@@ -31,7 +31,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "../includes/gpiolib.h"
+#include "gpiolib.h"
 
 #define ARRSIZE(x) (sizeof x / sizeof x[0])
 
