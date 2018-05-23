@@ -5,13 +5,12 @@
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * (5/20/18) edited version of eit_sample.c to run current sensor performance test
- *	- sets up muxes in first config and turns on current source to desired setpoint
- *	- takes 1 argument, current source setpoint (0-19, 100-2000uA)
- *	- example usage: "sudo ./i_sense_performance.c 4" 
- *		-runs script with 500uA
+ * (5/22/18) edited version of i_sense_performance.c to run adc performance test
+ *	- sets up muxes in user chosen config and turns on current source to desired setpoint
+ *	- prompts user for current setpoint, current node, and option to print to screen
  *	
- * compile with "gcc -pthread i_sense_performance.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o i_sense_performance"
+ *	
+ * compile with "gcc -pthread adc_performance.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o adc_performance"
  *
  ************************************************************************************/
 
@@ -41,6 +40,7 @@
 * DEFINES
 *************************************************************************************/
 #define MUX_PINS 5
+#define DATA_PATH "/home/debian/MAE156B_Team6/adc_performance_data/data.txt"
 
 /************************************************************************************
 * SETUP
@@ -68,6 +68,12 @@ int mux_disable_gpio[3] = MUX_DISABLE_GPIO;
 int adc_reset_gpio      = ADC_RESET_GPIO;
 int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
+//time stuff 
+struct timeval t, t1, t2;
+
+//data stuff
+FILE* fp;
+
 /************************************************************************************
 * CONFIGURATION, USER CAN CHANGE VARIABLES HERE
 *************************************************************************************/
@@ -78,10 +84,15 @@ int chan1; //current sense channel
 //int chan3; //unused
 
 //Other
-double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
-int cycles = 1000;			//specify how many cycles to run
-int i_setpoint, config, print_flag;
-//NODAL_NUM 				//change this in eit.h
+double scale = 0.078127104;						//ADC scale {0.312504320 0.156254208 0.078127104}
+int cycles = 1000;								//specify how many cycles to run
+// int i_setpoint;									//user selectable current setpoint
+// int current_node, ground_node, voltage_node;	//user selectable mux positions
+int ground_node, voltage_node;
+int print_flag;									//user selectable print option
+//NODAL_NUM 									//change this in eit.h
+
+int file_flag = 0;			//has data file been opened yet?
 
 /************************************************************************************
 * MAIN
@@ -89,25 +100,53 @@ int i_setpoint, config, print_flag;
 //int main(int argc, char **argv)
 int main()
 {
-	//Take some user input TODO: add error handling
-	printf("\n Choose current setpoint (100uA-2000uA in 100uA steps): ");
-	scanf("%d", &i_setpoint);
-	if (i_setpoint < 100 || i_setpoint > 2000 || i_setpoint%100 != 0) 
-	{
-		fprintf(stderr, "\nWARNING: incorrect usage, invalid current setpoint");
-		exit(1);
-	}
+	printf("\n entered MAIN...\n");
 	fflush(stdout);
+	
+	/*******************************
+	* TAKE USER INPUT
+	********************************/
+	// //Current setpoint
+	// printf("\n Choose current setpoint (100uA-2000uA in 100uA steps): ");
+	// scanf("%d", &i_setpoint);
+	// if (i_setpoint < 100 || i_setpoint > 2000 || i_setpoint%100 != 0) 
+	// {
+	// 	fprintf(stderr, "\nWARNING: incorrect usage, invalid current setpoint");
+	// 	exit(1);
+	// }
+	// fflush(stdout);
+	
+	// //Current node
+	// printf("\n Choose current node (1-%d): ",NODAL_NUM);
+	// scanf("%d", &current_node);
+	// if (current_node < 1 || current_node > NODAL_NUM) 
+	// {
+	// 	fprintf(stderr, "\nWARNING: incorrect usage, invalid node selection");
+	// 	exit(1);
+	// }
+	// fflush(stdout);
 
-	printf("\n Choose where to inject current (node 1-%d): ",NODAL_NUM);
-	scanf("%d", &config);
-	if (config < 1 || config > NODAL_NUM) 
+	//Ground node
+	printf("\n Choose ground node (1-%d): ",NODAL_NUM);
+	scanf("%d", &ground_node);
+	if (ground_node < 1 || ground_node > NODAL_NUM) 
 	{
 		fprintf(stderr, "\nWARNING: incorrect usage, invalid node selection");
 		exit(1);
 	}
 	fflush(stdout);
 
+	//ADC Node
+	printf("\n Choose ADC node (1-%d): ",NODAL_NUM);
+	scanf("%d", &voltage_node);
+	if (voltage_node < 1 || voltage_node > NODAL_NUM) 
+	{
+		fprintf(stderr, "\nWARNING: incorrect usage, invalid node selection");
+		exit(1);
+	}
+	fflush(stdout);
+
+	//Print option
 	printf("\n Print data to screen? (0 or 1): ");
 	if (print_flag != 0 && print_flag != 1) 
 	{
@@ -116,27 +155,10 @@ int main()
 	}
 	scanf("%d", &print_flag);
 	fflush(stdout);
-
-	/*******************************
-	* Error handling for input args
-	********************************/
-	// if (argc != 2) 
-	// {
-	// 	fprintf(stderr, "\nWARNING: incorrect usage, wrong number of arguments\n\n usage: sudo %s <current setpoint (0-19)>\n\n", argv[0]);
-	// 	exit(1);
-	// }
-
-	// if (atoi(argv[1]) < 0 || atoi(argv[1]) > 19) 
-	// {
-	// 	fprintf(stderr, "\nWARNING: incorrect usage, current setpoint out of bounds\n\n usage: sudo %s <current setpoint (0-19)>\n\n", argv[0]);
-	// 	exit(1);
-	// }
-
-
-	printf("\n entered MAIN...");
-	fflush(stdout);
 	
-	//Sigint setup, needs work
+	/**************************
+	* SETUP SIGINT
+	**************************/	
 	signal(SIGINT, sigint);
 	printf("\n setup SIGINT...");
 	fflush(stdout);
@@ -243,47 +265,46 @@ int main()
 	fflush(stdout);
 
 	//TODO: put scales and offsets in header file
-	ti_adc_set_scale(1, scale); //chan2
-	ti_adc_set_offset(1, 0);
+	for(i=0;i<4;i++){
+		ti_adc_set_scale(i, scale);
+		ti_adc_set_offset(i, 0);
+	}
 
 	printf("\n ADC scales and offsets configured...");
 	fflush(stdout);
 
-	/**********************************
-	* SET UP MUX SWITCHING PATTERN
-	***********************************/
-	//configures current and ground nodes according to # of nodes(NODAL_NUM)
-	cur_gnd_config(current_mux,ground_mux);
-	printf("\n current and ground switching patterns configured...");
-	fflush(stdout);
+	// /**********************************
+	// * SET UP MUX SWITCHING PATTERN
+	// ***********************************/
+	// //configures current and ground nodes according to # of nodes(NODAL_NUM)
+	// cur_gnd_config(current_mux,ground_mux);
+	// printf("\n current and ground switching patterns configured...");
+	// fflush(stdout);
 
-	//configures voltage sampling nodes according to # of nodes(NODAL_NUM)
-	volt_samp_config(current_mux,ground_mux,voltage_mux);
-	printf("\n voltage sampling pattern configured...");
-	fflush(stdout);
+	// //configures voltage sampling nodes according to # of nodes(NODAL_NUM)
+	// volt_samp_config(current_mux,ground_mux,voltage_mux);
+	// printf("\n voltage sampling pattern configured...");
+	// fflush(stdout);
 
 	/**********************************
 	* EXECUTE SAMPLING
 	***********************************/
-	printf("\n\n Setting muxes...\n");
+	printf("\n Setting muxes...\n");
 	fflush(stdout);
-
-	i = config-1;	//set configuration
-	//i = 0;			//set configuration
 
 	//Set current and ground
 	for(k = 0; k < MUX_PINS; k++)
 	{   
-		if(CHAN[current_mux[i]][k]==1)
-		{
-			gpio_set(current_mux_gpio_info[k]);
-		}
-		else
-		{
-			gpio_clear(current_mux_gpio_info[k]);
-		}
+		// if(CHAN[current_node][k]==1)
+		// {
+		// 	gpio_set(current_mux_gpio_info[k]);
+		// }
+		// else
+		// {
+		// 	gpio_clear(current_mux_gpio_info[k]);
+		// }
 
-		if(CHAN[ground_mux[i]][k]==1)
+		if(CHAN[ground_node][k]==1)
 		{
 			gpio_set(ground_mux_gpio_info[k]);
 		}
@@ -293,68 +314,98 @@ int main()
 		}
 	}
 
-	// //Inner loop, measure voltage
-	// int j=0;
-	// for(k = 0; k < MUX_PINS; k++)
-	// {
-	// 	if(CHAN[voltage_mux[i][j]][k]==1)
-	// 	{
-	// 		gpio_set(voltage_mux_gpio_info[k]);
-	// 	}
-	// 	else
-	// 	{
-	// 		gpio_clear(voltage_mux_gpio_info[k]);
-	// 	}
-	// }
-
-	printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+	printf("\n--------------Current Configuration: GND at node %d, ADC at node %d ------------\n", ground_node, voltage_node);
 	fflush(stdout);
 
-	//enabling muxs
-	for(n = 0;n < 3; n++)
-	{
-		gpio_clear(mux_disable_gpio_info[n]);
-	}
+	/**********************************
+	* ENABLE MUXES
+	***********************************/
+	// for(n = 0;n < 3; n++)
+	// {
+	// 	gpio_clear(mux_disable_gpio_info[n]);
+	// }
+	//enable ground and voltage muxes
+	gpio_clear(mux_disable_gpio_info[1]);
+	gpio_clear(mux_disable_gpio_info[2]);
+
 	printf("\n muxes enabled...");
 	fflush(stdout);
 
-	//set current
-	int current_setpoint = (i_setpoint/100)-1;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
-	printf("\n current set to %d uA...",(current_setpoint+1)*100);
+	// /**********************************
+	// * SET CURRENT
+	// ***********************************/
+	// int current_setpoint = (i_setpoint/100)-1;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
+	// printf("\n current set to %d uA...",(current_setpoint+1)*100);
+	// fflush(stdout);
+
+	// for(i = 0; i< 10; i++)
+	// {
+	// 	if(CURRENT[current_setpoint][i]==1)
+	// 	{
+	// 		gpio_set(current_switch_gpio_info[i]);
+	// 	}
+	// 	else
+	// 	{
+	// 		gpio_clear(current_switch_gpio_info[i]);
+	// 	}
+	// }
+
+	/**********************************
+	* READ ADC
+	***********************************/
+	int num_samples = 100000;
+	printf("\n sampling ADC %d times...",num_samples);
 	fflush(stdout);
 
-	for(i = 0; i< 10; i++)
+	//set ADC mux
+	for(k = 0; k < MUX_PINS; k++)
 	{
-		if(CURRENT[current_setpoint][i]==1)
+		if(CHAN[voltage_node][k]==1)
 		{
-			gpio_set(current_switch_gpio_info[i]);
+			gpio_set(voltage_mux_gpio_info[k]);
 		}
 		else
 		{
-			gpio_clear(current_switch_gpio_info[i]);
-		}
-	}
-	
-	//read ADC
-	if(print_flag)
-	{
-		printf("\n\n Current sensor voltage (V):\n");
-		fflush(stdout);
-		for(int q=0;q<1000;q++)
-		{
-			printf("%0.5f\n", ti_adc_read_raw(1)*scale/1000);
-			fflush(stdout);
+			gpio_clear(voltage_mux_gpio_info[k]);
 		}
 	}
 
-	//Sleep for a little
-	printf("\n\n setpoint: %d uA. Pausing for manual ammeter reading...\n",(current_setpoint+1)*100);
+	//read ADC//data stuff
+	int adc_data[num_samples];
+	double adc_time[num_samples];
+
+	gettimeofday(&t1, NULL);
+	for(int q=0;q<num_samples;q++)
+	{
+		//adc_data[q]=ti_adc_read_raw(0);
+		ti_adc_read_raw(0);
+		
+		// gettimeofday(&t, NULL);
+		// adc_time[q] = t.tv_usec/1e6;
+	}
+	gettimeofday(&t2, NULL);
+	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
+
+	printf("\n\nDone samplng, elapsed time: %0.8f seconds...", usec/1e6);
 	fflush(stdout);
-	usleep(3*1e6);
+
+
+	// //write data to .txt file
+	// fp = fopen(DATA_PATH,"a");
+	// printf("\n Data file opened...\n");	
+
+	// for(int q=0;q<num_samples;q++)
+	// {
+	// 	fprintf(fp,"%0.9f\t%0.9f\n", adc_data[q]*scale/1000, adc_time[q]);
+	// }
 
 	//Cleanup
 	printf("\n\nDone, cleaning up...");
 	fflush(stdout);
+
+	// fclose(fp);
+	// printf("\n closed data file...");
+	// fflush(stdout);
 
 	for(i=0;i<MUX_PINS;i++)
 	{
@@ -403,6 +454,16 @@ void sigint(int s __attribute__((unused)))
 	fflush(stdout);
 
 	//Cleanup
+	if(file_flag){
+		fclose(fp);
+		printf("\n closed data file...");
+		fflush(stdout);
+	}
+	else{
+		printf("\n data file not yet opened, continuing clean up...");
+		fflush(stdout);
+	}
+
 	int i;
 	for(i=0;i<MUX_PINS;i++)
 	{
@@ -422,7 +483,7 @@ void sigint(int s __attribute__((unused)))
 	gpio_detach(adc_reset_gpio_info);
 	gpio_detach(i_sense_reset_gpio_info);
 
-	printf("\n Detached all gpio pins");
+	printf("\n detached all gpio pins");
 	fflush(stdout);
 
 	gpio_finish();

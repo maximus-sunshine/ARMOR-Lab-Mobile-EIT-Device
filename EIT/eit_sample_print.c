@@ -5,24 +5,13 @@
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * Script to sample sensing skin.
+ *	Similar to eit_sample.c except prints to screen instead of writing to file.
  * 
- * Using gpio_lib (https://bitbucket.org/vanguardiasur/gpiolib) for GPIO toggling (~3 MHz)
- * 
- * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
+ *	Prints voltage measurements at nodes and voltage across current sensor.
+ *	
+ *	Current setpoint, number of nodes, and ADC scale/offset are all set before running. If changed, needs to be recompiled	 
  *
  * compile with "gcc -pthread eit_sample_print.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o eit_sample_print"
- * 
- * (5/13/18) Matthew updated to match the one we lost on BBB
- * 			 -debugged on local machine
- * 
- *
- * TODO: -find faster way to read ADC
- *		 -clean up code, move stuff to header file
- *       -error handling
- *       -pthread, write data to .txt
- *       -write Makefile
- *
  *
  ************************************************************************************/
 
@@ -104,7 +93,7 @@ gpio_info *mux_disable_gpio_info[3];
 
 //Variables
 double scale = 0.078127104;
-int current_setpoint = 11; //current setpoint 100uA-2000uA(0-19, 100uA) TODO, make this better
+int current_setpoint = 9; //current setpoint 100uA-2000uA(0-19, 100uA) TODO, make this better
 
 // //struct declarations
 // Array dynamic_buffer;
@@ -125,7 +114,7 @@ int main()
 	printf("setup SIGINT...\n");
 	fflush(stdout);
 
-	/**************************
+	/*************************
 	* INITIALIZE BUFFER ARRAY
 	**************************/	
 	// initArray(&dynamic_buffer,init_size);
@@ -221,8 +210,8 @@ int main()
 	ti_adc_set_scale(0, scale); //chan0
 	ti_adc_set_offset(0, 0);
 
-	ti_adc_set_scale(2, scale); //chan2
-	ti_adc_set_offset(2, 0);
+	ti_adc_set_scale(1, scale); //chan1
+	ti_adc_set_offset(1, 0);
 
 	printf("\n ADC scales and offsets configured...");
 	fflush(stdout);
@@ -345,8 +334,8 @@ int main()
 
 				//read ADC
 				chan0 = ti_adc_read_raw(0);
-				// chan1 = ti_adc_read_raw(1);
-		        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+				chan1 = ti_adc_read_raw(1);
+		        printf("Voltage at node %d:  %0.5f V\t\t Voltage across current sensor: %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000,chan1*scale/1000);
 		        fflush(stdout);
 				
 				// //record adc raw voltage into buffer (must be an int)
