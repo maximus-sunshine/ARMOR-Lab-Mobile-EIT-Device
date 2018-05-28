@@ -93,7 +93,8 @@ gpio_info *mux_disable_gpio_info[3];
 
 //Variables
 double scale = 0.078127104;
-int current_setpoint = 9; //current setpoint 100uA-2000uA(0-19, 100uA) TODO, make this better
+int current_setpoint = 0; //current setpoint 100uA-2000uA(0-19, 100uA) TODO, make this better
+int i_setpoint;
 
 // //struct declarations
 // Array dynamic_buffer;
@@ -111,8 +112,22 @@ int main()
 	
 	//Sigint setup, needs work
 	signal(SIGINT, sigint);
-	printf("setup SIGINT...\n");
+	printf("\n setup SIGINT...");
 	fflush(stdout);
+
+	/*******************************
+	* TAKE USER INPUT
+	********************************/
+	//Current setpoint
+	printf("\n Choose current setpoint (100uA-2000uA in 100uA steps): ");
+	scanf("%d", &i_setpoint);
+	if (i_setpoint < 100 || i_setpoint > 2000 || i_setpoint%100 != 0) 
+	{
+		fprintf(stderr, "\nWARNING: incorrect usage, invalid current setpoint");
+		exit(1);
+	}
+	fflush(stdout);
+	current_setpoint = (i_setpoint/100) - 1; 
 
 	/*************************
 	* INITIALIZE BUFFER ARRAY
@@ -441,7 +456,7 @@ void sigint(int s __attribute__((unused))) {
 	fflush(stdout);
 
 	ti_adc_cleanup();
-	printf("\n cleaned up ADC interface...");
+	printf("\n cleaned up ADC interface... \n\n");
 	fflush(stdout);
 	
 	// printf("waiting for pthread to join\n");
