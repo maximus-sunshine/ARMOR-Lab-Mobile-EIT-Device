@@ -45,7 +45,7 @@
 #include <sys/time.h>
 #include "includes/gpiolib.h"
 #include "includes/eit_config.h"
-#include "includes/eit.h"
+#include "includes/eit_r_buff.h"
 #include "includes/ti-ads8684.h"
 
 /************************************************************************************
