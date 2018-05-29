@@ -112,6 +112,7 @@ int chan1; //current sense channel
 //Other
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
 int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
+int i_setpoint;
 int cycles = 10;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
 
@@ -128,6 +129,20 @@ int main()
 	signal(SIGINT, sigint);
 	printf("\n setup SIGINT...");
 	fflush(stdout);
+
+	/*******************************
+	* TAKE USER INPUT
+	********************************/
+	//Current setpoint
+	printf("\n Choose current setpoint (100uA-2000uA in 100uA steps): ");
+	scanf("%d", &i_setpoint);
+	if (i_setpoint < 100 || i_setpoint > 2000 || i_setpoint%100 != 0) 
+	{
+		fprintf(stderr, "\nWARNING: incorrect usage, invalid current setpoint");
+		exit(1);
+	}
+	fflush(stdout);
+	current_setpoint = (i_setpoint/100) - 1; 
 
 	/**************************
 	* INITIALIZE BUFFER ARRAY
