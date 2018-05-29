@@ -5,16 +5,9 @@
  *	- Aaron Gunn
  *	- Jacob Rutheiser
  *
- * Script to sample sensing skin.
- * 
- * Using gpio_lib (https://bitbucket.org/vanguardiasur/gpiolib) for GPIO toggling (~3 MHz)
- * 
- * Using sysfs to read ADC (best ~15 kHz), need to improve (add buffer to adc driver?)
+ *	edited version to do testing in Ken's lab
  *
- * compile with "gcc -pthread eit_sample.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o eit_sample"
- * 
- * (5/13/18) Matthew updated to match the one we lost on BBB
- * 			 -debugged on local machine
+ * compile with "gcc -pthread eit_sample2.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o eit_sample2"
  * 
  *
  * TODO: -find faster way to read ADC
@@ -39,7 +32,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <malloc.h>
- 
+
 #include <assert.h>		//for gpiolib stuff
 #include <signal.h>
 #include <sys/time.h>
@@ -52,16 +45,6 @@
 * DEFINES
 *************************************************************************************/
 #define MUX_PINS 5
-
-
-/************************************************************************************
-* PTHREAD SETUP
-*************************************************************************************/
-pthread_t data_exporting_thread;
-//pthread function declaration
-void* data_exporting(void *ptr);
-//data file declaration
-FILE* fp;
 
 /************************************************************************************
 * SETUP SIGINT HANDLER
@@ -100,6 +83,7 @@ Array dynamic_buffer;
 size_t init_size = 100;
 int size = 0;
 int flag = 1;
+FILE* fp;
 
 /************************************************************************************
 * CONFIGURATION, USER CAN CHANGE VARIABLES HERE
@@ -282,16 +266,18 @@ int main()
 			gpio_clear(current_switch_gpio_info[i]);
 		}
 	}
+
+	/**********************************
+	* set up data writing
+	***********************************/
+	fp = fopen(VOLT_DATA_TEXT,"a");
+	printf("\n Data file opened...");	
+
 	/**********************************
 	* EXECUTE SAMPLING
 	***********************************/
 	struct timeval t1, t2; //time stuff 
 	gettimeofday(&t1, NULL);
-  	
-	//start pthread
-	pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
-	printf("\n pthread created...");
-	fflush(stdout);
 
 	printf("\n\n BEGINNING sample cycle...\n");
 	fflush(stdout);
@@ -390,12 +376,12 @@ int main()
 
 				else{
 					for(k = 0; k < MUX_PINS; k++){
-					if(CHAN[voltage_mux[i][j]][k]==1){
-						gpio_set(voltage_mux_gpio_info[k]);
-					}
-					else{
-						gpio_clear(voltage_mux_gpio_info[k]);
-					}
+						if(CHAN[voltage_mux[i][j]][k]==1){
+							gpio_set(voltage_mux_gpio_info[k]);
+						}
+						else{
+							gpio_clear(voltage_mux_gpio_info[k]);
+						}
 					}
 
 					//enabling muxs
@@ -406,8 +392,8 @@ int main()
 					//read ADC
 					chan0 = ti_adc_read_raw(0);
 			        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
-			        fflush(stdout);
-			    }
+					fflush(stdout);
+				}
 				
 				//record adc raw voltage into buffer (must be an int)
 				insertArray(&dynamic_buffer,chan0);
@@ -427,34 +413,40 @@ int main()
 		        // usleep(1 * 1e6);
 		        // printf("\nmuxes disabled...");
 		        // fflush(stdout);
-	      	}
-	    }
- 	}
+
+				if((count+1)%16 == 0){
+					fprintf(fp,"%0.5f\n",dynamic_buffer.array[count]*scale/1000);
+				}
+				else{
+					fprintf(fp,"%0.5f\t",dynamic_buffer.array[count]*scale/1000);
+				}
+			}
+		}
+	}
  	//Print timing data to screen!
- 	gettimeofday(&t2, NULL);
- 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
+	gettimeofday(&t2, NULL);
+	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
 	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",NODAL_NUM, cycles, usec/1e6, cycles/(usec/1e6));
 	fflush(stdout);
 
 	//Cleanup
-	
 	for(i=0;i<MUX_PINS;i++){
 		gpio_detach(current_mux_gpio_info[i]);
 		gpio_detach(ground_mux_gpio_info[i]);
 		gpio_detach(voltage_mux_gpio_info[i]);
 	}	
-  
+
 	for(i=0;i<10;i++){
 		gpio_detach(current_switch_gpio_info[i]);
-		
+
 	}	
 	for(i=0;i<3;i++){
 		gpio_detach(mux_disable_gpio_info[i]);
-		
+
 	}	
 	gpio_detach(adc_reset_gpio_info);
 	gpio_detach(i_sense_reset_gpio_info);
-	
+
 	printf("\n detached all gpio pins");
 	fflush(stdout);
 
@@ -465,19 +457,14 @@ int main()
 	ti_adc_cleanup();
 	printf("\n cleaned up ADC interface...");
 	fflush(stdout);
-	
-	printf("\n waiting for pthread to join");
-	flag = 0;
 
-	pthread_join(data_exporting_thread, NULL);
-	printf("\n # samples: %d",size);
-	
 	fclose(fp);
 
 	printf("\n file has closed");
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
 }
+
 
 /************************************************************************************
 * SIGINT HANDLER, TODO: improve
@@ -518,46 +505,9 @@ void sigint(int s __attribute__((unused))) {
 	ti_adc_cleanup();
 	printf("\n cleaned up ADC interface...");
 	fflush(stdout);
-	
-	printf("\n waiting for pthread to join...");
-	flag = 0;
-	pthread_join(data_exporting_thread, NULL);
-	printf("\n pthread has returned %d",size);
+
 	fclose(fp);
-	printf("\n file has closed");
+	printf("\n file has closed\n\n");
 	exit(0);
 }
 
-/************************************************************************************
-* PTHREAD
-*************************************************************************************/
-
-void* data_exporting(void *ptr){
-	fp = fopen(VOLT_DATA_TEXT,"a");
-	printf("\n Data file opened...");	
-	
-	//int i = 0;
-	int i = 1;
-
-	usleep(2*1e6); //delay to make sure pthread enters while loop
-
-	// fprintf(fp,"Chan 0\tChan 1\n");
-	fprintf(fp,"Chan 0\n\n");
-	
-	while(i < size-1 && size > 0){
-	    // // printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
-	    // fprintf(fp,"%0.5f\t%0.5f\n",dynamic_buffer.array[i]*scale/1000,dynamic_buffer.array[i+1]*scale/1000);
-	    // i=i+2;
-
-	    if(i%16 == 0){
-	    	fprintf(fp,"%0.5f\n",dynamic_buffer.array[i-1]*scale/1000);
-	    }
-	    else{
-	    	fprintf(fp,"%0.5f\t",dynamic_buffer.array[i-1]*scale/1000);
-	    }
-	    i++;
-	}
-	
-	printf("\n sampling..");
-	return NULL;
-}
