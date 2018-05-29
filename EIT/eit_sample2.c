@@ -98,7 +98,7 @@ int chan1; //current sense channel
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
 int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
 int i_setpoint;
-int cycles = 500;			//specify how many cycles to run
+int cycles = 100;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
 
 
@@ -395,9 +395,9 @@ int main()
 					fflush(stdout);
 				}
 				
-				//record adc raw voltage into buffer (must be an int)
-				insertArray(&dynamic_buffer,chan0);
-				size++;
+				// //record adc raw voltage into buffer (must be an int)
+				// insertArray(&dynamic_buffer,chan0);
+				// size++;
 		    /********************************************************************************************/
 
 				// if(size==1){
@@ -414,11 +414,11 @@ int main()
 		        // printf("\nmuxes disabled...");
 		        // fflush(stdout);
 
-				if((count+1)%16 == 0){
-					fprintf(fp,"%0.5f\n",dynamic_buffer.array[count]*scale/1000);
+				if(j==NODAL_NUM-1){
+					fprintf(fp,"%0.5f\n",chan0*scale/1000);
 				}
 				else{
-					fprintf(fp,"%0.5f\t",dynamic_buffer.array[count]*scale/1000);
+					fprintf(fp,"%0.5f\t",chan0*scale/1000);
 				}
 			}
 		}
