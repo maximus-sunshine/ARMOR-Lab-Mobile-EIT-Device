@@ -60,15 +60,35 @@ int cur_gnd_config(int cur[],int gnd[]){
 *				  -add flag so this can't run unless cur_gnd_config has already been run
 *				  -alternatively, just merge this into cur_gnd_config...
 *****************************************************************************/
-int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]){
+
+/****************************************************************************
+THIS WORKS
+*****************************************************************************/
+// int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]){
+// 	int k = 0;
+// 	int i,j;
+// 	for(i = 0; i < NODAL_NUM; i++){
+// 		for(j = 0; j < NODAL_NUM; j++){
+// 			if((i != j) && (gnd[i] != cur[j])){
+// 				volt[i][k] = cur[j];
+// 				k++;
+// 			}
+// 		}
+// 		k = 0;
+// 	}
+// 	return 0;
+// }
+
+/****************************************************************************
+THIS IS BEING TESTED
+*****************************************************************************/
+int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]){
 	int k = 0;
 	int i,j;
 	for(i = 0; i < NODAL_NUM; i++){
 		for(j = 0; j < NODAL_NUM; j++){
-			if((i != j) && (gnd[i] != cur[j])){
 				volt[i][k] = cur[j];
 				k++;
-			}
 		}
 		k = 0;
 	}

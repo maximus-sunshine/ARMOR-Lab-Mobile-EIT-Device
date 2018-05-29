@@ -74,7 +74,18 @@ int cur_gnd_config(int cur[],int gnd[]);
 *				  -add flag so this can't run unless cur_gnd_config has already been run
 *				  -alternatively, just merge this into cur_gnd_config...
 *****************************************************************************/
-int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]);
+
+/****************************************************************************
+THIS WORKS
+*****************************************************************************/
+// int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]);
+
+/****************************************************************************
+THIS IS BEING TESTED
+*****************************************************************************/
+int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]);
+
+
 
 	
 /****************************************************************************

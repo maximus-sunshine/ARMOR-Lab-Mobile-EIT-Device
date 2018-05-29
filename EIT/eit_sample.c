@@ -74,7 +74,8 @@ FILE* fp;
 //mux pin array declarations
 int current_mux[NODAL_NUM];              // current                                           
 int ground_mux[NODAL_NUM];               // ground
-int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling
+// int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling WORKS
+int voltage_mux[NODAL_NUM][NODAL_NUM];	// Test
 
 //gpio_info structs for all GPIO pins
 gpio_info *current_mux_gpio_info[MUX_PINS];	//mux logic pins
@@ -113,7 +114,7 @@ int chan1; //current sense channel
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
 int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
 int i_setpoint;
-int cycles = 10;			//specify how many cycles to run
+int cycles = 1000;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
 
 
@@ -325,53 +326,93 @@ int main()
 				}
 			}
 
+			//THIS IS THE ONE THAT WORKS
+			/*******************************************************************
+			// //Inner loop, measure voltage
+			// int j;
+			// for(j = 0; j < (NODAL_NUM-2); j++){
+			// 	for(k = 0; k < MUX_PINS; k++){
+			// 		if(CHAN[voltage_mux[i][j]][k]==1){
+			// 			gpio_set(voltage_mux_gpio_info[k]);
+			// 		}
+			// 		else{
+			// 			gpio_clear(voltage_mux_gpio_info[k]);
+			// 		}
+			// 	}
+
+			// 	//enabling muxs
+			// 	for(n = 0;n < 3; n++){
+			// 		gpio_clear(mux_disable_gpio_info[n]);
+			// 	}
+
+			// 	// //test current switches
+			// 	// printf("\n Switching currents...");
+			// 	// fflush(stdout);
+			// 	// int q;
+			// 	// for(q=0;q<20;q++){
+			// 	// 	printf("\n\n current set to %d uA...",(q+1)*100);
+			// 	// 	fflush(stdout);
+			// 	// 	for(i = 0; i< 10; i++){
+			// 	// 		if(CURRENT[q][i]==1){
+			// 	// 			gpio_set(current_switch_gpio_info[i]);
+			// 	// 		}
+			// 	// 		else{
+			// 	// 			gpio_clear(current_switch_gpio_info[i]);
+			// 	// 		}
+			// 	// 	}
+			// 	// 	usleep(2*1e6);
+			// 	// }
+
+			// 	//read ADC
+			// 	chan0 = ti_adc_read_raw(0);
+			// 	chan1 = ti_adc_read_raw(1);
+		 	//  // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+		 	//  fflush(stdout);
+
+		 	//	record adc raw voltage into buffer (must be an int)
+				insertArray(&dynamic_buffer,chan0);
+				insertArray(&dynamic_buffer,chan1);
+				size=size+2;
+		     	// printf("\ninserted Array...");
+		        // fflush(stdout);
+			*************************************************************************************/
+
+			/*************************************************************************************
+			THIS IS THE ONE BEING TESTED
+			*************************************************************************************/
 			//Inner loop, measure voltage
 			int j;
-			for(j = 0; j < (NODAL_NUM-2); j++){
-				for(k = 0; k < MUX_PINS; k++){
+			for(j = 0; j < (NODAL_NUM); j++){
+				
+				if(i==j || ground_mux[i] == current_mux[j]){
+					chan0 = 0;
+				}
+
+				else{
+					for(k = 0; k < MUX_PINS; k++){
 					if(CHAN[voltage_mux[i][j]][k]==1){
 						gpio_set(voltage_mux_gpio_info[k]);
 					}
 					else{
 						gpio_clear(voltage_mux_gpio_info[k]);
 					}
-				}
+					}
 
-				//enabling muxs
-				for(n = 0;n < 3; n++){
-					gpio_clear(mux_disable_gpio_info[n]);
-				}
+					//enabling muxs
+					for(n = 0;n < 3; n++){
+						gpio_clear(mux_disable_gpio_info[n]);
+					}
 
-				// //test current switches
-				// printf("\n Switching currents...");
-				// fflush(stdout);
-				// int q;
-				// for(q=0;q<20;q++){
-				// 	printf("\n\n current set to %d uA...",(q+1)*100);
-				// 	fflush(stdout);
-				// 	for(i = 0; i< 10; i++){
-				// 		if(CURRENT[q][i]==1){
-				// 			gpio_set(current_switch_gpio_info[i]);
-				// 		}
-				// 		else{
-				// 			gpio_clear(current_switch_gpio_info[i]);
-				// 		}
-				// 	}
-				// 	usleep(2*1e6);
-				// }
-
-				//read ADC
-				chan0 = ti_adc_read_raw(0);
-				chan1 = ti_adc_read_raw(1);
-		        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
-		        fflush(stdout);
+					//read ADC
+					chan0 = ti_adc_read_raw(0);
+			        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
+			        fflush(stdout);
+			    }
 				
 				//record adc raw voltage into buffer (must be an int)
 				insertArray(&dynamic_buffer,chan0);
-				insertArray(&dynamic_buffer,chan1);
-				size=size+2;
-		        // printf("\ninserted Array...");
-		        // fflush(stdout);
+				size++;
+		    /********************************************************************************************/
 
 				// if(size==1){
 				// 	pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
@@ -494,14 +535,27 @@ void sigint(int s __attribute__((unused))) {
 void* data_exporting(void *ptr){
 	fp = fopen(VOLT_DATA_TEXT,"a");
 	printf("\n Data file opened...");	
-	int i = 0;
-	usleep(2*1e6); //delay to make sure pthread enters while loop
-	fprintf(fp,"Chan 0\tChan 1\n");
 	
-	while(i < size && size > 1){
-	      // printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
-	      fprintf(fp,"%0.5f\t%0.5f\n",dynamic_buffer.array[i]*scale/1000,dynamic_buffer.array[i+1]*scale/1000);
-	    i=i+2;
+	//int i = 0;
+	int i = 1;
+
+	usleep(2*1e6); //delay to make sure pthread enters while loop
+
+	// fprintf(fp,"Chan 0\tChan 1\n");
+	fprintf(fp,"Chan 0\n\n");
+	
+	while(i < size-1 && size > 0){
+	    // // printf("pthread recorded %d value\n", dynamic_buffer.array[i]);
+	    // fprintf(fp,"%0.5f\t%0.5f\n",dynamic_buffer.array[i]*scale/1000,dynamic_buffer.array[i+1]*scale/1000);
+	    // i=i+2;
+
+	    if(i%16 == 0){
+	    	fprintf(fp,"%0.5f\n",dynamic_buffer.array[i-1]*scale/1000);
+	    }
+	    else{
+	    	fprintf(fp,"%0.5f\t",dynamic_buffer.array[i-1]*scale/1000);
+	    }
+	    i++;
 	}
 	
 	printf("\n waiting for pthread to finish...");
