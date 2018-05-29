@@ -108,7 +108,7 @@ void initArray(RING_BUFFER *ring_buffer, size_t initial_Size){
 *****************************************************************************/
 void insertArray(RING_BUFFER *ring_buffer, int element){
 	
-	if(ring_buffer->index >= ring_buffer->initialSize){sddfsdf
+	if(ring_buffer->index >= ring_buffer->initialSize){
 		ring_buffer->index = 0;
 	}
 	ring_buffer->buffer[ring_buffer->index] = element;
