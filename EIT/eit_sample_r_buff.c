@@ -45,7 +45,7 @@
 #include <sys/time.h>
 #include "includes/gpiolib.h"
 #include "includes/eit_config.h"
-#include "includes/eit.h"
+#include "includes/eit_r_buff.h"
 #include "includes/ti-ads8684.h"
 
 /************************************************************************************
@@ -57,12 +57,13 @@
 /************************************************************************************
 * PTHREAD SETUP
 *************************************************************************************/
-pthread_t data_exporting_thread;
+//pthread_t data_exporting_thread;
+
 //pthread function declaration
-void* data_exporting(void *ptr);
+//void* data_exporting(void *ptr);
 //data file declaration
 FILE* fp;
-
+float volt_reading;
 /************************************************************************************
 * SETUP SIGINT HANDLER
 *************************************************************************************/
@@ -96,7 +97,7 @@ int i_sense_reset_gpio  = I_SENSE_RESET_GPIO;
 
 //variables for pthread and data storage
 RING_BUFFER ring_buffer;
-size_t init_size = 10000;
+size_t init_size = 40000;
 int size = 0;
 int flag = 1;
 
@@ -112,8 +113,11 @@ int chan1; //current sense channel
 //Other
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
 int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
-int cycles = 10;			//specify how many cycles to run
+int cycles = 100;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
+
+char data_buf[100]; 
+char data_point[50];
 
 
 /************************************************************************************
@@ -273,7 +277,10 @@ int main()
 	gettimeofday(&t1, NULL);
   	
 	//start pthread
-	pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+	//pthread_create(&data_exporting_thread, NULL, data_exporting, (void*) NULL);
+	// struct sched_param params;
+	// params.sched_priority = 30;
+	// pthread_setschedparam(data_exporting_thread, SCHED_FIFO, &params);
 	printf("\n pthread created...");
 	fflush(stdout);
 
@@ -281,6 +288,12 @@ int main()
 	fflush(stdout);
 
 	int count = 0;
+
+	void* data_exporting(void *ptr);
+
+	fp = fopen(VOLT_DATA_TXT,"a");
+
+
 	while(count < cycles){
 		count++;
 
@@ -347,14 +360,18 @@ int main()
 
 				//read ADC
 				chan0 = ti_adc_read_raw(0);
-				chan1 = ti_adc_read_raw(1);
+				//chan1 = ti_adc_read_raw(1);
 		        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
 		        fflush(stdout);
 				
 				//record adc raw voltage into buffer (must be an int)
-				insertArray(&ring_buffer,chan0);
+				//insertArray(&ring_buffer,chan0);
+				volt_reading = chan0*(scale/1000);
+				sprintf(data_buf+10,"%.5f",volt_reading);
+
+				//strcat(data_buf, gcvt(volt_reading, 10,data_point));
 				//insertArray(&dynamic_buffer,chan1);
-				size++;
+				// size++;
 		        // printf("\ninserted Array...");
 		        // fflush(stdout);
 
@@ -372,6 +389,8 @@ int main()
 		        // printf("\nmuxes disabled...");
 		        // fflush(stdout);
 	      	}
+	      	fprintf(fp,"%s\n",data_buf);
+	      	sprintf(data_buf,"");
 	    }
  	}
  	//Print timing data to screen!
@@ -412,7 +431,7 @@ int main()
 	
 	printf("waiting for pthread to join\n");
 	flag = 0;
-	pthread_join(data_exporting_thread, NULL);
+	//pthread_join(data_exporting_thread, NULL);
 	fclose(fp);
 	printf("file has closed\n");
 	exit(0);
@@ -460,7 +479,7 @@ void sigint(int s __attribute__((unused))) {
 	
 	printf("waiting for pthread to join\n");
 	flag = 0;
-	pthread_join(data_exporting_thread, NULL);
+	//pthread_join(data_exporting_thread, NULL);
 	fclose(fp);
 	printf("file has closed\n");
 	exit(0);
@@ -469,19 +488,18 @@ void sigint(int s __attribute__((unused))) {
 /************************************************************************************
 * PTHREAD
 *************************************************************************************/
-
-void* data_exporting(void *ptr){
-	fp = fopen(VOLT_DATA_TXT,"a");
-	float volt_reading = 0;
-	while(1){
-		if (ring_buffer.read_index != ring_buffer.index){
-		  volt_reading = readArray(&ring_buffer)*(scale/1000);
-	    fprintf(fp,"%.9f\n",volt_reading);
-		}
-		if( ring_buffer.read_index == ring_buffer.index && flag == 0){	
-			break;
-		}
-	}
-	printf("thread is finished\n");
-	return NULL;
-}
+// void* data_exporting(void *ptr){
+// 	fp = fopen(VOLT_DATA_TXT,"a");
+// 	float volt_reading = 0;
+// 	while(1){
+// 		if (ring_buffer.read_index != ring_buffer.index){
+// 		  	volt_reading = readArray(&ring_buffer)*(scale/1000);
+// 	    	fprintf(fp,"%.9f\n",volt_reading);
+// 		}
+// 		if( ring_buffer.read_index == ring_buffer.index && flag == 0){	
+// 			break;
+// 		}
+// 	}
+// 	printf("thread is finished\n");
+// 	return NULL;
+// }

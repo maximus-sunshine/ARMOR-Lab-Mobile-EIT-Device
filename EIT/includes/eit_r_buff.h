@@ -18,7 +18,7 @@
 
 //NUMBER OF NODES
 
-#define NODAL_NUM 32
+#define NODAL_NUM 16
 
 //NUMBER OF NODES PER SIDE
 #define SIDE_LEN (NODAL_NUM/4) 
@@ -38,7 +38,7 @@ typedef struct {
 /************************************************************** 
 *DATA FILE EXPORT PATH
 ***************************************************************/
-#define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
+#define VOLT_DATA_TXT "/home/debian/MAE156B_Team6/data/data.txt"
 
 
 /************************************************************************************
