@@ -10,6 +10,8 @@
  *	- takes 1 argument, current source setpoint (0-19, 100-2000uA)
  *	- example usage: "sudo ./i_sense_performance.c 4" 
  *		-runs script with 500uA
+ *
+ * (5/20/18) updated declaration of voltage_mux to be a square matrix (the way Ken's lab does it)
  *	
  * compile with "gcc -pthread i_sense_performance.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o i_sense_performance"
  *
@@ -48,7 +50,7 @@
 //mux pin array declarations
 int current_mux[NODAL_NUM];              // current                                           
 int ground_mux[NODAL_NUM];               // ground
-int voltage_mux[NODAL_NUM][NODAL_NUM-2]; // voltage sampling
+int voltage_mux[NODAL_NUM][NODAL_NUM]; // voltage sampling
 
 //gpio_info structs for all GPIO pins
 gpio_info *current_mux_gpio_info[MUX_PINS];	//mux logic pins
@@ -268,7 +270,7 @@ int main()
 	printf("\n\n Setting muxes...\n");
 	fflush(stdout);
 
-	i = config-1;	//set configuration
+	i = config-1;		//set configuration
 	//i = 0;			//set configuration
 
 	//Set current and ground
