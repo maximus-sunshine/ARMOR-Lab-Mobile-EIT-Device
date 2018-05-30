@@ -40,7 +40,6 @@ static int fd_offset[CHANNELS];	// file descriptors for 4 channels (offset)
 static int fd_scale[CHANNELS];	// file descriptors for 4 channels (scale)
 static int fd_enable[CHANNELS];	// file descriptors for 4 channels (enable)
 
-
 //ADC reset pin
 static int adc_rst_dir_fd;		// file descriptor for ADC RST pin (direction)
 static int adc_rst_val_fd;		// file descriptor for ADC RST pin (value)
@@ -61,7 +60,8 @@ static int current_trigger_fd;	// file descriptor for adc current trigger
 /****************************************************************************
 * int ti_adc_init()
 *
-* DESCRIPTION
+* Initializes ADC library by opening file descriptors used by functions defined in this library.
+* THIS DOES NOT ENABLE THE ADC. The ADC must be enabled by pulling the enable pin high. 
 *
 * Inputs :	
 * 

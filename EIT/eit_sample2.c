@@ -279,7 +279,7 @@ int main()
 	struct timeval t1, t2; //time stuff 
 	gettimeofday(&t1, NULL);
 
-	printf("\n\n BEGINNING sample cycle...\n");
+	printf("\n\n BEGINNING sampling: %d cycles...\n",cycles);
 	fflush(stdout);
 
 	int count = 0;

@@ -352,7 +352,7 @@ int main()
 	//Sleep for a little
 	printf("\n\n setpoint: %d uA. Pausing for manual ammeter reading...\n",(current_setpoint+1)*100);
 	fflush(stdout);
-	usleep(3*1e6);
+	usleep(5*1e6);
 
 	//Cleanup
 	printf("\n\nDone, cleaning up...");
