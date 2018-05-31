@@ -14,17 +14,19 @@
  * The Big Kahuna. This is the script that runs on boot. It does everything.
  ***************************************************************************/
 
-typedef struct config_t{
-    int nodal_num;
-    double adc_scale;
-    int adc_offset;
-    int sample_mode;
-    int time;
-    int cycles;
-    int sample_geom;
-    int i_setpoint;
-} config_t;
+/************************************************************************************
+* INCLUDES
+*************************************************************************************/
+#include "includes/ti-ads8684.h"
+#include "includes/gpiolib.h"
+#include "includes/eit_config.h"
+#include "includes/eit.h"
+#include "includes/UI.h"
 
+
+/************************************************************************************
+* ENUMS/DEFINES
+*************************************************************************************/
 enum sample_mode
 {
 	TIMED,
@@ -38,4 +40,27 @@ enum sample_geom
 	ADJACENT,
 };
 
+enum adc_channels
+{
+    NODE,
+    CURRENT_SENSOR,
+    BATTERY,
+};
+
 #define MUX_PINS 5
+#define I_SWTCH_PINS 10
+
+/************************************************************************************
+* STRUCTS
+*************************************************************************************/
+typedef struct config_t{
+    int nodal_num;
+    double adc_scale[CHANNELS];
+    int adc_offset[CHANNELS];
+    int channels[CHANNELS];
+    int sample_mode;
+    int time;
+    int cycles;
+    int sample_geom;
+    int i_setpoint;
+} config_t;
