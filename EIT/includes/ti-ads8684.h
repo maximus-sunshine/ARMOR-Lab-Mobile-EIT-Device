@@ -25,8 +25,8 @@
 #define SYSFS_TRIG_NAME		"trigger1"
 #define MAX_BUF 64
 
-float SCALES_AVAIL[3] {0.312504320, 0.156254208, 0.078127104};
-int OFFSETS_AVAIL[2] {-32768, 0};
+#define SCALES_AVAIL	{0.312504320, 0.156254208, 0.078127104}
+#define OFFSETS_AVAIL  	{-32768, 0}
 
 /***************************************************************
 * FUNCTION DECLARATIONS

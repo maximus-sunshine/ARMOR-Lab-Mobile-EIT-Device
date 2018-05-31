@@ -40,6 +40,10 @@ static int fd_offset[CHANNELS];	// file descriptors for 4 channels (offset)
 static int fd_scale[CHANNELS];	// file descriptors for 4 channels (scale)
 static int fd_enable[CHANNELS];	// file descriptors for 4 channels (enable)
 
+//available scales and offsets
+static int scales_avail[3] = SCALES_AVAIL;
+static int offsets_avail[2] = OFFSETS_AVAIL;
+
 //Buffer
 static int buf_length_fd;		// file descriptor for buffer length
 static int buf_enable_fd;		// file descriptor for buffer length
@@ -115,6 +119,8 @@ int ti_adc_init()
 
 	/* BUFFER */
 	//open file descriptors for buffer. (length and enable)
+	char buf1[MAX_BUF];
+	char buf2[MAX_BUF];
 	snprintf(buf1, sizeof(buf1), IIO_DIR ADC_NAME "/buffer/length");
 	snprintf(buf2, sizeof(buf2), IIO_DIR ADC_NAME "/buffer/enable");
 	
@@ -153,7 +159,7 @@ int ti_adc_init()
 	snprintf(buf, sizeof(buf), IIO_DIR ADC_NAME "/trigger/current_trigger");
 	current_trigger_fd = open(buf, O_WRONLY);
 
-	snprintf(buf, sizeof(buf), SYSFS_TRIG);
+	snprintf(buf, sizeof(buf), SYSFS_TRIG_NAME);
 	if(write(current_trigger_fd, buf, sizeof(buf))<0){
 		perror("ERROR in ti_adc_init, failed to write to current_trigger\n");
 		fprintf(stderr, "maybe kernel or device tree is too old\n");
@@ -162,9 +168,6 @@ int ti_adc_init()
 
 	/* ADC ENABLE */
 	// //open file descriptors for ADC reset pins and set direction to out
-	// char buf1[MAX_BUF];
-	// char buf2[MAX_BUF];
-	
 	// snprintf(buf1, sizeof(buf1), "/sys/class/gpio/gpio13/direction");
 	// snprintf(buf2, sizeof(buf2), "/sys/class/gpio/gpio13/value");
 	
@@ -265,8 +268,8 @@ int ti_adc_set_offset(int ch, int offset)
 		fprintf(stderr,"ERROR: in ti_adc_set_offset, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}	
-	if(unlikely(offset != OFFSETS_AVAIL[0] && offset != OFFSETS_AVAIL[1])){
-		fprintf(stderr,"ERROR: in ti_adc_set_offset, offset must be either %d or %d\n", OFFSETS_AVAIL[0], OFFSETS_AVAIL[1]);
+	if(unlikely(offset != offsets_avail[0] && offset != offsets_avail[1])){
+		fprintf(stderr,"ERROR: in ti_adc_set_offset, offset must be either %d or %d\n", offsets_avail[0], offsets_avail[1]);
 		return -1;
 	}
 
@@ -292,8 +295,8 @@ int ti_adc_set_scale(int ch, double scale)
 		fprintf(stderr,"ERROR: in ti_adc_set_scale, adc channel must be between 0 & %d\n", CHANNELS-1);
 		return -1;
 	}
-	if(unlikely(scale != SCALES_AVAIL[0] && scale != SCALES_AVAIL[1] && scale != SCALES_AVAIL[2])){
-		fprintf(stderr,"ERROR: in ti_adc_set_scale, scale must be %d, %d, or %d\n", SCALES_AVAIL[0], SCALES_AVAIL[1], SCALES_AVAIL[2]);
+	if(unlikely(scale != scales_avail[0] && scale != scales_avail[1] && scale != scales_avail[2])){
+		fprintf(stderr,"ERROR: in ti_adc_set_scale, scale must be %d, %d, or %d\n", scales_avail[0], scales_avail[1], scales_avail[2]);
 		return -1;
 	}
 
