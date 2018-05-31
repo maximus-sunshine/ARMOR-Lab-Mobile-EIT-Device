@@ -41,7 +41,7 @@ static int fd_scale[CHANNELS];	// file descriptors for 4 channels (scale)
 static int fd_enable[CHANNELS];	// file descriptors for 4 channels (enable)
 
 //available scales and offsets
-static int scales_avail[3] = SCALES_AVAIL;
+static double scales_avail[3] = SCALES_AVAIL;
 static int offsets_avail[2] = OFFSETS_AVAIL;
 
 //Buffer
