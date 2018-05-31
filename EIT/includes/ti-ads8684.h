@@ -1,18 +1,32 @@
 /*****************************************************************
- * MAE 156B Spring 2018 Team 6
- *
+ * ---------------------------------------------------------------
+ * ARMOR Lab @UC San Diego, Kenneth Loh Ph.D
+ * 
+ * MAE 156B Spring 2018 Team 6: Warfighter Protection
+ * 	- Maxwell Sun		(maxsun96@gmail.com)
+ *	- Jacob Rutheiser	(jrutheiser@gmail.com)
+ *	- Matthew Williams	(mwilliams31243@gmail.com)
+ *	- Aaron Gunn		(gunnahg@gmail.com)
+ * ---------------------------------------------------------------
+ * 
+ * ti-ads8684.h
+ * 
  * Basic interface for the TI-ADS8684 ADC, an iio device
- *
- * Copied from James Strawson's GitHub
- *******************************************************************/
+ ********************************************************************/
 
 #ifndef TI_ADS8684_H
 #define TI_ADS8684_H
 
 //ADC characteristics
 #define CHANNELS 4
-#define IIO_DIR "/sys/bus/iio/devices/iio:device1"
+#define IIO_DIR				"/sys/bus/iio/devices/"
+#define ADC_NAME 			"iio:device1"
+#define HRTIMER_TRIG_NAME	"trigger0"
+#define SYSFS_TRIG_NAME		"trigger1"
 #define MAX_BUF 64
+
+float SCALES_AVAIL[3] {0.312504320, 0.156254208, 0.078127104};
+int OFFSETS_AVAIL[2] {-32768, 0};
 
 /***************************************************************
 * FUNCTION DECLARATIONS
@@ -21,148 +35,158 @@
 /****************************************************************************
 * int ti_adc_init()
 *
-* DESCRIPTION
+* Initializes ADC library by opening file descriptors used by functions defined in this library.
+* THIS DOES NOT ENABLE THE ADC. The ADC must be enabled by pulling the enable pin high. 
+* This function sets an init_flag high.
 *
-* Inputs :	
+* Inputs : none
 * 
-* Outputs:	
+* Outputs: returns 0 on succes, -1 on failure
 *****************************************************************************/
 int ti_adc_init();
 
 /****************************************************************************
 * int ti_adc_cleanup()
 *
-* DESCRIPTION
+* Safely cleans up ADC library by closing all file descriptors. Sets init_flag low.
 *
-* Inputs :	
+* Inputs : none
 * 
-* Outputs:	
+* Outputs: returns 0 on success
 *****************************************************************************/
 int ti_adc_cleanup();
 
 /****************************************************************************
 * int ti_adc_enable()
 *
-* Set ADC Reset pin to high
+* Sets ADC reset pin high
 *
-* TODO: ERROR HANDLING 
-*
-* Inputs : 
-* Outputs:	
+* Inputs : none
+* Outputs: returns 0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_enable();
 
 /****************************************************************************
 * int ti_adc_disable()
 *
-* Set ADC Reset pin to low
+* Sets ADC reset pin low
 *
-* TODO: ERROR HANDLING 
-*
-* Inputs : 
-* Outputs:	
+* Inputs : none
+* Outputs: returns 0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_disable();
 
 /****************************************************************************
 * int ti_adc_set_offset(int ch, int offset)
 *
-* DESCRIPTION
+* Sets offset of specified channel
 *
-* Inputs :	
+* Inputs : 	ch, 	channel [0-4]
+*			offset,	offset 	[-32768, 0]
 * 
-* Outputs:	
+* Outputs:	0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_set_offset(int ch, int offset);
 
-/****************************************************************************
+/**************************************************************************************************************
 * int ti_adc_set_scale(int ch, float scale)
 *
-* DESCRIPTION
+* Sets offset of specified channel
 *
-* Inputs :	
+* Inputs : 	ch, 	channel [0-4]
+*			scale,	scale 	[0.312504320, 0.156254208, 0.078127104] corresponds to 20.48V, 10.24V, or 5.12V FSR
 * 
-* Outputs:	
-*****************************************************************************/
+* Outputs:	0 on success, -1 on failure
+***************************************************************************************************************/
 int ti_adc_set_scale(int ch, double scale);
 
 /****************************************************************************
 * int ti_adc_enable_channel(int ch)
 *
-* DESCRIPTION
+* Enables specified channel for buffered scanning
 *
-* Inputs :	
+* Inputs :	ch,	channel [0-4]
 * 
-* Outputs:	
+* Outputs:	0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_enable_channel(int ch);
 
 /****************************************************************************
 * int ti_adc_disable_channel(int ch)
 *
-* DESCRIPTION
+* Disables specified channel for buffered scanning
 *
-* Inputs :	
+* Inputs :	ch,	channel [0-4]
 * 
-* Outputs:	
+* Outputs:	0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_disable_channel(int ch);
 
 /****************************************************************************
 * int ti_adc_set_buf_length()
 *
-* DESCRIPTION
+* Sets buffer length
 *
-* Inputs :	
+* Inputs :	length, length of buffer (integer)
 * 
-* Outputs:	
+* Outputs:	0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_set_buf_length(int length);
 
 /****************************************************************************
-* int ti_adc_set_sample_rate(int length)
+* int ti_adc_set_hrtimer_freq(int freq)
 *
-* DESCRIPTION
+* Sets hrtimer_trigger frequency
 *
-* Inputs :	
+* Inputs :	freq, hrtimer frequency (integer?)
 * 
-* Outputs:	
+* Outputs:	0 on success, -1 on failure
 *****************************************************************************/
-int ti_adc_set_sample_rate(int freq);
+int ti_adc_set_hrtimer_freq(int freq);
 
 /****************************************************************************
-* int ti_adc_enable_buf(int ch)
+* int ti_adc_enable_buf()
 *
-* DESCRIPTION
+* Enables buffered scanning of ADC
 *
-* Inputs :	
+* Inputs : none
 * 
-* Outputs:	
+* Outputs: 0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_enable_buf();
 
 /****************************************************************************
 * int ti_adc_disable_buf(int ch)
 *
-* DESCRIPTION
+* Disables buffered scanning of ADC
 *
-* Inputs :	
+* Inputs : none
 * 
-* Outputs:	
+* Outputs: 0 on success, -1 on failure
 *****************************************************************************/
 int ti_adc_disable_buf();
 
 /****************************************************************************
 * int ti_adc_read_raw(int ch)
 *
-* DESCRIPTION
+* Reads raw, 16-bit value of specified ADC channel
 *
-* Inputs :	
+* Inputs : ch,	channel [0-4]
 * 
-* Outputs:	
+* Outputs: ADC measurement on success, -1 on failure
 *****************************************************************************/
 int ti_adc_read_raw(int ch);
 
+/****************************************************************************
+* int ti_adc_sysfs_read()
+*
+* Writes to sysfs trigger for a buffered ADC scan
+*
+* Inputs : none
+* 
+* Outputs: 0 on success, -1 on failure
+*****************************************************************************/
+int ti_adc_sysfs_read();
 
 
 #endif //TI_ADS8684_H
