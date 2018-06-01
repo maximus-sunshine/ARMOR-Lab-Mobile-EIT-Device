@@ -64,3 +64,19 @@ typedef struct config_t{
     int sample_geom;
     int i_setpoint;
 } config_t;
+
+/************************************************************************************
+* FUNCTIONS
+*************************************************************************************/
+int eit_gpio_attach(int gpio_pin, gpio_info *info){
+    int bank, mask;
+    bank = gpio_pin/32;
+    mask = bit(gpio_pin%32);
+    info = gpio_attach(bank, mask, GPIO_OUT);
+    if(info == NULL){
+        perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
+        fprintf(stderr, "maybe device tree is too old or the gpio pin is already\n");
+        return -1;
+    }
+    return 0;
+}

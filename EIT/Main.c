@@ -82,12 +82,16 @@ int main(){
 	//initialize gpio_lib
 	if(gpio_init()){
 		fprintf(stderr, "\n gpio_init failed with %i", gpio_errno);
+		exit(1);
 	}
 	printf("\n gpiolib intialized...");
 	fflush(stdout);	
 
 	//initialize ADC library
-	ti_adc_init();
+	if(ti_adc_init()<0){
+		fprintf(stderr, "\n ti_adc_init failed\n");
+		exit(1);
+	};
 	printf("\n ADC interface initialized...");
 	fflush(stdout);
 
@@ -110,39 +114,23 @@ int main(){
 
 	//attach gpio pins
 	int bank, mask;
-	for(i = 0; i < MUX_PINS; i++){										//current
-		bank = current_mux_gpio[i]/32;
-		mask = bit(current_mux_gpio[i]%32);
-		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
+	for(i = 0; i < MUX_PINS; i++){
+		if(eit_gpio_attach(current_mux_gpio[i], current_mux_gpio_info[i])<0){
+			perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
+        	fprintf(stderr, "maybe device tree is too old or the gpio pin is already\n");
+			exit(1);
+		};																		//current
+		eit_gpio_attach(ground_mux_gpio[i], ground_mux_gpio_info[i]);			//ground
+		eit_gpio_attach(voltage_mux_gpio[i], voltage_mux_gpio_info[i]);			//voltage
 	}
-	for(i = 0; i < MUX_PINS; i++){										//ground   
-		bank = ground_mux_gpio[i]/32;
-		mask = bit(ground_mux_gpio[i]%32);
-		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
+	for(i = 0; i < 10; i++){
+		eit_gpio_attach(current_switch_gpio[i], current_switch_gpio_info[i]);	//current source switches
 	}
-	for(i = 0; i < MUX_PINS; i++){										//voltage
-		bank = voltage_mux_gpio[i]/32;
-		mask = bit(voltage_mux_gpio[i]%32);
-		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	for(i = 0; i < 3; i++){
+		eit_gpio_attach(mux_disable_gpio[i], mux_disable_gpio_info[i]);			//mux disable
 	}
-	for(i = 0; i < 10; i++){											//current source switch
-		int bank = current_switch_gpio[i]/32;
-		int mask = bit(current_switch_gpio[i]%32);
-		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
-	}
-	for(i = 0; i < 3; i++){												//mux disable
-		int bank = mux_disable_gpio[i]/32;
-		int mask = bit(mux_disable_gpio[i]%32);
-		mux_disable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
-	}
-
-	bank = adc_reset_gpio/32;											//adc reset
-	mask = bit(adc_reset_gpio%32);
-	adc_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
-
-	bank = i_sense_reset_gpio/32;										//current sensor reset
-	mask = bit(i_sense_reset_gpio%32);
-	i_sense_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+	eit_gpio_attach(adc_reset_gpio, adc_reset_gpio_info);						//adc reset
+	eit_gpio_attach(i_sense_reset_gpio, i_sense_reset_gpio_info);				//current sensor reset
 
 	printf("\n gpio pins attached...");
 	fflush(stdout);
@@ -296,7 +284,6 @@ int sample(){
 	fflush(stdout);
 	return 0;
 }
-
 
 /************************************************************************************
 * PTHREADS
