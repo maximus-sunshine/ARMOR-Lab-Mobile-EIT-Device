@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <fcntl.h> // for open
 #include <unistd.h> // for close
-#include "../includes/ti-ads8684.h"
+#include "../includes/ti-ads8684_data.h"
 
 // preprocessor macros
 #define unlikely(x)	__builtin_expect (!!(x), 0)
