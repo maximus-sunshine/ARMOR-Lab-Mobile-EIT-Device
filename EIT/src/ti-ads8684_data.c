@@ -436,7 +436,7 @@ int ti_adc_disable_buf()
 	return 0;
 }
 
-char ti_adc_read_raw(int ch)
+char* ti_adc_read_raw(int ch)
 {
 	//adc_raw_buff is defined in ti-ads8684 header
 	
