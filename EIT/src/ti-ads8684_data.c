@@ -436,9 +436,9 @@ int ti_adc_disable_buf()
 	return 0;
 }
 
-char ti_adc_read_raw(int ch)
+char* ti_adc_read_raw(int ch)
 {
-	char buf[6];
+	//adc_raw_buff is defined in ti-ads8684 header
 	
 	//sanity checks
 	if(unlikely(!init_flag)){
@@ -453,12 +453,12 @@ char ti_adc_read_raw(int ch)
 		perror("ERROR: in ti_adc_read_raw, failed to seek to beginning of FD");
 		return "-1";
 	}
-	if(unlikely(read(fd_raw[ch], buf, sizeof(buf))<0)){
+	if(unlikely(read(fd_raw[ch], adc_raw_buff, sizeof(adc_raw_buff))<0)){
 		perror("ERROR in ti_adc_read_raw, can't read iio adc fd");
 		return "-1";
 	}
 	
-	return buf;
+	return adc_raw_buff;
 }
 
 int ti_adc_sysfs_read()
