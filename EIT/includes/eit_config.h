@@ -38,7 +38,6 @@
 #define I_SENSE_RESET_GPIO 27	//p8_17
 
 //CURRENT LOGIC PINS
-
 #define CUR_SOURCE_A4  26   //p8_14
 #define CUR_SOURCE_A7  23   //p8_13
 #define CUR_SOURCE_A8  47   //p8_15
@@ -102,9 +101,9 @@
 #define CUR_ROW 20
 #define CUR_COL 10
 
-//MUX TRUTH TABLE DECLARATION 
-//rows:		nodes 1 to 32
-//colums:	mux logic pins {A4,A3,A2,A1,A0}
+//MUX TRUTH TABLE
+//[*][ ]:	nodes 1 to 32
+//[ ][*]:	mux logic pins {A4,A3,A2,A1,A0}
 int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1},
 								 {0,0,1,0,0},{0,0,1,0,1},{0,0,1,1,0},{0,0,1,1,1},
 								 {0,1,0,0,0},{0,1,0,0,1},{0,1,0,1,0},{0,1,0,1,1},
@@ -115,8 +114,8 @@ int CHAN[LOGIC_ROW][LOGIC_COL] = {{0,0,0,0,0},{0,0,0,0,1},{0,0,0,1,0},{0,0,0,1,1
 								 {1,1,1,0,0},{1,1,1,0,1},{1,1,1,1,0},{1,1,1,1,1}};
 
 //CURRENT SOURCE SWITCHING TRUTH TABLE
-//rows:		100ua to 20000ua in 100ua steps
-//columns:	logic pins {A4,A5,A6,A7,A8,A9,A10,A11,A12,A13} 
+//[*][ ]:	100ua to 20000ua in 100ua steps
+//[ ][*]:	logic pins {A4,A5,A6,A7,A8,A9,A10,A11,A12,A13} 
 int CURRENT[CUR_ROW][CUR_COL] = {{1,0,0,0,0,0,0,0,0,0},{1,1,0,0,0,0,0,0,0,0},
 								 {1,1,1,0,0,0,0,0,0,0},{1,1,1,1,0,0,0,0,0,0},
 								 {1,1,1,1,1,0,0,0,0,0},{1,1,1,1,1,1,0,0,0,0},

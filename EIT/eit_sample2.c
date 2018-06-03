@@ -96,9 +96,9 @@ int chan1; //current sense channel
 
 //Other
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
-int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
+int current_setpoint = 0;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
 int i_setpoint;
-int cycles = 1000;			//specify how many cycles to run
+int cycles = 100;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
 
 
@@ -224,6 +224,9 @@ int main()
 	//TODO: put scales and offsets in header file
 	ti_adc_set_scale(0, scale); //chan0
 	ti_adc_set_offset(0, 0);
+
+	ti_adc_set_scale(1, scale); //chan2
+	ti_adc_set_offset(1, 0);
 
 	ti_adc_set_scale(2, scale); //chan2
 	ti_adc_set_offset(2, 0);

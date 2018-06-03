@@ -27,12 +27,11 @@
 /************************************************************** 
 *ARRAY STRUCTURE FOR BUFFER
 ****************************************************************/
-typedef struct {
-	
-	size_t used; //# of elements that have been put into array
-	size_t size; //size of array
-	int *array; // pointer array
-} Array; //name of struct
+// typedef struct {	
+// 	size_t used; //# of elements that have been put into array
+// 	size_t size; //size of array
+// 	int *array; // pointer array
+// } Array; //name of struct
 
 /************************************************************** 
 *DATA FILE EXPORT PATH
@@ -99,7 +98,7 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]);
 * 
 * TODO: Add safety checks
 *****************************************************************************/
-void initArray(Array *a, size_t initialSize);
+// void initArray(Array *a, size_t initialSize);
 	
 
 /****************************************************************************
@@ -113,7 +112,7 @@ void initArray(Array *a, size_t initialSize);
 * 
 * TODO: Add safety checks
 *****************************************************************************/
-void insertArray(Array *a, int element);
+//void insertArray(Array *a, int element);
 
 /****************************************************************************
 * void sigint(int s __attribute__((unused)))
