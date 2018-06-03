@@ -203,8 +203,8 @@ int sample(){
 	fflush(stdout);
 
 	//TODO: set up data writing
-  char raw_buf[8];
-  fp = fopen(VOLT_DATA_TEXT,"w");
+  	char raw_buf[8];
+ 	fp = fopen(VOLT_DATA_TEXT,"w");
   
 	//execute sampling
 	while((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS)
@@ -241,10 +241,10 @@ int sample(){
 			for(j = 0; j < (NODAL_NUM); j++){
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
-        //writing 0 to text file
+       					 //writing 0 to text file
 					strcpy(raw_buf, "0");
-		      strcat(raw_buf, "\n");
-		      fputs(raw_buf,fp);
+		      			strcat(raw_buf, "\n");
+		     			fputs(raw_buf,fp);
 				}
 
 				else{
@@ -263,12 +263,12 @@ int sample(){
 					}
 
 					//read ADC
-				  //data = ti_adc_read_raw(NODE);
+				 	//data = ti_adc_read_raw(NODE);
           
-          //write ADC output to file
-          strcpy(raw_buf, ti_adc_read_raw(NODE));
-		      strcat(raw_buf, "\n");
-		      fputs(raw_buf,fp);
+         			        //write ADC output to file
+        				strcpy(raw_buf, ti_adc_read_raw(NODE));
+		     			strcat(raw_buf, "\n");
+		      			fputs(raw_buf,fp);
           
 			        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,data*scale/1000);
 					//fflush(stdout);
@@ -289,11 +289,13 @@ int sample(){
 	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",NODAL_NUM, cycles, usec/1e6, cycles/(usec/1e6));
 	fflush(stdout);
   
-  //closing raw text file
-  fclose(fp);
+  	//closing raw text file
+ 	fclose(fp);
   
-  //converting raw adc values to voltage measurements
-  data_conversion();
+  	//converting raw adc values to voltage measurements
+	printf("Converting and formatting data\n");
+  	data_conversion();
+	printf("Conversion complete\n");
 	return 0;
 }
 
