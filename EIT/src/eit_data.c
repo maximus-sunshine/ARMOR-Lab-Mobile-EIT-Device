@@ -105,7 +105,7 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]){
 * Reads raw voltages from VOLT_DATA_TEXT
 * Preforms voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
 * Places all voltages for one cycle on a tab seberated row
-* Original raw file is removed and tempory file is renamed to original file
+* Original raw file is removed and temporary file is renamed to original file
 *
 * Inputs :	
 
@@ -115,6 +115,7 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]){
 int data_conversion(){
 	float volt_value;
 	char data_buff[8];
+	double volt_scale = 0.078127104;
 	int index = 0;
 
 	
@@ -130,7 +131,7 @@ int data_conversion(){
    	}
 
 	while(fgets(data_buff,8,fp)!= NULL){
-		volt_value = atoi(data_buff)*(scale/1000);
+		volt_value = atoi(data_buff)*(volt_scale/1000);
 
 		if(index == (NODAL_NUM-1)){ 	
 			fprintf(fp_temp,"%.9f\n",volt_value);
