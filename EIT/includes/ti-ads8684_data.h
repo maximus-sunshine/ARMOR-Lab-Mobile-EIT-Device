@@ -181,7 +181,7 @@ int ti_adc_disable_buf();
 * 
 * Outputs: ADC measurement string on success, "-1" on failure
 *****************************************************************************/
-char ti_adc_read_raw(int ch);
+char* ti_adc_read_raw(int ch);
 
 /****************************************************************************
 * int ti_adc_sysfs_read()
