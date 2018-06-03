@@ -11,7 +11,7 @@
 ***************************************************************/
 
 #include <stdio.h>
-#include "../includes/eit.h"
+#include "../includes/eit_data.h"
 #include <malloc.h>
 
 /************************************************************************************
@@ -120,14 +120,14 @@ int data_conversion(){
 	
 	fp = fopen(VOLT_DATA_TEXT,"r");
 	if(NULL == fp) {
-        perror("ERROR in opening raw data file\n");
+        	perror("ERROR in opening raw data file\n");
 		return -1;
-    }
+    	}
 	fp_temp = fopen(TEMP_VOLT_DATA_TEXT,"w");
 	if(NULL == fp_temp) {
-        perror("ERROR in creating text file for converted/formatted data\n");
+        	perror("ERROR in creating text file for converted/formatted data\n");
 		return -1;
-    }
+   	}
 
 	while(fgets(data_buff,8,fp)!= NULL){
 		volt_value = atoi(data_buff)*(scale/1000);
