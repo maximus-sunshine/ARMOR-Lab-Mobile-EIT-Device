@@ -264,7 +264,7 @@ int main()
 	***********************************/
 	fp = fopen(VOLT_DATA_TEXT,"w");
 	printf("\n Data file opened...");
-  char raw_buf[8];
+ 	char raw_buf[8];
 
 	/**********************************
 	* EXECUTE SAMPLING
@@ -358,10 +358,10 @@ int main()
 			for(j = 0; j < (NODAL_NUM); j++){
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
-          //writing 0 to text file
-          strcpy(raw_buf, "0");
-		      strcat(raw_buf, "\n");
-		      fputs(raw_buf,fp);
+          				//writing 0 to text file
+          				strcpy(raw_buf, "0");
+		      			strcat(raw_buf, "\n");
+		      			fputs(raw_buf,fp);
 				}
 
 				else{
@@ -382,10 +382,10 @@ int main()
 					//read ADC
 					//chan0 = ti_adc_read_raw(0);
           
-          //writing adc measurement to file
-          strcpy(raw_buf, ti_adc_read_raw(0));
-		      strcat(raw_buf, "\n");
-	      	fputs(raw_buf,fp);
+          				//writing adc measurement to file
+          				strcpy(raw_buf, ti_adc_read_raw(0));
+		      			strcat(raw_buf, "\n");
+	      				fputs(raw_buf,fp);
           
           
 			        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
@@ -450,8 +450,8 @@ int main()
   
 	fclose(fp);
   
-  printf("Converting and formatting datan\n");
-  data_conversion();
+  	printf("Converting and formatting datan\n");
+ 	data_conversion();
 	printf("Conversion/Formatting complete\n");
 	//fflush(stdout);
 }
@@ -498,8 +498,8 @@ void sigint(int s __attribute__((unused))) {
 	fflush(stdout);
 
 	fclose(fp);
-  printf("Converting and formatting datan\n");
-  data_conversion();
+  	printf("Converting and formatting datan\n");
+  	data_conversion();
 	printf("Conversion/Formatting complete\n");
 	exit(0);
 }
