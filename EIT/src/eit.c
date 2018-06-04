@@ -27,17 +27,18 @@
 * 
 * Outputs:	TODO: return -1 on failure
 ******************************************************************************/
-int cur_gnd_config(int cur[],int gnd[]){
+int cur_gnd_config(int nodal_num, int cur[],int gnd[]){
 	int i;
-	int node_index = 3*SIDE_LEN;
-	for(i=0; i < NODAL_NUM; i++){
+	int side_len = (nodal_num/4); 
+	int node_index = 3*side_len;
+	for(i=0; i < nodal_num; i++){
 		cur[i] = i;
 		gnd[i] = node_index - 1;
 		node_index = node_index - 1;
-		if((node_index % (SIDE_LEN))==0){
-			node_index = node_index + (NODAL_NUM/2);
-			if (node_index > NODAL_NUM){
-				node_index = node_index % NODAL_NUM;
+		if((node_index % (side_len))==0){
+			node_index = node_index + (nodal_num/2);
+			if (node_index > nodal_num){
+				node_index = node_index % nodal_num;
 			}
 		}
 	}
@@ -82,11 +83,11 @@ THIS WORKS
 /****************************************************************************
 THIS IS BEING TESTED
 *****************************************************************************/
-int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]){
+int volt_samp_config(int nodal_num, int cur[], int gnd[], int volt[][nodal_num]){
 	int k = 0;
 	int i,j;
-	for(i = 0; i < NODAL_NUM; i++){
-		for(j = 0; j < NODAL_NUM; j++){
+	for(i = 0; i < nodal_num; i++){
+		for(j = 0; j < nodal_num; j++){
 				volt[i][k] = cur[j];
 				k++;
 		}

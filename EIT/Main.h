@@ -3,10 +3,10 @@
  * ARMOR Lab @UC San Diego, Kenneth Loh Ph.D
  * 
  * MAE 156B Spring 2018 Team 6: Warfighter Protection
- * 	- Maxwell Sun		(maxsun96@gmail.com)
- *	- Jacob Rutheiser	(jrutheiser@gmail.com)
- *	- Matthew Williams	(mwilliams31243@gmail.com)
- *	- Aaron Gunn		(gunnahg@gmail.com)
+ *  - Maxwell Sun       (maxsun96@gmail.com)
+ *  - Jacob Rutheiser   (jrutheiser@gmail.com)
+ *  - Matthew Williams  (mwilliams31243@gmail.com)
+ *  - Aaron Gunn        (gunnahg@gmail.com)
  * ------------------------------------------------------------------------
  * 
  * Main.h
@@ -17,11 +17,18 @@
 /************************************************************************************
 * INCLUDES
 *************************************************************************************/
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <stdlib.h>     // for atoi
+#include <fcntl.h>      // for open
+#include <unistd.h>     // for close
+#include <stdio.h>      
+#include <string.h>
+#include <errno.h>
 #include <pthread.h>
+#include <malloc.h>
+#include <sys/signal.h>
 #include <sys/time.h>
-#include <signal.h>
 
 #include "includes/ti-ads8684.h"
 #include "includes/gpiolib.h"
@@ -34,15 +41,15 @@
 *************************************************************************************/
 enum sample_mode
 {
-	TIMED,
-	CYCLES,
-	CONTINUOUS,
+    TIMED,
+    CYCLES,
+    CONTINUOUS,
 };
 
 enum sample_geom
 {
-	ACROSS,
-	ADJACENT,
+    ACROSS,
+    ADJACENT,
 };
 
 enum adc_channels
@@ -98,7 +105,7 @@ int eit_gpio_attach(int gpio_pin, gpio_info *info){
     info = gpio_attach(bank, mask, GPIO_OUT);
     if(info == NULL){
         perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-        fprintf(stderr, "maybe device tree is too old or the gpio pin is already\n");
+        fprintf(stderr, "maybe device tree is too old or the gpio pin is already exported\n");
         return -1;
     }
     return 0;

@@ -1,5 +1,5 @@
 /***************************************************************************
- * ------------------------------------------------------------------------
+ * -------------------------------------------------------------------------
  * ARMOR Lab @UC San Diego, Kenneth Loh Ph.D
  * 
  * MAE 156B Spring 2018 Team 6: Warfighter Protection
@@ -7,7 +7,7 @@
  *	- Jacob Rutheiser	(jrutheiser@gmail.com)
  *	- Matthew Williams	(mwilliams31243@gmail.com)
  *	- Aaron Gunn		(gunnahg@gmail.com)
- * ------------------------------------------------------------------------
+ * -------------------------------------------------------------------------
  * 
  * Main.c (compile with 'gcc -pthread Main.c src/eit.c src/gpiolib.c src/ti-ads8684.c -o Main')
  * 
@@ -23,13 +23,13 @@
 * STRUCTS
 *************************************************************************************/
 config_t config = {
-    .nodal_num		= 32,
+    .nodal_num		= 8,
     .adc_scale		= {0.078127104,0.078127104,0.078127104,0.078127104},
     .adc_offset		= {0,0,0,0},
     .channels		= {1,0,0,0},
     .sample_mode	= CYCLES,
-    .time			= 20,
-    .cycles			= 100,
+    .time			= 5,
+    .cycles			= 10,
     .sample_geom	= ACROSS,
     .i_setpoint		= 100,
 };
@@ -37,11 +37,6 @@ config_t config = {
 /************************************************************************************
 * SETUP
 *************************************************************************************/
-//mux array declarations
-int current_mux[NODAL_NUM];				// current                                           
-int ground_mux[NODAL_NUM];				// ground
-int voltage_mux[NODAL_NUM][NODAL_NUM];	// voltage
-
 // // gpio pin IDs, see eit_config.h
 // int current_mux_gpio[MUX_PINS]			= CURRENT_MUX_GPIO;
 // int ground_mux_gpio[MUX_PINS]			= GROUND_MUX_GPIO;
@@ -126,15 +121,50 @@ int main(){
 	}
 
 	//attach gpio pins
-	if(attach_all_gpio()<0){
-		perror("\nERROR: unable to attach gpio pins, exiting...\n");
-		fprintf(stderr, "maybe device tree is too old or pin is already exported");	
-		exit(1);
+    int bank, mask;
+	for(i = 0; i < MUX_PINS; i++){
+		bank = current_mux_gpio[i]/32;
+		mask = bit(current_mux_gpio[i]%32);
+		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
+	//attach ground gpio pins
+	for(i = 0; i < MUX_PINS; i++){                            
+		bank = ground_mux_gpio[i]/32;
+		mask = bit(ground_mux_gpio[i]%32);
+		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
+	}
+	//attach voltage gpio pins
+	for(i = 0; i < MUX_PINS; i++){                            
+		bank = voltage_mux_gpio[i]/32;
+		mask = bit(voltage_mux_gpio[i]%32);
+		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	//attach current switch gpio pins
+	for(i = 0; i < 10; i++){                            
+		int bank = current_switch_gpio[i]/32;
+		int mask = bit(current_switch_gpio[i]%32);
+		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	//attach mux enable gpio pins
+	for(i = 0; i < 3; i++){                            
+		int bank = mux_disable_gpio[i]/32;
+		int mask = bit(mux_disable_gpio[i]%32);
+		mux_disable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
+	}
+	//adc reset attach
+	bank = adc_reset_gpio/32;
+	mask = bit(adc_reset_gpio%32);
+	adc_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+	//i sense reset attach
+	bank = i_sense_reset_gpio/32;
+	mask = bit(i_sense_reset_gpio%32);
+	i_sense_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
+
 	printf("\n gpio pins attached...");
 	fflush(stdout);
 
 	//enable ADC
+	printf("\n enabling ADC...");
 	gpio_set(adc_reset_gpio_info);
 	printf("\n ADC enabled...");
 	fflush(stdout);
@@ -177,9 +207,9 @@ int main(){
 	printf("\n cleaned up ADC interface...");
 	fflush(stdout);
 
-	fclose(fp);
+	// fclose(fp);
 
-	printf("\n file has closed");
+	// printf("\n file has closed");
 	printf("\n FINISHED!\n\n");
 	fflush(stdout);
 }
@@ -207,8 +237,16 @@ int sample()
 	fflush(stdout);
 
 	//configure mux switching patterns
-	cur_gnd_config(current_mux,ground_mux);
-	volt_samp_config(current_mux,ground_mux,voltage_mux);
+	//mux array declarations
+	int current_mux[config.nodal_num];						// current                                           
+	int ground_mux[config.nodal_num];						// ground
+	int voltage_mux[config.nodal_num][config.nodal_num];	// voltage
+
+	printf("\n declared mux matrices...");
+	fflush(stdout);
+
+	cur_gnd_config(config.nodal_num,current_mux,ground_mux);
+	volt_samp_config(config.nodal_num,current_mux,ground_mux,voltage_mux);
 	printf("\n mux switching patterns configured...");
 	fflush(stdout);
 
@@ -236,13 +274,14 @@ int sample()
 	fflush(stdout);
 
 	//execute sampling
+	gettimeofday(&t1, NULL);
 	while((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS)
 	{
 		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 		fflush(stdout);
 
 		//outer loop, move current and ground
-		for(i = 0; i < NODAL_NUM; i++){
+		for(i = 0; i < config.nodal_num; i++){
 			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
 			fflush(stdout);
 
@@ -265,7 +304,7 @@ int sample()
 
 			//inner loop, measure voltage
 			int j;
-			for(j = 0; j < (NODAL_NUM); j++){
+			for(j = 0; j < (config.nodal_num); j++){
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
 					data = 0;
@@ -288,7 +327,7 @@ int sample()
 
 					//read ADC
 					data = ti_adc_read_raw(NODE);
-			        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,data*config.adc_scale[0]/1000);
+			        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,data*config.adc_scale[NODE]/1000);
 					fflush(stdout);
 				}
 
@@ -312,7 +351,7 @@ int sample()
  	//Print timing data to screen
 	gettimeofday(&t2, NULL);
 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
-	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",NODAL_NUM, count, usec/1e6, count/(usec/1e6));
+	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",config.nodal_num, count, usec/1e6, count/(usec/1e6));
 	fflush(stdout);
 	return 0;
 }
