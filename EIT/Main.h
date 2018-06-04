@@ -151,7 +151,7 @@ gpio_info *oled_power_gpio_info;                    //OLED power pin, pull high 
 //UI
 state_t state;
 int button = -1;
-int menu;
+int menu = START;
 
 //enums
 enum sample_mode

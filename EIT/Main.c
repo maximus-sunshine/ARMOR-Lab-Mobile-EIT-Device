@@ -37,9 +37,6 @@ config_t config = {
 /************************************************************************************
 * SETUP
 *************************************************************************************/
-long elapsed_time;
-int count, data, n, k;
-struct timeval t1, t2;
 
 //data storage
 FILE* fp;
@@ -59,6 +56,7 @@ void* button_poll(void* ptr);
 * FUNCTION DECLARATIONS
 *************************************************************************************/
 int sample();
+int process_button(UI_state_t UI_state);
 
 /************************************************************************************
 * MAIN
@@ -219,15 +217,18 @@ int main(){
 	printf("\n entering menu interface...");
     fflush(stdout);
 
-    state.system = RUNNING;
-    usleep(1*1e6);
+   	state.system = RUNNING;
+    fflush(stdout);
+    usleep(0.5*1e6);
     button = -1;
     while(state.system == RUNNING){
     	switch(menu) {
             // LEVEL 1
     		case START:
     			printUI(UI_start, state);
-                if(process_button(UI_start, button, menu)){
+                if(process_button(UI_start)){
+                	printf("\n starting sample from switch case");
+    				fflush(stdout);
                 	sample();
                 }
                 break;
@@ -235,19 +236,19 @@ int main(){
             case SETTINGS:
 
                 printUI(UI_settings, state);
-                process_button(UI_settings, button, menu);
+                process_button(UI_settings);
                 break;
 
             case NODES:
 
                 printUI(UI_nodes, state);
-                process_button(UI_nodes, button, menu);
+                process_button(UI_nodes);
                 break;
 
             case NUM_NODES8:
 
                 printUI(UI_nodes8, state);
-                if(process_button(UI_nodes8, button, menu)){
+                if(process_button(UI_nodes8)){
                     config.nodal_num = 8;
                 }
                 break;
@@ -255,7 +256,7 @@ int main(){
             case NUM_NODES16:
 
                 printUI(UI_nodes16, state);
-                if(process_button(UI_nodes16, button, menu)){
+                if(process_button(UI_nodes16)){
                     config.nodal_num = 16;
                 }
                 break;     
@@ -263,7 +264,7 @@ int main(){
             case NUM_NODES32:
 
                 printUI(UI_nodes32, state);
-                if(process_button(UI_nodes32, button, menu)){
+                if(process_button(UI_nodes32)){
                     config.nodal_num = 32;
                 }
                 break;           
@@ -271,13 +272,13 @@ int main(){
             case CURRENT:
 
                 printUI(UI_current, state);
-                process_button(UI_current, button, menu);
+                process_button(UI_current);
                 break;
 
             case CURRENT_AUTO:
 
                 printUI(UI_current_auto, state);
-                if(process_button(UI_current_auto, button, menu)){
+                if(process_button(UI_current_auto)){
                         // set current to auto
                 }
                 break;
@@ -285,16 +286,16 @@ int main(){
             case CURRENT_MANUAL:
 
                 printUI(UI_current_manual, state);
-                process_button(UI_current_manual, button, menu);
+                process_button(UI_current_manual);
                 break;
 
             case CONFIG:
 
                 printUI(UI_config, state);
-                process_button(UI_config, button, menu);
+                process_button(UI_config);
                 break;                  
-            }
         }
+    }
 
 	/* CLEANUP */
 
@@ -353,6 +354,10 @@ int main(){
 *************************************************************************************/
 int sample()
 {
+	long elapsed_time;
+	int count, data, n, k;
+	struct timeval t1, t2;
+
 	//set ADC scales and offsets
 	int i;
 	for(i=0;i<CHANNELS;i++){
@@ -490,6 +495,38 @@ int sample()
 	return 0;
 }
 
+int process_button(UI_state_t UI_state)
+{
+    switch(button) {
+        case SELECT:
+            mainSelect(UI_state);
+            menu = UI_state.button_select;
+            button = -1;
+            return 1;
+            break;
+        case PREV:
+            prevSelect();
+            menu = UI_state.button_prev;
+            button = -1;
+            return 0;
+            break;
+        case NEXT:
+            nextSelect();
+            menu = UI_state.button_next;
+            button = -1;
+            return 0;
+            break;
+        case BACK:
+            menu = UI_state.button_back;
+            button = -1;
+            return 0;
+            break;
+        case -1:
+            return 0;
+            break;
+    }
+}
+
 /************************************************************************************
 * PTHREADS
 *************************************************************************************/
@@ -542,21 +579,18 @@ void* button_poll(void* ptr){
         if (fdset[SELECT].revents & POLLPRI) {
             lseek(fdset[SELECT].fd, 0, SEEK_SET);
             len = read(fdset[SELECT].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO select %d interrupt occurred!\n", gpio[SELECT]);
             button = SELECT;
         }
 
         if (fdset[PREV].revents & POLLPRI) {
             lseek(fdset[PREV].fd, 0, SEEK_SET);
             len = read(fdset[PREV].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO prev %d interrupt occurred!\n", gpio[PREV]);
             button = PREV;
         }
 
         if (fdset[NEXT].revents & POLLPRI) {
             lseek(fdset[NEXT].fd, 0, SEEK_SET);
             len = read(fdset[NEXT].fd, buf, MAX_BUF);
-            printf("\npoll() GPIO next %d interrupt occurred!\n", gpio[NEXT]);
             button = NEXT;
         }     
 

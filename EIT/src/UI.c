@@ -241,37 +241,6 @@ void mainSelect(UI_state_t UI_state)
     Display();
 }
 
-int process_button(UI_state_t UI_state, int button, int menu)
-{
-    switch(button) {
-        case SELECT:
-            mainSelect(UI_state);
-            menu = UI_state.button_select;
-            button = -1;
-            return 1;
-            break;
-        case PREV:
-            prevSelect();
-            menu = UI_state.button_prev;
-            button = -1;
-            return 0;
-            break;
-        case NEXT:
-            nextSelect();
-            menu = UI_state.button_next;
-            button = -1;
-            return 0;
-            break;
-        case BACK:
-            menu = UI_state.button_back;
-            button = -1;
-            return 0;
-            break;
-        case -1:
-            break;
-    }
-}
-
 /* USER BUTTON FUNCTIONS */
 int gpio_export(unsigned int gpio)
 {

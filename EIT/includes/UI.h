@@ -42,21 +42,28 @@ extern I2C_DeviceT I2C_DEV_2;
 /*******************************************************************************
 * ENUMS/DEFINES/VARIABLES
 *******************************************************************************/
-#define SELECT 0 //TODO: change to enum
-#define PREV 1
-#define NEXT 2
-#define BACK 3
+enum buttons
+{
+    SELECT,
+    PREV,
+    NEXT,
+    BACK,
+};
 
-#define START 0	//TODO: change to enum
-#define SETTINGS 1
-#define NODES 2
-#define NUM_NODES8 3
-#define NUM_NODES16 4
-#define NUM_NODES32 5
-#define CURRENT 6
-#define CURRENT_AUTO 7
-#define CURRENT_MANUAL 8
-#define CONFIG 9
+enum options
+{
+    START,
+    SETTINGS,
+    NODES,
+    NUM_NODES8,
+    NUM_NODES16,
+    NUM_NODES32,
+    CURRENT,
+    CURRENT_AUTO,
+    CURRENT_MANUAL,
+    CONFIG,
+};
+
 
 #define RUNNING 1 //TODO: change to enum
 #define STOPPED 0
@@ -221,17 +228,6 @@ void printUI(UI_state_t UI_state, state_t state);
 * Outputs: 
 *****************************************************************************/
 void mainSelect(UI_state_t UI_state);
-
-/****************************************************************************
-* int process_button(UI_state_t UI_state, int button, int menu)
-*
-* DESCRIPTION
-*
-* Inputs : 
-* 
-* Outputs: 
-*****************************************************************************/
-int process_button(UI_state_t UI_state, int button, int menu);
 
 /* USER BUTTON FUNCTIONS */
 /****************************************************************************
