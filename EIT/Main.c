@@ -220,7 +220,7 @@ int main(){
     fflush(stdout);
 
     state.system = RUNNING;
-    usleep(0.5*1e6);
+    usleep(1*1e6);
     button = -1;
     while(state.system == RUNNING){
     	switch(menu) {

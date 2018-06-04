@@ -51,8 +51,8 @@
 #define I_SENSE_RESET_GPIO 27 //p8_17
 
 //oled power/reset
-#define OLED_POWER_GPIO 80 //p8_36
-#define OLED_RESET_GPIO 81 //p8_34
+#define OLED_POWER_GPIO 81 //p8_34
+#define OLED_RESET_GPIO 80 //p8_36
 
 //current source switch logic
 #define CUR_SOURCE_A4  26   //p8_14
@@ -305,7 +305,7 @@ void sigint(int s __attribute__((unused))) {
 
     //clean up adc library
     ti_adc_cleanup();
-    printf("\n cleaned up ADC interface...");
+    printf("\n cleaned up ADC interface...\n\n");
     fflush(stdout);
 
     // fclose(fp);
