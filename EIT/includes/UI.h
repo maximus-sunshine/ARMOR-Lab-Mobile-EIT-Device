@@ -51,7 +51,7 @@ enum buttons
 };
 
 enum options
-{
+{   
     START,
     SETTINGS,
     NODES,
