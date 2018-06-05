@@ -64,11 +64,6 @@ enum options
     CONFIG,
 };
 
-
-#define RUNNING 1 //TODO: change to enum
-#define STOPPED 0
-#define PAUSED 0
-
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
 #define MAX_BUF 64

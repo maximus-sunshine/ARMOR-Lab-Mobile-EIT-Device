@@ -149,7 +149,6 @@ gpio_info *oled_reset_gpio_info;                    //OLED reset pin, pull low f
 gpio_info *oled_power_gpio_info;                    //OLED power pin, pull high to turn on display
 
 //UI
-state_t state;
 int button = -1;
 int menu = START;
 
@@ -172,6 +171,12 @@ enum adc_channels
     NODE,
     CURRENT_SENSOR,
     BATTERY,
+};
+
+enum system_states
+{
+    RUNNING, 
+    EXITING,
 };
 
 /************************************************************************************
@@ -255,60 +260,4 @@ int attach_all_gpio(){
     }
 
     return 0;
-}
-
-void sigint(int s __attribute__((unused))) {
-    printf("\n Received SIGINT: \n");
-    fflush(stdout);
-
-    printf("\n Exiting cleanly...");
-    fflush(stdout);
-
-    //Display ARMOR logo
-    clearDisplay();
-    display_bitmap();
-    Display();
-    usleep(2*1e6);
-
-    // //join pthreads
-    // pthread_join(button_poll_thread, NULL);
-    // printf("\n button poll thread joined... \n");
-
-    //detach gpio pins
-    int i;
-    for(i=0;i<MUX_PINS;i++){
-        gpio_detach(current_mux_gpio_info[i]);
-        gpio_detach(ground_mux_gpio_info[i]);
-        gpio_detach(voltage_mux_gpio_info[i]);
-    }   
-
-    for(i=0;i<10;i++){
-        gpio_detach(current_switch_gpio_info[i]);
-        
-    }   
-    for(i=0;i<3;i++){
-        gpio_detach(mux_disable_gpio_info[i]);
-        
-    }   
-    gpio_detach(adc_reset_gpio_info);
-    gpio_detach(i_sense_reset_gpio_info);
-    gpio_detach(oled_reset_gpio_info);
-    gpio_detach(oled_power_gpio_info);
-
-    printf("\n Detached all gpio pins");
-    fflush(stdout);
-
-    //clean up gpio library
-    gpio_finish();
-    printf("\n closed gpiolib cleanly...");
-    fflush(stdout);
-
-    //clean up adc library
-    ti_adc_cleanup();
-    printf("\n cleaned up ADC interface...\n\n");
-    fflush(stdout);
-
-    // fclose(fp);
-    // printf("\n file has closed\n\n");
-    exit(0);
 }

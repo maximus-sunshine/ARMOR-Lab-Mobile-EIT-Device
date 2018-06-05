@@ -54,7 +54,7 @@
 * 
 * Outputs:	TODO: return -1 on failure
 *****************************************************************************/
-int cur_gnd_config(int nodal_num, int cur[],int gnd[]);
+int mux_config(int nodal_num, int cur[], int gnd[], int volt[]);
 
 
 /****************************************************************************
@@ -82,7 +82,7 @@ THIS WORKS
 /****************************************************************************
 THIS IS BEING TESTED
 *****************************************************************************/
-int volt_samp_config(int nodal_num, int cur[], int gnd[], int volt[][nodal_num]);
+// int volt_samp_config(int nodal_num, int cur[], int gnd[], int volt[][nodal_num]);
 
 
 

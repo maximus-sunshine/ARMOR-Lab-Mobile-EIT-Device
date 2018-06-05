@@ -27,13 +27,14 @@
 * 
 * Outputs:	TODO: return -1 on failure
 ******************************************************************************/
-int cur_gnd_config(int nodal_num, int cur[],int gnd[]){
+int mux_config(int nodal_num, int cur[],int gnd[], int volt[]){
 	int i;
 	int side_len = (nodal_num/4); 
 	int node_index = 3*side_len;
 	for(i=0; i < nodal_num; i++){
-		cur[i] = i;
-		gnd[i] = node_index - 1;
+		cur[i] 	= i;
+		gnd[i] 	= node_index - 1;
+		volt[i] = i;
 		node_index = node_index - 1;
 		if((node_index % (side_len))==0){
 			node_index = node_index + (nodal_num/2);
@@ -62,39 +63,21 @@ int cur_gnd_config(int nodal_num, int cur[],int gnd[]){
 *				  -alternatively, just merge this into cur_gnd_config...
 *****************************************************************************/
 
-/****************************************************************************
-THIS WORKS
-*****************************************************************************/
-// int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM-2]){
+// /****************************************************************************
+// THIS IS BEING TESTED
+// *****************************************************************************/
+// int volt_samp_config(int nodal_num, int cur[], int gnd[], int volt[][nodal_num]){
 // 	int k = 0;
 // 	int i,j;
-// 	for(i = 0; i < NODAL_NUM; i++){
-// 		for(j = 0; j < NODAL_NUM; j++){
-// 			if((i != j) && (gnd[i] != cur[j])){
+// 	for(i = 0; i < nodal_num; i++){
+// 		for(j = 0; j < nodal_num; j++){
 // 				volt[i][k] = cur[j];
 // 				k++;
-// 			}
 // 		}
 // 		k = 0;
 // 	}
 // 	return 0;
 // }
-
-/****************************************************************************
-THIS IS BEING TESTED
-*****************************************************************************/
-int volt_samp_config(int nodal_num, int cur[], int gnd[], int volt[][nodal_num]){
-	int k = 0;
-	int i,j;
-	for(i = 0; i < nodal_num; i++){
-		for(j = 0; j < nodal_num; j++){
-				volt[i][k] = cur[j];
-				k++;
-		}
-		k = 0;
-	}
-	return 0;
-}
 
 
 

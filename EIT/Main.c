@@ -34,6 +34,22 @@ config_t config = {
     .i_setpoint		= 100,
 };
 
+// UI_state_t UI_state = {
+//     .menu_main = HOME_OPTS[0],
+//     .menu_prev = HOME_OPTS[1],
+//     .menu_next = HOME_OPTS[1],
+//     .menu_back = PARENT_OPTS[0],
+//     .button_select = START,
+//     .button_prev = SETTINGS,
+//     .button_next = SETTINGS,
+//     .button_back = START,
+// };
+
+state_t state = {
+	.batt = 0.0,
+	.system = RUNNING,
+};
+
 /************************************************************************************
 * SETUP
 *************************************************************************************/
@@ -188,15 +204,14 @@ int main(){
 	fflush(stdout);
 
 	/* START PTHREAD TO READ BATTERY */	
-	// pthread_create(&batt_read_thread, NULL, batt_read, (void*) NULL);
-	// printf("\n battery reading pthread created...");
-	// fflush(stdout);
+	pthread_create(&batt_read_thread, NULL, batt_read, (void*) NULL);
+	printf("\n battery reading pthread created...");
+	fflush(stdout);
 
 	/* Run SDD1306 Initialization Sequence */
     display_Init_seq();
     printf("\n init sequence displayed...");
     fflush(stdout);
-    state.batt = 99.0;
     menu = START;
     printf("\n OLED initialized...");
     fflush(stdout);
@@ -227,8 +242,6 @@ int main(){
     		case START:
     			printUI(UI_start, state);
                 if(process_button(UI_start)){
-                	printf("\n starting sample from switch case");
-    				fflush(stdout);
                 	sample();
                 }
                 break;
@@ -298,7 +311,6 @@ int main(){
     }
 
 	/* CLEANUP */
-
     //display ARMOR logo
     printf("\n displaying ARMOR logo");
     fflush(stdout);
@@ -308,7 +320,8 @@ int main(){
 
     //join pthreads
    	pthread_join(button_poll_thread, NULL);
-    printf("\n button poll thread joined... \n");
+   	pthread_join(batt_read_thread, NULL);
+    printf("\n pthreads joined... \n");
 
     //detach gpio pins
 	for(i=0;i<MUX_PINS;i++){
@@ -377,15 +390,14 @@ int sample()
 
 	//configure mux switching patterns
 	//mux array declarations
-	int current_mux[config.nodal_num];						// current                                           
-	int ground_mux[config.nodal_num];						// ground
-	int voltage_mux[config.nodal_num][config.nodal_num];	// voltage
+	int current_mux[config.nodal_num];	// current                                           
+	int ground_mux[config.nodal_num];	// ground
+	int voltage_mux[config.nodal_num];	// voltage
 
 	printf("\n declared mux matrices...");
 	fflush(stdout);
 
-	cur_gnd_config(config.nodal_num,current_mux,ground_mux);
-	volt_samp_config(config.nodal_num,current_mux,ground_mux,voltage_mux);
+	mux_config(config.nodal_num,current_mux,ground_mux,voltage_mux);
 	printf("\n mux switching patterns configured...");
 	fflush(stdout);
 
@@ -451,7 +463,7 @@ int sample()
 				
 				else{
 					for(k = 0; k < MUX_PINS; k++){
-						if(CHAN[voltage_mux[i][j]][k]==1){
+						if(CHAN[voltage_mux[j]][k]==1){
 							gpio_set(voltage_mux_gpio_info[k]);
 						}
 						else{
@@ -465,8 +477,8 @@ int sample()
 					}
 
 					//read ADC
-					data = ti_adc_read_raw(NODE);
-			        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,data*config.adc_scale[NODE]/1000);
+					data = ti_adc_read_raw(BATTERY);
+			        printf("Voltage at node %d:  %0.5f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
 					fflush(stdout);
 				}
 
@@ -527,6 +539,10 @@ int process_button(UI_state_t UI_state)
     }
 }
 
+UI_state_t update_UI_state(){
+
+}
+
 /************************************************************************************
 * PTHREADS
 *************************************************************************************/
@@ -553,7 +569,7 @@ void* button_poll(void* ptr){
 
     timeout = POLL_TIMEOUT;
 
-    while(state.system){
+    while(state.system != EXITING){
         memset((void*)fdset, 0, sizeof(fdset));
         
         for(int i=0;i<3;i++){
@@ -605,6 +621,121 @@ void* button_poll(void* ptr){
     return NULL;
 }
 
-// /* BATTERY READ THREAD */
-// void* batt_read(void *ptr){
-// }
+/* BATTERY READ THREAD */
+void* batt_read(void *ptr){
+	//set ADC scales and offsets
+	if(ti_adc_set_scale(BATTERY, config.adc_scale[BATTERY])<0){
+		perror("\nERROR: ti_adc_set_scale failed\n");
+		fprintf(stderr, "channel %d failed", BATTERY);	
+		return NULL;
+	}
+	if(ti_adc_set_offset(BATTERY, config.adc_offset[BATTERY])<0){
+		perror("\nERROR: ti_adc_set_offset failed\n");
+		fprintf(stderr, "channel %d failed", BATTERY);
+		return NULL;
+	}
+
+	printf("\n ADC scales and offsets configured...");
+	fflush(stdout);
+	int batt;
+	while(state.system != EXITING){
+		batt = ti_adc_read_raw(BATTERY);
+		switch(batt) {
+			case 54001 ... 55050:
+				state.batt = 100.0;
+				break;
+
+			case 51773 ... 54000:
+				state.batt = 80.0;
+				break;
+
+			case 49807 ... 51772:
+				state.batt = 60.0;
+				break;
+
+			case 49152 ... 49806:
+				state.batt = 40.0;
+				break;
+
+			case 48496 ... 49151:
+				state.batt = 20.0;
+				break;
+
+			case 47185 ... 48495:
+				state.batt = 10.0;
+				break;
+
+			case 45219 ... 47184:
+				state.batt = 5.0;
+				break;
+
+			case 0 ... 45218:
+				state.batt = 0.0;
+				break;
+		}
+		usleep(.25*1e6);
+	}
+	return NULL;
+}
+
+/************************************************************************************
+* SIGINT
+*************************************************************************************/
+void sigint(int s __attribute__((unused))) {
+    printf("\n Received SIGINT: \n");
+    fflush(stdout);
+
+    printf("\n Exiting cleanly...");
+    fflush(stdout);
+
+    state.system = EXITING;
+
+    //Display ARMOR logo
+    clearDisplay();
+    display_bitmap();
+    Display();
+    usleep(2*1e6);
+
+    //join pthreads
+    pthread_join(button_poll_thread, NULL);
+    pthread_join(batt_read_thread, NULL);
+    printf("\n pthreads joined... \n");
+
+    //detach gpio pins
+    int i;
+    for(i=0;i<MUX_PINS;i++){
+        gpio_detach(current_mux_gpio_info[i]);
+        gpio_detach(ground_mux_gpio_info[i]);
+        gpio_detach(voltage_mux_gpio_info[i]);
+    }   
+
+    for(i=0;i<10;i++){
+        gpio_detach(current_switch_gpio_info[i]);
+        
+    }   
+    for(i=0;i<3;i++){
+        gpio_detach(mux_disable_gpio_info[i]);
+        
+    }   
+    gpio_detach(adc_reset_gpio_info);
+    gpio_detach(i_sense_reset_gpio_info);
+    gpio_detach(oled_reset_gpio_info);
+    gpio_detach(oled_power_gpio_info);
+
+    printf("\n Detached all gpio pins");
+    fflush(stdout);
+
+    //clean up gpio library
+    gpio_finish();
+    printf("\n closed gpiolib cleanly...");
+    fflush(stdout);
+
+    //clean up adc library
+    ti_adc_cleanup();
+    printf("\n cleaned up ADC interface...\n\n");
+    fflush(stdout);
+
+    // fclose(fp);
+    // printf("\n file has closed\n\n");
+    exit(0);
+}

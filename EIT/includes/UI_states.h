@@ -6,6 +6,14 @@
 /* Oh Compiler-Please leave me as is */
 volatile unsigned char flag = 0;
 
+const char PARENT_OPTS[7][9] = {"HOME","START","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
+const char HOME_OPTS[2][9] = {"START","SETTINGS"};
+const char SETTINGS_OPTS[4][8] = {"NODES","CURRENT","CONFIG","MODE"};
+const char NODES_OPTS[7][3] = {"8","12","16","20","24","28","32"};
+const char CURRENT_OPTS[20][5] = {"100","200","300","400","500","600","700","800","900","1000","1100","1200","1300","1400","1500","1600","1700","1800","1900","2000"};
+const char CONFIG_OPTS[2][9] = {"ACROSS","ADJACENT"};
+const char SAMPLING_OPTS[3][11] = {"TIMED","CYCLES","CONTINUOUS"};
+
 UI_state_t UI_start = {
     .menu_main = "START",
     .menu_prev = "",
