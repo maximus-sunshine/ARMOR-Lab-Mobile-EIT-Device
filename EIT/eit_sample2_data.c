@@ -383,9 +383,9 @@ int main()
 					//chan0 = ti_adc_read_raw(0);
           
           				//writing adc measurement to file
-          				strcpy(raw_buf, ti_adc_read_raw(0));
-		      			strcat(raw_buf, "\n");
-	      				fputs(raw_buf,fp);
+          				//strcpy(raw_buf, ti_adc_read_raw(0));
+		      			//strcat(raw_buf, "\n");
+	      				fputs(ti_adc_read_raw(0),fp);
           
           
 			        // printf("Voltage at node %d:  %0.5f V\n", voltage_mux[i][j]+1,chan0*scale/1000);
