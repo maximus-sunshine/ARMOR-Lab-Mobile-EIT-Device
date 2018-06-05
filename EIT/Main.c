@@ -291,8 +291,9 @@ int main(){
 *************************************************************************************/
 int sample()
 {
-	long elapsed_time;
-	int count, data, n, k;
+	long elapsed_time = 0;
+	int count = 0;
+	int data, n, k;
 	struct timeval t1, t2;
 
 	//set ADC scales and offsets
@@ -401,8 +402,8 @@ int sample()
 					}
 
 					//read ADC
-					data = ti_adc_read_raw(BATTERY);
-					printf("Voltage at node %d:  %0.5f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
+					data = ti_adc_read_raw(NODE);
+					printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
 					fflush(stdout);
 				}
 
@@ -468,12 +469,12 @@ int process_button(char opt_list[][OPT_STR_LEN])
 }
 
 int update_UI(){
-	int len;
 	switch (state.menu) {
 		case HOME:
+		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
-			if(mod(state.index,len) == 0) sample();
+			if(mod(state.index,state.len) == 0) sample();
 			else{
 				state.menu = SETTINGS;
 				state.index = 0;
@@ -485,7 +486,7 @@ int update_UI(){
 		state.len = SETTINGS_OPTS_LEN;
 		printUI(state, SETTINGS_OPTS);
 		if(process_button(SETTINGS_OPTS)){
-			state.menu = mod(state.index,len) + 2;
+			state.menu = mod(state.index,state.len) + 2;
 			state.index = 0; 
 		};
 		break;
@@ -494,8 +495,9 @@ int update_UI(){
 		state.len = NODES_OPTS_LEN;
 		printUI(state, NODES_OPTS);
 		if(process_button(NODES_OPTS)){
-			config.nodal_num = atoi(state.opts[mod(state.index,len)]);
-			state.menu == SETTINGS;
+			config.nodal_num = atoi(NODES_OPTS[mod(state.index,state.len)]);
+			printf(" nodal num set to %d\n",config.nodal_num);
+			state.menu = HOME;
 			state.index = 0;
 		};
 		break;
@@ -504,9 +506,10 @@ int update_UI(){
 		state.len = CURRENT_OPTS_LEN;
 		printUI(state, CURRENT_OPTS);
 		if(process_button(CURRENT_OPTS)){
-			config.i_setpoint = atoi(state.opts[mod(state.index,len)]);
-			state.menu = SETTINGS;
-			state.index = 1;
+			config.i_setpoint = atoi(CURRENT_OPTS[mod(state.index,state.len)]);
+			printf(" current set to %d\n",config.i_setpoint);
+			state.menu = HOME;
+			state.index = 0;
 		};
 		break;
 
@@ -514,9 +517,10 @@ int update_UI(){
 		state.len = CONFIG_OPTS_LEN;
 		printUI(state, CONFIG_OPTS);
 		if(process_button(CONFIG_OPTS)){
-			config.sample_geom = mod(state.index,len);
-			state.menu = SETTINGS;
-			state.index = 2;
+			config.sample_geom = mod(state.index,state.len);
+			printf(" geometry set\n");
+			state.menu = HOME;
+			state.index = 0;
 		};
 		break;
 
@@ -524,13 +528,15 @@ int update_UI(){
 		state.len = SAMPLING_OPTS_LEN;
 		printUI(state, SAMPLING_OPTS);
 		if(process_button(SAMPLING_OPTS)){
-			config.sample_mode = mod(state.index,len);
-			state.menu = SETTINGS;
-			state.index = 3;
+			config.sample_mode = mod(state.index,state.len);
+			printf(" sampling mode set\n");
+			state.menu = HOME;
+			state.index = 0;
 		};
 		break;
 	}
 	return 0;
+	usleep(0.1*1e6);
 }
 
 /************************************************************************************
@@ -578,9 +584,9 @@ void* button_poll(void* ptr){
     		return NULL;
     	}
 
-    	if (rc == 0) {
-    		printf(".");
-    	}
+    	// if (rc == 0) {
+    	// 	printf(".");
+    	// }
 
     	if (fdset[SELECT].revents & POLLPRI) {
     		lseek(fdset[SELECT].fd, 0, SEEK_SET);

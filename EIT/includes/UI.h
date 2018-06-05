@@ -83,7 +83,6 @@ typedef struct state_t{
     int len; 
     float batt;
     int system;
-    char opts[][OPT_STR_LEN];
 } state_t;
 
 /************************************************************************************
