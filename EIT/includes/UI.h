@@ -50,48 +50,44 @@ enum buttons
     BACK,
 };
 
-enum options
+enum menus
 {   
     HOME,
     SETTINGS,
     NODES,
     CURRENT,
     CONFIG,
-    MODE,
+    SAMPLING,
 };
 
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
-#define OPT_STRLEN 11   
+#define OPT_STR_LEN 11   
 #define MAX_BUF 64
 #define mod(a,b) (a%b+b)%b
+
+#define HOME_OPTS_LEN 2
+#define SETTING_OPTS_LEN 4
+#define NODES_OPTS_LEN 7
+#define CURRENT_OPTS_LEN 20
+#define CONFIG_OPTS_LEN 2
+#define SAMPLING_OPTS_LEN 3
 
 /************************************************************************************
 * STRUCTS
 *************************************************************************************/
-// typedef struct UI_state_t{
-//     int current_menu;
-//     int selection;
-//     const unsigned char *menu_main;
-//     const unsigned char *menu_prev;
-//     const unsigned char *menu_next;
-//     const unsigned char *menu_back;
-//     int button_select;
-//     int button_prev;
-//     int button_next;
-//     int button_back;
-// } UI_state_t;
-
-typedef struct UI_state_t{
-    int menu;
-    int select;
-    int prev;
-    int next;
-    int back;
-    int index;
-} UI_state_t;
 
 typedef struct state_t{
+    float batt;
+    int system;
+} state_t;
+
+typedef struct state_t{
+    int menu;
+    int index;
+    const char menu_opts[][OPT_STR_LEN];
+    const char opts[][OPT_STR_LEN];
+    int len; 
     float batt;
     int system;
 } state_t;

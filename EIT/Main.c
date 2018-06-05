@@ -34,32 +34,15 @@ config_t config = {
     .i_setpoint		= 100,
 };
 
-// UI_state_t UI_state = {
-//     .current_menu = HOME,
-// 	.selection = 0;
-//     .menu_main = HOME_OPTS[0],
-//     .menu_prev = HOME_OPTS[1],
-//     .menu_next = HOME_OPTS[1],
-//     .menu_back = PARENT_OPTS[0],
-//     .button_select = START,
-//     .button_prev = SETTINGS,
-//     .button_next = SETTINGS,
-//     .button_back = START,
-// };
-
-UI_state_t UI_state = {
-    .menu = HOME;
-    .select = START;
-    .prev = SETTINGS;
-    .next = SETTINGS;
-    .back = START;
-    .index = 0;
-} UI_state_t;
-
 state_t state = {
-	.batt = 0.0,
+    .menu = HOME,
+    .index = 0,
+    .menu_opts = MENU_OPTS,
+    .opts = HOME_OPTS,
+    .len = HOME_OPTS_LEN,
+    .batt = 0.0,
 	.system = RUNNING,
-};
+} state_t;
 
 /************************************************************************************
 * SETUP
@@ -83,7 +66,7 @@ void* button_poll(void* ptr);
 * FUNCTION DECLARATIONS
 *************************************************************************************/
 int sample();
-int process_button(UI_state_t UI_state);
+int process_button(state_t state);
 
 /************************************************************************************
 * MAIN
@@ -248,78 +231,7 @@ int main(){
     usleep(0.5*1e6);
     button = -1;
     while(state.system == RUNNING){
-    	process_UI();
-    	// switch(menu) {
-     //        // LEVEL 1
-    	// 	case START:
-    	// 		printUI(UI_start, state);
-     //            if(process_button(UI_start)){
-     //            	sample();
-     //            }
-     //            break;
-
-     //        case SETTINGS:
-
-     //            printUI(UI_settings, state);
-     //            process_button(UI_settings);
-     //            break;
-
-     //        case NODES:
-
-     //            printUI(UI_nodes, state);
-     //            process_button(UI_nodes);
-     //            break;
-
-     //        case NUM_NODES8:
-
-     //            printUI(UI_nodes8, state);
-     //            if(process_button(UI_nodes8)){
-     //                config.nodal_num = 8;
-     //            }
-     //            break;
-
-     //        case NUM_NODES16:
-
-     //            printUI(UI_nodes16, state);
-     //            if(process_button(UI_nodes16)){
-     //                config.nodal_num = 16;
-     //            }
-     //            break;     
-
-     //        case NUM_NODES32:
-
-     //            printUI(UI_nodes32, state);
-     //            if(process_button(UI_nodes32)){
-     //                config.nodal_num = 32;
-     //            }
-     //            break;           
-
-     //        case CURRENT:
-
-     //            printUI(UI_current, state);
-     //            process_button(UI_current);
-     //            break;
-
-     //        case CURRENT_AUTO:
-
-     //            printUI(UI_current_auto, state);
-     //            if(process_button(UI_current_auto)){
-     //                    // set current to auto
-     //            }
-     //            break;
-
-     //        case CURRENT_MANUAL:
-
-     //            printUI(UI_current_manual, state);
-     //            process_button(UI_current_manual);
-     //            break;
-
-     //        case CONFIG:
-
-     //            printUI(UI_config, state);
-     //            process_button(UI_config);
-     //            break;                  
-     //    }
+    	update_UI();
     }
 
 	/* CLEANUP */
@@ -523,24 +435,25 @@ int process_button(int size)
 {
     switch(button) {
         case SELECT:
-            mainSelect(UI_state);
+            mainSelect(state);
             button = -1;
             return 1;
             break;
         case PREV:
             prevSelect();
-            UI_state.index--;
+            state.index--;
             button = -1;
             return 0;
             break;
         case NEXT:
             nextSelect();
-            UI_state.index++;
+            state.index++;
             button = -1;
             return 0;
             break;
         case BACK:
-
+        	state.index = 0;
+        	if(state.menu > 0) state.menu--;
             button = -1;
             return 0;
             break;
@@ -551,38 +464,69 @@ int process_button(int size)
 }
 
 int update_UI(){
-	switch (UI_state.menu) {
+	switch (state.menu) {
 		case HOME:
-			len = sizeof(HOME_OPTS/sizeof(HOME_OPTS[0]));
-			printUI(HOME_OPTS,len,UI_state.index,state);
-			if(process_button() && mod(UI_state.index,len) == START){
-				sample();
-				UI_state.index = 0;
-			};
+			printUI(state);
+			if(process_button()){
+				if(mod(state.index,len) == START) sample();
+				else{
+					state.menu = SETTINGS;
+					state.index = 0;
+				}
 			break;
 
 	   	case SETTINGS:
-	   		len = sizeof(SETTNGS_OPTS/sizeof(SETTINGS_OPTS[0]));
-			printUI(SETTINGS_OPTS,len,UI_state.index,state);
+	   		state.opts = SETTINGS_OPTS;
+			state.len = SETTINGS_OPTS_LEN;
+			printUI(state);
 			if(process_button()){
-				UI_state.menu = mod(UI_state.index,len)
+				state.menu = mod(state.index,len) + 2;
+				state.index = 0; 
 			};
 	   		break;
 
 	    case NODES:
-	    	
+	    	state.opts = NODES_OPTS;
+	    	state.len = NODES_OPTS_LEN;
+			printUI(state);
+			if(process_button()){
+				config.nodal_num = atoi(state.opts[mod(state.index,len)]);
+				state.menu == SETTINGS;
+				state.index = 0;
+			};
 	    	break;
 
 	    case CURRENT:
-	    	
+	    	state.opts = CURRENT_OPTS;
+	    	state.len = CURRENT_OPTS_LEN;
+			printUI(state);
+			if(process_button()){
+				config.i_setpoint = atoi(state.opts[mod(state.index,len)]);
+				state.menu = SETTINGS;
+				state.index = 1;
+			};
 	    	break;
 
 	    case CONFIG:
-	    	
+	    	state.opts = CONFIG_OPTS;
+	    	state.len = CONFIG_OPTS_LEN;
+			printUI(state);
+			if(process_button()){
+				config.sample_geom = mod(state.index,len);
+				state.menu = SETTINGS;
+				state.index = 2;
+			};
 	    	break;
 
 	    case SAMPLING:
-
+	    	state.opts = SAMPLING_OPTS;
+	    	state.len = SAMPLING_OPTS_LEN;
+			printUI(state);
+			if(process_button()){
+				config.sample_mode = mod(state.index,len);
+				state.menu = SETTINGS;
+				state.index = 3;
+			};
 	    	break;
 	}
 }

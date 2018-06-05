@@ -218,30 +218,32 @@ void printBattery(float batt)
     }
 }
 
-void printUI(char opt_list[][OPT_STR_LEN], int len, int index, state_t state)
+void printUI(state_t state)
 {
-    int center = (index%len+len)%len;
-    int left = ((index-1)%len+len)%len;
-    int right = ((index+1)%len+len)%len;
+    int center = mod(state.index,state.len);
+    int left = mod(state.index-1,state.len);
+    int right = mod(state.index+1,state.len);
 
     clearDisplay();
-    printCenter(opt_list[center],2);
-    printLeft(UI_state.menu_back,1,1); //TODO
+    printCenter(state.opts[center],2);
+    printLeft(state.menu_opts[state.menu],1,1); //TODO
     printBattery(state.batt);
-    printLeft(opt_list[left],SSD1306_LCDHEIGHT-9,1);
-    printRight(opt_list[right],SSD1306_LCDHEIGHT-9,1);
+    printLeft(state.opts[left],SSD1306_LCDHEIGHT-9,1);
+    printRight(state.opts[right],SSD1306_LCDHEIGHT-9,1);
     printCenterY("<",1,2);
     printCenterY(">",SSD1306_LCDWIDTH-12-1,2);
     Display();
 }
 
-void mainSelect(UI_state_t UI_state)
+void mainSelect(state_t state)
 {
-    printMenuCenterSelect(UI_state.menu_main,2);
+    int center = mod(state.index,state.len);
+
+    printMenuCenterSelect(state.opts[center],2);
     Display();
     usleep(0.1*1e6);
 
-    printCenter(UI_state.menu_main,2);
+    printCenter(state.opts[center],2);
     Display();
 }
 

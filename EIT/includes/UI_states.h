@@ -6,7 +6,7 @@
 /* Oh Compiler-Please leave me as is */
 volatile unsigned char flag = 0;
 
-const char PARENT_OPTS[7][OPT_STR_LEN] = {"HOME","START","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
+const char MENU_OPTS[6][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
 const char HOME_OPTS[2][OPT_STR_LEN] = {"START","SETTINGS"};
 const char SETTINGS_OPTS[4][OPT_STR_LEN] = {"NODES","CURRENT","CONFIG","MODE"};
 const char NODES_OPTS[7][OPT_STR_LEN] = {"8","12","16","20","24","28","32"};
