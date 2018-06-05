@@ -218,14 +218,18 @@ void printBattery(float batt)
     }
 }
 
-void printUI(UI_state_t UI_state, state_t state)
+void printUI(char opt_list[][OPT_STR_LEN], int len, int index, state_t state)
 {
+    int center = (index%len+len)%len;
+    int left = ((index-1)%len+len)%len;
+    int right = ((index+1)%len+len)%len;
+
     clearDisplay();
-    printCenter(UI_state.menu_main,2);
-    printLeft(UI_state.menu_back,1,1);
+    printCenter(opt_list[center],2);
+    printLeft(UI_state.menu_back,1,1); //TODO
     printBattery(state.batt);
-    printLeft(UI_state.menu_prev,SSD1306_LCDHEIGHT-9,1);
-    printRight(UI_state.menu_next,SSD1306_LCDHEIGHT-9,1);
+    printLeft(opt_list[left],SSD1306_LCDHEIGHT-9,1);
+    printRight(opt_list[right],SSD1306_LCDHEIGHT-9,1);
     printCenterY("<",1,2);
     printCenterY(">",SSD1306_LCDWIDTH-12-1,2);
     Display();

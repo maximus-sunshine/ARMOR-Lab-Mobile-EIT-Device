@@ -35,6 +35,8 @@ config_t config = {
 };
 
 // UI_state_t UI_state = {
+//     .current_menu = HOME,
+// 	.selection = 0;
 //     .menu_main = HOME_OPTS[0],
 //     .menu_prev = HOME_OPTS[1],
 //     .menu_next = HOME_OPTS[1],
@@ -44,6 +46,15 @@ config_t config = {
 //     .button_next = SETTINGS,
 //     .button_back = START,
 // };
+
+UI_state_t UI_state = {
+    .menu = HOME;
+    .select = START;
+    .prev = SETTINGS;
+    .next = SETTINGS;
+    .back = START;
+    .index = 0;
+} UI_state_t;
 
 state_t state = {
 	.batt = 0.0,
@@ -237,77 +248,78 @@ int main(){
     usleep(0.5*1e6);
     button = -1;
     while(state.system == RUNNING){
-    	switch(menu) {
-            // LEVEL 1
-    		case START:
-    			printUI(UI_start, state);
-                if(process_button(UI_start)){
-                	sample();
-                }
-                break;
+    	process_UI();
+    	// switch(menu) {
+     //        // LEVEL 1
+    	// 	case START:
+    	// 		printUI(UI_start, state);
+     //            if(process_button(UI_start)){
+     //            	sample();
+     //            }
+     //            break;
 
-            case SETTINGS:
+     //        case SETTINGS:
 
-                printUI(UI_settings, state);
-                process_button(UI_settings);
-                break;
+     //            printUI(UI_settings, state);
+     //            process_button(UI_settings);
+     //            break;
 
-            case NODES:
+     //        case NODES:
 
-                printUI(UI_nodes, state);
-                process_button(UI_nodes);
-                break;
+     //            printUI(UI_nodes, state);
+     //            process_button(UI_nodes);
+     //            break;
 
-            case NUM_NODES8:
+     //        case NUM_NODES8:
 
-                printUI(UI_nodes8, state);
-                if(process_button(UI_nodes8)){
-                    config.nodal_num = 8;
-                }
-                break;
+     //            printUI(UI_nodes8, state);
+     //            if(process_button(UI_nodes8)){
+     //                config.nodal_num = 8;
+     //            }
+     //            break;
 
-            case NUM_NODES16:
+     //        case NUM_NODES16:
 
-                printUI(UI_nodes16, state);
-                if(process_button(UI_nodes16)){
-                    config.nodal_num = 16;
-                }
-                break;     
+     //            printUI(UI_nodes16, state);
+     //            if(process_button(UI_nodes16)){
+     //                config.nodal_num = 16;
+     //            }
+     //            break;     
 
-            case NUM_NODES32:
+     //        case NUM_NODES32:
 
-                printUI(UI_nodes32, state);
-                if(process_button(UI_nodes32)){
-                    config.nodal_num = 32;
-                }
-                break;           
+     //            printUI(UI_nodes32, state);
+     //            if(process_button(UI_nodes32)){
+     //                config.nodal_num = 32;
+     //            }
+     //            break;           
 
-            case CURRENT:
+     //        case CURRENT:
 
-                printUI(UI_current, state);
-                process_button(UI_current);
-                break;
+     //            printUI(UI_current, state);
+     //            process_button(UI_current);
+     //            break;
 
-            case CURRENT_AUTO:
+     //        case CURRENT_AUTO:
 
-                printUI(UI_current_auto, state);
-                if(process_button(UI_current_auto)){
-                        // set current to auto
-                }
-                break;
+     //            printUI(UI_current_auto, state);
+     //            if(process_button(UI_current_auto)){
+     //                    // set current to auto
+     //            }
+     //            break;
 
-            case CURRENT_MANUAL:
+     //        case CURRENT_MANUAL:
 
-                printUI(UI_current_manual, state);
-                process_button(UI_current_manual);
-                break;
+     //            printUI(UI_current_manual, state);
+     //            process_button(UI_current_manual);
+     //            break;
 
-            case CONFIG:
+     //        case CONFIG:
 
-                printUI(UI_config, state);
-                process_button(UI_config);
-                break;                  
-        }
+     //            printUI(UI_config, state);
+     //            process_button(UI_config);
+     //            break;                  
+     //    }
     }
 
 	/* CLEANUP */
@@ -507,29 +519,28 @@ int sample()
 	return 0;
 }
 
-int process_button(UI_state_t UI_state)
+int process_button(int size)
 {
     switch(button) {
         case SELECT:
             mainSelect(UI_state);
-            menu = UI_state.button_select;
             button = -1;
             return 1;
             break;
         case PREV:
             prevSelect();
-            menu = UI_state.button_prev;
+            UI_state.index--;
             button = -1;
             return 0;
             break;
         case NEXT:
             nextSelect();
-            menu = UI_state.button_next;
+            UI_state.index++;
             button = -1;
             return 0;
             break;
         case BACK:
-            menu = UI_state.button_back;
+
             button = -1;
             return 0;
             break;
@@ -539,8 +550,41 @@ int process_button(UI_state_t UI_state)
     }
 }
 
-UI_state_t update_UI_state(){
+int update_UI(){
+	switch (UI_state.menu) {
+		case HOME:
+			len = sizeof(HOME_OPTS/sizeof(HOME_OPTS[0]));
+			printUI(HOME_OPTS,len,UI_state.index,state);
+			if(process_button() && mod(UI_state.index,len) == START){
+				sample();
+				UI_state.index = 0;
+			};
+			break;
 
+	   	case SETTINGS:
+	   		len = sizeof(SETTNGS_OPTS/sizeof(SETTINGS_OPTS[0]));
+			printUI(SETTINGS_OPTS,len,UI_state.index,state);
+			if(process_button()){
+				UI_state.menu = mod(UI_state.index,len)
+			};
+	   		break;
+
+	    case NODES:
+	    	
+	    	break;
+
+	    case CURRENT:
+	    	
+	    	break;
+
+	    case CONFIG:
+	    	
+	    	break;
+
+	    case SAMPLING:
+
+	    	break;
+	}
 }
 
 /************************************************************************************

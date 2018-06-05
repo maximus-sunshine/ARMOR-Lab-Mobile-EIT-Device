@@ -52,34 +52,43 @@ enum buttons
 
 enum options
 {   
-    START,
+    HOME,
     SETTINGS,
     NODES,
-    NUM_NODES8,
-    NUM_NODES16,
-    NUM_NODES32,
     CURRENT,
-    CURRENT_AUTO,
-    CURRENT_MANUAL,
     CONFIG,
+    MODE,
 };
 
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
+#define OPT_STRLEN 11   
 #define MAX_BUF 64
+#define mod(a,b) (a%b+b)%b
 
 /************************************************************************************
 * STRUCTS
 *************************************************************************************/
+// typedef struct UI_state_t{
+//     int current_menu;
+//     int selection;
+//     const unsigned char *menu_main;
+//     const unsigned char *menu_prev;
+//     const unsigned char *menu_next;
+//     const unsigned char *menu_back;
+//     int button_select;
+//     int button_prev;
+//     int button_next;
+//     int button_back;
+// } UI_state_t;
+
 typedef struct UI_state_t{
-    const unsigned char *menu_main;
-    const unsigned char *menu_prev;
-    const unsigned char *menu_next;
-    const unsigned char *menu_back;
-    int button_select;
-    int button_prev;
-    int button_next;
-    int button_back;
+    int menu;
+    int select;
+    int prev;
+    int next;
+    int back;
+    int index;
 } UI_state_t;
 
 typedef struct state_t{
