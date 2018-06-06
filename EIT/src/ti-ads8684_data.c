@@ -146,26 +146,26 @@ int ti_adc_init()
 	}
 
 
-	/* SYSFS_TRIGGER */
-	//open file descriptor for sysfs trigger
-	snprintf(buf, sizeof(buf), IIO_DIR SYSFS_TRIG_NAME "/trigger_now");
-	sysfs_trig_fd = open(buf, O_WRONLY);
-	if(sysfs_trig_fd<0){
-		perror("ERROR in ti_adc_init, failed to open adc interface for sysfs trigger\n");
-		fprintf(stderr, "maybe kernel or device tree is too old\n");
-		return -1;
-	}
+	// /* SYSFS_TRIGGER */
+	// //open file descriptor for sysfs trigger
+	// snprintf(buf, sizeof(buf), IIO_DIR SYSFS_TRIG_NAME "/trigger_now");
+	// sysfs_trig_fd = open(buf, O_WRONLY);
+	// if(sysfs_trig_fd<0){
+	// 	perror("ERROR in ti_adc_init, failed to open adc interface for sysfs trigger\n");
+	// 	fprintf(stderr, "maybe kernel or device tree is too old\n");
+	// 	return -1;
+	// }
 
-	//set ADC trigger to be hrtimer trigger
-	snprintf(buf, sizeof(buf), IIO_DIR ADC_NAME "/trigger/current_trigger");
-	current_trigger_fd = open(buf, O_WRONLY);
+	// //set ADC trigger to be sysfs trigger
+	// snprintf(buf, sizeof(buf), IIO_DIR ADC_NAME "/trigger/current_trigger");
+	// current_trigger_fd = open(buf, O_WRONLY);
 
-	snprintf(buf, sizeof(buf), SYSFS_TRIG_NAME);
-	if(write(current_trigger_fd, buf, sizeof(buf))<0){
-		perror("ERROR in ti_adc_init, failed to write to current_trigger\n");
-		fprintf(stderr, "maybe kernel or device tree is too old\n");
-		return -1;
-	}
+	// snprintf(buf, sizeof(buf), SYSFS_TRIG_NAME);
+	// if(write(current_trigger_fd, buf, sizeof(buf))<0){
+	// 	perror("ERROR in ti_adc_init, failed to write to current_trigger\n");
+	// 	fprintf(stderr, "maybe kernel or device tree is too old\n");
+	// 	return -1;
+	// }
 
 	/* ADC ENABLE */
 	// //open file descriptors for ADC reset pins and set direction to out
