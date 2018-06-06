@@ -351,7 +351,7 @@ int sample()
 
 	//execute sampling
 	gettimeofday(&t1, NULL);
-	while((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS)
+	while(state.system != EXITING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
 		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 		fflush(stdout);
@@ -432,7 +432,7 @@ int sample()
 	return 0;
 }
 
-int process_button(char opt_list[][OPT_STR_LEN])
+int process_button(const char opt_list[][OPT_STR_LEN])
 {
 	switch(button) {
 		case SELECT:
@@ -470,11 +470,15 @@ int process_button(char opt_list[][OPT_STR_LEN])
 
 int update_UI(){
 	switch (state.menu) {
+		printf(" index = %d",state.index);
 		case HOME:
 		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
-			if(mod(state.index,state.len) == 0) sample();
+			if(mod(state.index,state.len) == 0) {
+				sample();
+				state.index = 0;
+			}
 			else{
 				state.menu = SETTINGS;
 				state.index = 0;
@@ -529,11 +533,38 @@ int update_UI(){
 		printUI(state, SAMPLING_OPTS);
 		if(process_button(SAMPLING_OPTS)){
 			config.sample_mode = mod(state.index,state.len);
-			printf(" sampling mode set\n");
+			printf("sampling mode set to %s\n",SAMPLING_OPTS[config.sample_mode]);
+			if (mod(state.index,state.len) == CONTINUOUS){
+				state.menu = HOME;
+				state.index = 0;
+			}
+			else state.menu = mod(state.index,state.len) + 6;
+			state.index = 0;
+		};
+		break;
+
+		case TIME:
+		state.len = TIME_OPTS_LEN;
+		printUI(state, TIME_OPTS);
+		if(process_button(TIME_OPTS)){
+			config.time = time_opts[mod(state.index,state.len)];
+			printf("time set to %d seconds\n",config.time);
 			state.menu = HOME;
 			state.index = 0;
 		};
 		break;
+
+		case CYCLE:
+		state.len = CYCLE_OPTS_LEN;
+		printUI(state, CYCLE_OPTS);
+		if(process_button(CYCLE_OPTS)){
+			config.cycles = atoi(CYCLE_OPTS[mod(state.index,state.len)]);
+			printf("cycles set to %d\n",config.cycles);
+			state.menu = HOME;
+			state.index = 0;
+		};
+		break;
+
 	}
 	return 0;
 	usleep(0.1*1e6);
@@ -545,18 +576,19 @@ int update_UI(){
 
 /* BUTTON POLL THREAD */
 void* button_poll(void* ptr){
-	struct pollfd fdset[3];
-	int nfds = 3;
-	int gpio_fd[3], timeout, rc;
+	int nfds = 4;
+	struct pollfd fdset[nfds];
+	int gpio_fd[nfds], timeout, rc;
 	char *buf[MAX_BUF];
-	unsigned int gpio[3];
+	unsigned int gpio[nfds];
 	int len;
 
     gpio[0] = 61; // button select
     gpio[1] = 88; // button previous
     gpio[2] = 89; // button next
+    gpio[3] = 11; // button back
 
-    for(int i=0;i<3;i++){
+    for(int i=0;i<nfds;i++){
     	gpio_export(gpio[i]);
     	gpio_set_dir(gpio[i], 0);
     	gpio_set_edge(gpio[i], "rising");
@@ -568,7 +600,7 @@ void* button_poll(void* ptr){
     while(state.system != EXITING){
     	memset((void*)fdset, 0, sizeof(fdset));
 
-    	for(int i=0;i<3;i++){
+    	for(int i=0;i<nfds;i++){
     		fdset[i].fd = gpio_fd[i];
     		fdset[i].events = POLLPRI;
     	}
@@ -593,23 +625,26 @@ void* button_poll(void* ptr){
     		len = read(fdset[SELECT].fd, buf, MAX_BUF);
     		button = SELECT;
     	}
-
     	if (fdset[PREV].revents & POLLPRI) {
     		lseek(fdset[PREV].fd, 0, SEEK_SET);
     		len = read(fdset[PREV].fd, buf, MAX_BUF);
     		button = PREV;
     	}
-
     	if (fdset[NEXT].revents & POLLPRI) {
     		lseek(fdset[NEXT].fd, 0, SEEK_SET);
     		len = read(fdset[NEXT].fd, buf, MAX_BUF);
     		button = NEXT;
-    	}     
+    	}
+    	if (fdset[BACK].revents & POLLPRI) {
+    		lseek(fdset[BACK].fd, 0, SEEK_SET);
+    		len = read(fdset[BACK].fd, buf, MAX_BUF);
+    		button = BACK;
+    	}       
 
     	fflush(stdout);
     }
 
-    for(int i=0;i<4;i++){
+    for(int i=0;i<nfds;i++){
     	gpio_unexport(gpio[i]);
     	gpio_fd_close(gpio_fd[i]);
     }

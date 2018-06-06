@@ -191,7 +191,7 @@ void backSelect()
 }
 
 void printBattery(float batt)
-{   
+{  
     setTextSize(1);
     setTextColor(WHITE);
 
@@ -218,9 +218,9 @@ void printBattery(float batt)
     }
 }
 
-void printUI(state_t state, char opt_list[][OPT_STR_LEN])
+void printUI(state_t state, const char opt_list[][OPT_STR_LEN])
 {
-    char MENU_OPTS[6][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
+    char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE","TIME","CYCLES"};
 
     int center = mod(state.index,state.len);
     int left = mod(state.index-1,state.len);
@@ -237,7 +237,7 @@ void printUI(state_t state, char opt_list[][OPT_STR_LEN])
     Display();
 }
 
-void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])
+void mainSelect(state_t state, const char opt_list[][OPT_STR_LEN])
 {
     int center = mod(state.index,state.len);
 

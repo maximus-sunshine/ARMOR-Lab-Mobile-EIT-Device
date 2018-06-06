@@ -42,36 +42,11 @@ extern I2C_DeviceT I2C_DEV_2;
 /*******************************************************************************
 * ENUMS/DEFINES/VARIABLES
 *******************************************************************************/
-enum buttons
-{
-    SELECT,
-    PREV,
-    NEXT,
-    BACK,
-};
-
-enum menus
-{   
-    HOME,
-    SETTINGS,
-    NODES,
-    CURRENT,
-    CONFIG,
-    SAMPLING,
-};
-
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
 #define OPT_STR_LEN 11   
 #define MAX_BUF 64
 #define mod(a,b) (a%b+b)%b
-
-#define HOME_OPTS_LEN 2
-#define SETTINGS_OPTS_LEN 4
-#define NODES_OPTS_LEN 7
-#define CURRENT_OPTS_LEN 20
-#define CONFIG_OPTS_LEN 2
-#define SAMPLING_OPTS_LEN 3
 
 /************************************************************************************
 * STRUCTS
@@ -209,7 +184,7 @@ void printBattery(float batt);
 * 
 * Outputs: 
 *****************************************************************************/
-void printUI(state_t state, char opt_list[][OPT_STR_LEN]);
+void printUI(state_t state, const char opt_list[][OPT_STR_LEN]);
 
 /****************************************************************************
 * void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])
@@ -220,7 +195,7 @@ void printUI(state_t state, char opt_list[][OPT_STR_LEN]);
 * 
 * Outputs: 
 *****************************************************************************/
-void mainSelect(state_t state, char opt_list[][OPT_STR_LEN]);
+void mainSelect(state_t state, const char opt_list[][OPT_STR_LEN]);
 
 /* USER BUTTON FUNCTIONS */
 /****************************************************************************
