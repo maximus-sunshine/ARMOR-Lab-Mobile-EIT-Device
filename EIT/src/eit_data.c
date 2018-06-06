@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include "../includes/eit_data.h"
 #include <malloc.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /************************************************************************************
 * FUNCTION DEFINITIONS
@@ -105,10 +107,11 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]){
 * Reads raw voltages from VOLT_DATA_TEXT
 * Preforms voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
 * Places all voltages for one cycle on a tab seberated row
-* Original raw file is removed and temporary file is renamed to original file
-*
+* Original raw file is removed and temporary file is renamed to a nonexhisting file
+* increments the name of temp file by 1 untill it reaches a file that doesnt exhist
+* 
+* Only works if you create a path in working directory
 * Inputs :	
-
 * Outputs: return -1 on failure, 0 on success
 *				  
 *****************************************************************************/
@@ -118,18 +121,19 @@ int data_conversion(){
 	double volt_scale = 0.078127104;
 	int index = 0;
 
-	
+	//opens original file for reading
 	fp = fopen(VOLT_DATA_TEXT,"r");
 	if(NULL == fp) {
         	perror("ERROR in opening raw data file\n");
 		return -1;
     	}
+  	//creates temporary file where converted/formatted data will go
 	fp_temp = fopen(TEMP_VOLT_DATA_TEXT,"w");
 	if(NULL == fp_temp) {
         	perror("ERROR in creating text file for converted/formatted data\n");
 		return -1;
    	}
-
+   	//reads original file and write converted/formatted data to temporary file
 	while(fgets(data_buff,8,fp)!= NULL){
 		volt_value = atoi(data_buff)*(volt_scale/1000);
 
@@ -143,12 +147,28 @@ int data_conversion(){
 		}
 
 	}
-	
 	fclose(fp);
 	fclose(fp_temp);
-	
+
+	//creates a file name that doesnt exhist
+	//if file exhists already it creates new file with an increment in the name
+	char path[66];
+	int i = 1;
+	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+	while(1){
+		if( access( path,F_OK ) != -1){
+			i++;
+			snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+		
+		}
+		else{
+			break;
+		}
+	}
+	//removes original file
 	remove(VOLT_DATA_TEXT);
-	rename(TEMP_VOLT_DATA_TEXT,VOLT_DATA_TEXT);
+	//renames temporary file to new incremented file name
+	rename(TEMP_VOLT_DATA_TEXT,path);
 
 	return 0;
 }
