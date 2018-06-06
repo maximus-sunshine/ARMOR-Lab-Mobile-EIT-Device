@@ -162,10 +162,10 @@
 					0x1a8 0x07 /* P9.41 gpio3_20 (gpio 116), OUTPUT_PULLDOWN | MODE7, A1_3 		 */
 					0x164 0x07 /* P9.42 gpio0_7  (gpio   7), OUTPUT_PULLDOWN | MODE7, A0_3 		 */
 
-					0x07c 0x27 /* P8.26 gpio1_29 (gpio 61), INPUT_PULLDOWN | MODE7, Button0	 */
-					0x0e8 0x27 /* P8.28 gpio2_24 (gpio 88), INPUT_PULLDOWN | MODE7, Button1	 */
-					0x0ec 0x27 /* P8.30 gpio2_25 (gpio 89), INPUT_PULLDOWN | MODE7, Button2	 */
-					0x0dc 0x27 /* P8.32 gpio0_11 (gpio 11), INPUT_PULLDOWN | MODE7, Button3	 */
+					0x07c 0x27 /* P8.26 gpio1_29 (gpio 61), INPUT_PULLDOWN | MODE7, Button0, SEL */
+					0x0e8 0x27 /* P8.28 gpio2_24 (gpio 88), INPUT_PULLDOWN | MODE7, Button1, PREV*/
+					0x0ec 0x27 /* P8.30 gpio2_25 (gpio 89), INPUT_PULLDOWN | MODE7, Button2, NEXT*/
+					0x0dc 0x27 /* P8.32 gpio0_11 (gpio 11), INPUT_PULLDOWN | MODE7, Button3, BACK*/
 					0x0cc 0x07 /* P8.34 gpio2_17 (gpio 81), OUPUT_PULLDOWN | MODE7, OLED PWR */
 					0x0c8 0x07 /* P8.36 gpio2_16 (gpio 80), OUPUT_PULLDOWN | MODE7, OLED RST */
 				>;

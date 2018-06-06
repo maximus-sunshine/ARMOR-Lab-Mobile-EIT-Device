@@ -220,7 +220,7 @@ void printBattery(float batt)
 
 void printUI(state_t state, char opt_list[][OPT_STR_LEN])
 {
-    char MENU_OPTS[6][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
+    char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE","TIME","CYCLES"};
 
     int center = mod(state.index,state.len);
     int left = mod(state.index-1,state.len);
