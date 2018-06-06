@@ -223,8 +223,8 @@ void printUI(state_t state, const char opt_list[][OPT_STR_LEN])
     char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE","TIME","CYCLES"};
 
     int center = mod(state.index,state.len);
-    int left = mod(state.index-1,state.len);
-    int right = mod(state.index+1,state.len);
+    int left = mod((state.index-1),state.len);
+    int right = mod((state.index+1),state.len);
 
     clearDisplay();
     printCenter(opt_list[center],2);

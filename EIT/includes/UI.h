@@ -54,6 +54,7 @@ extern I2C_DeviceT I2C_DEV_2;
 
 typedef struct state_t{
     int menu;
+    int back;
     int index;
     int len; 
     float batt;

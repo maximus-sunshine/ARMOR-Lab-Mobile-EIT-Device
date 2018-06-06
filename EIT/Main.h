@@ -171,7 +171,7 @@ const char SETTINGS_OPTS[4][OPT_STR_LEN] = {"NODES","CURRENT","CONFIG","MODE"};
 const char NODES_OPTS[7][OPT_STR_LEN] = {"8","12","16","20","24","28","32"};
 const char CURRENT_OPTS[20][OPT_STR_LEN] = {"100","200","300","400","500","600","700","800","900","1000","1100","1200","1300","1400","1500","1600","1700","1800","1900","2000"};
 const char CONFIG_OPTS[2][OPT_STR_LEN] = {"ACROSS","ADJACENT"};
-const char SAMPLING_OPTS[3][OPT_STR_LEN] = {"TIMED","CYCLES","CONTINUOUS"};
+const char SAMPLING_OPTS[3][OPT_STR_LEN] = {"TIMED","CYCLES","CONT."};
 const char TIME_OPTS[13][OPT_STR_LEN] = {"5 s","10 s","20 s","30 s","45 s","1 min","2 min","5 min","10 min","20 min","30 min","1 hr","2 hr"};
 const char CYCLE_OPTS[13][OPT_STR_LEN] = {"1","5","10","20","30","40","50","100","200","500","1000","5000","10000"};
 

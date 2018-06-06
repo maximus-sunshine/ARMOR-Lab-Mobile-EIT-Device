@@ -36,6 +36,7 @@ config_t config = {
 
 state_t state = {
 	.menu = HOME,
+	.back = HOME,
 	.index = 0,
 	.len = HOME_OPTS_LEN,
 	.batt = 0.0,
@@ -457,7 +458,7 @@ int process_button(const char opt_list[][OPT_STR_LEN])
 
 		case BACK:
 		state.index = 0;
-		if(state.menu > 0) state.menu--;
+		state.menu = state.back;
 		button = -1;
 		return 0;
 		break;
@@ -470,14 +471,14 @@ int process_button(const char opt_list[][OPT_STR_LEN])
 
 int update_UI(){
 	switch (state.menu) {
-		printf(" index = %d",state.index);
 		case HOME:
+		state.back = HOME;
 		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
 			if(mod(state.index,state.len) == 0) {
-				sample();
 				state.index = 0;
+				sample();
 			}
 			else{
 				state.menu = SETTINGS;
@@ -487,6 +488,7 @@ int update_UI(){
 		break;
 
 		case SETTINGS:
+		state.back = HOME;
 		state.len = SETTINGS_OPTS_LEN;
 		printUI(state, SETTINGS_OPTS);
 		if(process_button(SETTINGS_OPTS)){
@@ -496,6 +498,7 @@ int update_UI(){
 		break;
 
 		case NODES:
+		state.back = SETTINGS;
 		state.len = NODES_OPTS_LEN;
 		printUI(state, NODES_OPTS);
 		if(process_button(NODES_OPTS)){
@@ -507,6 +510,7 @@ int update_UI(){
 		break;
 
 		case CURRENT:
+		state.back = SETTINGS;
 		state.len = CURRENT_OPTS_LEN;
 		printUI(state, CURRENT_OPTS);
 		if(process_button(CURRENT_OPTS)){
@@ -518,6 +522,7 @@ int update_UI(){
 		break;
 
 		case CONFIG:
+		state.back = SETTINGS;
 		state.len = CONFIG_OPTS_LEN;
 		printUI(state, CONFIG_OPTS);
 		if(process_button(CONFIG_OPTS)){
@@ -529,6 +534,7 @@ int update_UI(){
 		break;
 
 		case SAMPLING:
+		state.back = SETTINGS;
 		state.len = SAMPLING_OPTS_LEN;
 		printUI(state, SAMPLING_OPTS);
 		if(process_button(SAMPLING_OPTS)){
@@ -544,6 +550,7 @@ int update_UI(){
 		break;
 
 		case TIME:
+		state.back = SAMPLING;
 		state.len = TIME_OPTS_LEN;
 		printUI(state, TIME_OPTS);
 		if(process_button(TIME_OPTS)){
@@ -555,6 +562,7 @@ int update_UI(){
 		break;
 
 		case CYCLE:
+		state.back = SAMPLING;
 		state.len = CYCLE_OPTS_LEN;
 		printUI(state, CYCLE_OPTS);
 		if(process_button(CYCLE_OPTS)){
