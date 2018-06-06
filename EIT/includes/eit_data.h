@@ -33,6 +33,7 @@
 ***************************************************************/
 #define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
 #define TEMP_VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/temp_data.txt"
+#define RAW_PATH "/home/debian/MAE156B_Team6/data/data"
 
 /************************************************************** 
 *FILE POINTERS
