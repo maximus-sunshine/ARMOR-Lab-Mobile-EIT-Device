@@ -50,39 +50,37 @@ enum buttons
     BACK,
 };
 
-enum options
+enum menus
 {   
-    START,
+    HOME,
     SETTINGS,
     NODES,
-    NUM_NODES8,
-    NUM_NODES16,
-    NUM_NODES32,
     CURRENT,
-    CURRENT_AUTO,
-    CURRENT_MANUAL,
     CONFIG,
+    SAMPLING,
 };
 
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
+#define OPT_STR_LEN 11   
 #define MAX_BUF 64
+#define mod(a,b) (a%b+b)%b
+
+#define HOME_OPTS_LEN 2
+#define SETTINGS_OPTS_LEN 4
+#define NODES_OPTS_LEN 7
+#define CURRENT_OPTS_LEN 20
+#define CONFIG_OPTS_LEN 2
+#define SAMPLING_OPTS_LEN 3
 
 /************************************************************************************
 * STRUCTS
 *************************************************************************************/
-typedef struct UI_state_t{
-    const unsigned char *menu_main;
-    const unsigned char *menu_prev;
-    const unsigned char *menu_next;
-    const unsigned char *menu_back;
-    int button_select;
-    int button_prev;
-    int button_next;
-    int button_back;
-} UI_state_t;
 
 typedef struct state_t{
+    int menu;
+    int index;
+    int len; 
     float batt;
     int system;
 } state_t;
@@ -203,7 +201,7 @@ void backSelect();
 void printBattery(float batt);
 
 /****************************************************************************
-* void printUI(UI_state_t UI_state, state_t state)
+* void printUI(state_t state, char opt_list[][OPT_STR_LEN])
 *
 * DESCRIPTION
 *
@@ -211,10 +209,10 @@ void printBattery(float batt);
 * 
 * Outputs: 
 *****************************************************************************/
-void printUI(UI_state_t UI_state, state_t state);
+void printUI(state_t state, char opt_list[][OPT_STR_LEN]);
 
 /****************************************************************************
-* void mainSelect(UI_state_t UI_state)
+* void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])
 *
 * DESCRIPTION
 *
@@ -222,7 +220,7 @@ void printUI(UI_state_t UI_state, state_t state);
 * 
 * Outputs: 
 *****************************************************************************/
-void mainSelect(UI_state_t UI_state);
+void mainSelect(state_t state, char opt_list[][OPT_STR_LEN]);
 
 /* USER BUTTON FUNCTIONS */
 /****************************************************************************

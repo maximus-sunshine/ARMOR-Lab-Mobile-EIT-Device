@@ -218,26 +218,34 @@ void printBattery(float batt)
     }
 }
 
-void printUI(UI_state_t UI_state, state_t state)
+void printUI(state_t state, char opt_list[][OPT_STR_LEN])
 {
+    char MENU_OPTS[6][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE"};
+
+    int center = mod(state.index,state.len);
+    int left = mod(state.index-1,state.len);
+    int right = mod(state.index+1,state.len);
+
     clearDisplay();
-    printCenter(UI_state.menu_main,2);
-    printLeft(UI_state.menu_back,1,1);
+    printCenter(opt_list[center],2);
+    printLeft(MENU_OPTS[state.menu],1,1); //TODO
     printBattery(state.batt);
-    printLeft(UI_state.menu_prev,SSD1306_LCDHEIGHT-9,1);
-    printRight(UI_state.menu_next,SSD1306_LCDHEIGHT-9,1);
+    printLeft(opt_list[left],SSD1306_LCDHEIGHT-9,1);
+    printRight(opt_list[right],SSD1306_LCDHEIGHT-9,1);
     printCenterY("<",1,2);
     printCenterY(">",SSD1306_LCDWIDTH-12-1,2);
     Display();
 }
 
-void mainSelect(UI_state_t UI_state)
+void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])
 {
-    printMenuCenterSelect(UI_state.menu_main,2);
+    int center = mod(state.index,state.len);
+
+    printMenuCenterSelect(opt_list[center],2);
     Display();
     usleep(0.1*1e6);
 
-    printCenter(UI_state.menu_main,2);
+    printCenter(opt_list[center],2);
     Display();
 }
 
