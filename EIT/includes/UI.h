@@ -184,7 +184,7 @@ void printBattery(float batt);
 * 
 * Outputs: 
 *****************************************************************************/
-void printUI(state_t state, char opt_list[][OPT_STR_LEN]);
+void printUI(state_t state, const char opt_list[][OPT_STR_LEN]);
 
 /****************************************************************************
 * void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])
@@ -195,7 +195,7 @@ void printUI(state_t state, char opt_list[][OPT_STR_LEN]);
 * 
 * Outputs: 
 *****************************************************************************/
-void mainSelect(state_t state, char opt_list[][OPT_STR_LEN]);
+void mainSelect(state_t state, const char opt_list[][OPT_STR_LEN]);
 
 /* USER BUTTON FUNCTIONS */
 /****************************************************************************

@@ -351,7 +351,7 @@ int sample()
 
 	//execute sampling
 	gettimeofday(&t1, NULL);
-	while((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS)
+	while(state.system != EXITING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
 		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 		fflush(stdout);
@@ -432,7 +432,7 @@ int sample()
 	return 0;
 }
 
-int process_button(char opt_list[][OPT_STR_LEN])
+int process_button(const char opt_list[][OPT_STR_LEN])
 {
 	switch(button) {
 		case SELECT:
@@ -470,11 +470,15 @@ int process_button(char opt_list[][OPT_STR_LEN])
 
 int update_UI(){
 	switch (state.menu) {
+		printf(" index = %d",state.index);
 		case HOME:
 		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
-			if(mod(state.index,state.len) == 0) sample();
+			if(mod(state.index,state.len) == 0) {
+				sample();
+				state.index = 0;
+			}
 			else{
 				state.menu = SETTINGS;
 				state.index = 0;
@@ -529,8 +533,12 @@ int update_UI(){
 		printUI(state, SAMPLING_OPTS);
 		if(process_button(SAMPLING_OPTS)){
 			config.sample_mode = mod(state.index,state.len);
-			printf("sampling mode set to %s\n",SAMPLING);
-			state.menu = mod(state.index,state.len) + 6;
+			printf("sampling mode set to %s\n",SAMPLING_OPTS[config.sample_mode]);
+			if (mod(state.index,state.len) == CONTINUOUS){
+				state.menu = HOME;
+				state.index = 0;
+			}
+			else state.menu = mod(state.index,state.len) + 6;
 			state.index = 0;
 		};
 		break;

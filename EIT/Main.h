@@ -1,4 +1,4 @@
-/***************************************************************************
+/****************************************************************************
  * ------------------------------------------------------------------------
  * ARMOR Lab @UC San Diego, Kenneth Loh Ph.D
  * 
@@ -165,17 +165,17 @@ enum menus
     CYCLE,
 };
 
-char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE","TIME","CYCLES"};
-char HOME_OPTS[2][OPT_STR_LEN] = {"START","SETTINGS"};
-char SETTINGS_OPTS[4][OPT_STR_LEN] = {"NODES","CURRENT","CONFIG","MODE"};
-char NODES_OPTS[7][OPT_STR_LEN] = {"8","12","16","20","24","28","32"};
-char CURRENT_OPTS[20][OPT_STR_LEN] = {"100","200","300","400","500","600","700","800","900","1000","1100","1200","1300","1400","1500","1600","1700","1800","1900","2000"};
-char CONFIG_OPTS[2][OPT_STR_LEN] = {"ACROSS","ADJACENT"};
-char SAMPLING_OPTS[3][OPT_STR_LEN] = {"TIMED","CYCLES","CONTINUOUS"};
-char TIME_OPTS[13][OPT_STR_LEN = {"5 s","10 s","20 s","30 s","45 s","1 min","2 min","5 min","10 min","20 min","30 min","1 hr","2 hr"};
-char CYCLE_OPTS[][OPT_STR_LEN] = {"1","5","10","20","30","40","50","100","200","500","1000","5000","10000"};
+const char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CONFIG","MODE","TIME","CYCLES"};
+const char HOME_OPTS[2][OPT_STR_LEN] = {"START","SETTINGS"};
+const char SETTINGS_OPTS[4][OPT_STR_LEN] = {"NODES","CURRENT","CONFIG","MODE"};
+const char NODES_OPTS[7][OPT_STR_LEN] = {"8","12","16","20","24","28","32"};
+const char CURRENT_OPTS[20][OPT_STR_LEN] = {"100","200","300","400","500","600","700","800","900","1000","1100","1200","1300","1400","1500","1600","1700","1800","1900","2000"};
+const char CONFIG_OPTS[2][OPT_STR_LEN] = {"ACROSS","ADJACENT"};
+const char SAMPLING_OPTS[3][OPT_STR_LEN] = {"TIMED","CYCLES","CONTINUOUS"};
+const char TIME_OPTS[13][OPT_STR_LEN] = {"5 s","10 s","20 s","30 s","45 s","1 min","2 min","5 min","10 min","20 min","30 min","1 hr","2 hr"};
+const char CYCLE_OPTS[13][OPT_STR_LEN] = {"1","5","10","20","30","40","50","100","200","500","1000","5000","10000"};
 
-int time_opts[13] = {5, 10, 20, 30, 45, 60, 120, 300, 600, 1200, 1800, 3600, 7200}; //time options in seconds
+const int time_opts[13] = {5, 10, 20, 30, 45, 60, 120, 300, 600, 1200, 1800, 3600, 7200}; //time options in seconds
 
 #define HOME_OPTS_LEN 2
 #define SETTINGS_OPTS_LEN 4
