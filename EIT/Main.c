@@ -361,13 +361,17 @@ int sample()
 	gettimeofday(&t1, NULL);
 	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
-		// printf("\n\n\n******************** Cycle %d *************************\n\n",count);
-		// fflush(stdout);
+		if(isatty(fileno(stdout))){
+			printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+			fflush(stdout);
+		}
 
 		//outer loop, move current and ground
 		for(i = 0; i < config.nodal_num; i++){
-			// printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
-			// fflush(stdout);
+			if(isatty(fileno(stdout))){
+				printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+				fflush(stdout);
+			};
 
 			//set current and ground mux logic pins
 			for(k = 0; k < MUX_PINS; k++){                            
@@ -392,8 +396,7 @@ int sample()
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
 					//fill current and ground nodes with junk data
-          			strcpy(raw_buf, "0");
-		      		strcat(raw_buf, "\n");
+          			strcpy(raw_buf, "0\n");
 		      		fputs(raw_buf,fp);
 				}
 				
@@ -413,9 +416,12 @@ int sample()
 					}
 
 					//read ADC
-					fputs(ti_adc_read_str(NODE),fp);
-					//printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
-					//fflush(stdout);
+					strcpy(raw_buf, ti_adc_read_str(NODE));
+					fputs(raw_buf,fp);
+					if(isatty(fileno(stdout))){
+						printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,atoi(raw_buf)*config.adc_scale[NODE]/1000);
+						fflush(stdout);
+					}
 				}
 
 				//disable muxs
@@ -438,14 +444,15 @@ int sample()
  	//Print timing data to screen
 	gettimeofday(&t2, NULL);
 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
-	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",config.nodal_num, count, usec/1e6, count/(usec/1e6));
+	float freq = count/(usec/1e6);
+	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",config.nodal_num, count, usec/1e6, freq);
 	fflush(stdout);
 
 	//finish writing data
 	fclose(fp);
   	printf("Converting and formatting data\n");
 
- 	data_conversion(config.nodal_num);
+ 	data_conversion(config.nodal_num, freq);
 	printf("Conversion/Formatting complete\n");
 	return 0;
 }

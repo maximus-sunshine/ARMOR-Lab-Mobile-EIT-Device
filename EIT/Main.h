@@ -324,7 +324,7 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 * Outputs: return -1 on failure, 0 on success
 *                 
 *****************************************************************************/
-int data_conversion(int nodal_num){
+int data_conversion(int nodal_num, float freq){
     float volt_value;
     char data_buff[8];
     char write_buff[15];
@@ -362,6 +362,9 @@ int data_conversion(int nodal_num){
 
     }
     
+    len = snprintf(write_buff, sizeof(write_buff),"\n\n %0.5f \n\n",freq);
+    write(fd,write_buff,len);
+
     fclose(fp);
     close(fd);
     
