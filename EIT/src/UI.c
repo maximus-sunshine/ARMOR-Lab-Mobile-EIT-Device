@@ -1,11 +1,18 @@
 /*****************************************************************
- * MAE 156B Spring 2018 Team 6
- *
- *  UI demo script for Preliminary Design presentation on 5/23/18
+ * ---------------------------------------------------------------
+ * ARMOR Lab @UC San Diego, Kenneth Loh Ph.D
  * 
- *  compile with "gcc -pthread demo.c gpiolib.c example_app.c I2C.c SSD1306_OLED.c -o demo"
- *
- *********************************************************************/
+ * MAE 156B Spring 2018 Team 6: Warfighter Protection
+ *  - Maxwell Sun       (maxsun96@gmail.com)
+ *  - Jacob Rutheiser   (jrutheiser@gmail.com)
+ *  - Matthew Williams  (mwilliams31243@gmail.com)
+ *  - Aaron Gunn        (gunnahg@gmail.com)
+ * ---------------------------------------------------------------
+ * 
+ * UI.c
+ * 
+ * Function Library for UI
+ ********************************************************************/
  
 /*******************************************************************************
 * INCLUDES

@@ -13,6 +13,7 @@
  * 
  * Header file for the EIT device's user interface
  ********************************************************************/
+
 #ifndef UI_H
 #define UI_H
 
