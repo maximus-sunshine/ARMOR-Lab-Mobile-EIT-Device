@@ -513,8 +513,8 @@ int manage_menu(){
 		if(process_button(NODES_OPTS)){
 			config.nodal_num = atoi(NODES_OPTS[mod(state.index,state.len)]);
 			printf(" nodal num set to %d\n",config.nodal_num);
-			state.menu = HOME;
-			state.index = 0;
+			state.menu = state.back;
+			state.index = state.prev_index;
 		};
 		break;
 
@@ -526,8 +526,8 @@ int manage_menu(){
 		if(process_button(CURRENT_OPTS)){
 			config.i_setpoint = atoi(CURRENT_OPTS[mod(state.index,state.len)]);
 			printf(" current set to %d\n",config.i_setpoint);
-			state.menu = HOME;
-			state.index = 0;
+			state.menu = state.back;
+			state.index = state.prev_index;
 		};
 		break;
 
@@ -539,8 +539,8 @@ int manage_menu(){
 		if(process_button(CONFIG_OPTS)){
 			config.sample_geom = mod(state.index,state.len);
 			printf(" geometry set\n");
-			state.menu = HOME;
-			state.index = 0;
+			state.menu = state.back;
+			state.index = state.prev_index;
 		};
 		break;
 
@@ -553,13 +553,13 @@ int manage_menu(){
 			config.sample_mode = mod(state.index,state.len);
 			printf("sampling mode set to %s\n",SAMPLING_OPTS[config.sample_mode]);
 			if (mod(state.index,state.len) == CONTINUOUS){
-				state.menu = HOME;
-				state.index = 0;
+				state.menu = state.back;
+				state.index = state.prev_index;
 			}
 			else {
 				state.menu = mod(state.index,state.len) + 6;
+				state.index = 0;
 			}
-			state.index = 0;
 		};
 		break;
 
@@ -571,8 +571,8 @@ int manage_menu(){
 		if(process_button(TIME_OPTS)){
 			config.time = time_opts[mod(state.index,state.len)];
 			printf("time set to %d seconds\n",config.time);
-			state.menu = HOME;
-			state.index = 0;
+			state.menu = state.back;
+			state.index = state.prev_index;
 		};
 		break;
 
@@ -584,8 +584,8 @@ int manage_menu(){
 		if(process_button(CYCLE_OPTS)){
 			config.cycles = atoi(CYCLE_OPTS[mod(state.index,state.len)]);
 			printf("cycles set to %d\n",config.cycles);
-			state.menu = HOME;
-			state.index = 0;
+			state.menu = state.back;
+			state.index = state.prev_index;
 		};
 		break;
 
