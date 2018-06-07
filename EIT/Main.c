@@ -38,9 +38,10 @@ state_t state = {
 	.menu = HOME,
 	.back = HOME,
 	.index = 0,
+	.prev_index = 0,
 	.len = HOME_OPTS_LEN,
 	.batt = 0.0,
-	.system = RUNNING,
+	.system = UI,
 };
 
 /************************************************************************************
@@ -68,7 +69,7 @@ void* button_poll(void* ptr);
 *************************************************************************************/
 int sample();
 int process_button();
-int update_UI();
+int manage_menu();
 
 /************************************************************************************
 * MAIN
@@ -224,15 +225,21 @@ int main(){
 	fflush(stdout);
 
 	/* ENTER UI */
-	printf("\n entering menu interface...");
+	printf("\n entering menu interface...\n");
 	fflush(stdout);
 
-	state.system = RUNNING;
+	state.system = UI;
 	fflush(stdout);
 	usleep(0.5*1e6);
 	button = -1;
-	while(state.system == RUNNING){
-		update_UI();
+	while(state.system != EXITING){
+		if(state.system == UI){
+			manage_menu();
+		} 
+		else if (state.system == RUNNING){
+			sample();
+			state.system = UI;
+		} 
 	}
 
 	/* CLEANUP */
@@ -297,6 +304,8 @@ int sample()
 	int data, n, k;
 	struct timeval t1, t2;
 
+	print_sample_screen();
+
 	//set ADC scales and offsets
 	int i;
 	for(i=0;i<CHANNELS;i++){
@@ -315,13 +324,9 @@ int sample()
 	fflush(stdout);
 
 	//configure mux switching patterns
-	//mux array declarations
 	int current_mux[config.nodal_num];	// current                                           
 	int ground_mux[config.nodal_num];	// ground
 	int voltage_mux[config.nodal_num];	// voltage
-
-	printf("\n declared mux matrices...");
-	fflush(stdout);
 
 	mux_config(config.nodal_num,current_mux,ground_mux,voltage_mux);
 	printf("\n mux switching patterns configured...");
@@ -352,7 +357,7 @@ int sample()
 
 	//execute sampling
 	gettimeofday(&t1, NULL);
-	while(state.system != EXITING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
+	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
 		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 		fflush(stdout);
@@ -457,8 +462,8 @@ int process_button(const char opt_list[][OPT_STR_LEN])
 		break;
 
 		case BACK:
-		state.index = 0;
 		state.menu = state.back;
+		state.index = state.prev_index;
 		button = -1;
 		return 0;
 		break;
@@ -469,16 +474,17 @@ int process_button(const char opt_list[][OPT_STR_LEN])
 	}
 }
 
-int update_UI(){
+int manage_menu(){
 	switch (state.menu) {
 		case HOME:
+		state.prev_index = 0;
 		state.back = HOME;
 		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
 			if(mod(state.index,state.len) == 0) {
 				state.index = 0;
-				sample();
+				state.system = RUNNING;
 			}
 			else{
 				state.menu = SETTINGS;
@@ -489,16 +495,19 @@ int update_UI(){
 
 		case SETTINGS:
 		state.back = HOME;
+		state.prev_index = 1;
 		state.len = SETTINGS_OPTS_LEN;
 		printUI(state, SETTINGS_OPTS);
 		if(process_button(SETTINGS_OPTS)){
 			state.menu = mod(state.index,state.len) + 2;
+			state.prev_index = state.index;
 			state.index = 0; 
 		};
 		break;
 
 		case NODES:
 		state.back = SETTINGS;
+		state.prev_index = 0;
 		state.len = NODES_OPTS_LEN;
 		printUI(state, NODES_OPTS);
 		if(process_button(NODES_OPTS)){
@@ -511,6 +520,7 @@ int update_UI(){
 
 		case CURRENT:
 		state.back = SETTINGS;
+		state.prev_index = 1;
 		state.len = CURRENT_OPTS_LEN;
 		printUI(state, CURRENT_OPTS);
 		if(process_button(CURRENT_OPTS)){
@@ -523,6 +533,7 @@ int update_UI(){
 
 		case CONFIG:
 		state.back = SETTINGS;
+		state.prev_index = 2;
 		state.len = CONFIG_OPTS_LEN;
 		printUI(state, CONFIG_OPTS);
 		if(process_button(CONFIG_OPTS)){
@@ -535,6 +546,7 @@ int update_UI(){
 
 		case SAMPLING:
 		state.back = SETTINGS;
+		state.prev_index = 3;
 		state.len = SAMPLING_OPTS_LEN;
 		printUI(state, SAMPLING_OPTS);
 		if(process_button(SAMPLING_OPTS)){
@@ -544,13 +556,16 @@ int update_UI(){
 				state.menu = HOME;
 				state.index = 0;
 			}
-			else state.menu = mod(state.index,state.len) + 6;
+			else {
+				state.menu = mod(state.index,state.len) + 6;
+			}
 			state.index = 0;
 		};
 		break;
 
 		case TIME:
 		state.back = SAMPLING;
+		state.prev_index = 0;
 		state.len = TIME_OPTS_LEN;
 		printUI(state, TIME_OPTS);
 		if(process_button(TIME_OPTS)){
@@ -563,6 +578,7 @@ int update_UI(){
 
 		case CYCLE:
 		state.back = SAMPLING;
+		state.prev_index = 1;
 		state.len = CYCLE_OPTS_LEN;
 		printUI(state, CYCLE_OPTS);
 		if(process_button(CYCLE_OPTS)){
@@ -624,32 +640,42 @@ void* button_poll(void* ptr){
     		return NULL;
     	}
 
-    	// if (rc == 0) {
-    	// 	printf(".");
-    	// }
+    	switch(state.system){
+    		
+    		case UI:
+    		if (fdset[SELECT].revents & POLLPRI) {
+    			lseek(fdset[SELECT].fd, 0, SEEK_SET);
+    			len = read(fdset[SELECT].fd, buf, MAX_BUF);
+    			button = SELECT;
+    		}
+    		if (fdset[PREV].revents & POLLPRI) {
+    			lseek(fdset[PREV].fd, 0, SEEK_SET);
+    			len = read(fdset[PREV].fd, buf, MAX_BUF);
+    			button = PREV;
+    		}
+    		if (fdset[NEXT].revents & POLLPRI) {
+    			lseek(fdset[NEXT].fd, 0, SEEK_SET);
+    			len = read(fdset[NEXT].fd, buf, MAX_BUF);
+    			button = NEXT;
+    		}
+    		if (fdset[BACK].revents & POLLPRI) {
+    			lseek(fdset[BACK].fd, 0, SEEK_SET);
+    			len = read(fdset[BACK].fd, buf, MAX_BUF);
+    			button = BACK;
+    		}
+    		break;
 
-    	if (fdset[SELECT].revents & POLLPRI) {
-    		lseek(fdset[SELECT].fd, 0, SEEK_SET);
-    		len = read(fdset[SELECT].fd, buf, MAX_BUF);
-    		button = SELECT;
+    		case RUNNING:
+    		if (fdset[BACK].revents & POLLPRI) {
+    			state.system = UI;
+    			for(int i=0;i<nfds;i++){
+    				lseek(fdset[i].fd, 0, SEEK_SET);
+    				len = read(fdset[i].fd, buf, MAX_BUF);
+    			}
+    		}
+    		break;
+    		fflush(stdout);
     	}
-    	if (fdset[PREV].revents & POLLPRI) {
-    		lseek(fdset[PREV].fd, 0, SEEK_SET);
-    		len = read(fdset[PREV].fd, buf, MAX_BUF);
-    		button = PREV;
-    	}
-    	if (fdset[NEXT].revents & POLLPRI) {
-    		lseek(fdset[NEXT].fd, 0, SEEK_SET);
-    		len = read(fdset[NEXT].fd, buf, MAX_BUF);
-    		button = NEXT;
-    	}
-    	if (fdset[BACK].revents & POLLPRI) {
-    		lseek(fdset[BACK].fd, 0, SEEK_SET);
-    		len = read(fdset[BACK].fd, buf, MAX_BUF);
-    		button = BACK;
-    	}       
-
-    	fflush(stdout);
     }
 
     for(int i=0;i<nfds;i++){

@@ -56,6 +56,7 @@ typedef struct state_t{
     int menu;
     int back;
     int index;
+    int prev_index;
     int len; 
     float batt;
     int system;
@@ -186,6 +187,17 @@ void printBattery(float batt);
 * Outputs: 
 *****************************************************************************/
 void printUI(state_t state, const char opt_list[][OPT_STR_LEN]);
+
+/****************************************************************************
+* void print_sample_screen()
+*
+* DESCRIPTION
+*
+* Inputs : 
+* 
+* Outputs: 
+*****************************************************************************/
+void print_sample_screen();
 
 /****************************************************************************
 * void mainSelect(state_t state, char opt_list[][OPT_STR_LEN])

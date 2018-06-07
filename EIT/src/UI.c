@@ -237,6 +237,12 @@ void printUI(state_t state, const char opt_list[][OPT_STR_LEN])
     Display();
 }
 
+void print_sample_screen(){
+    clearDisplay();
+    printCenter("SAMPLING",2);
+    Display();
+}
+
 void mainSelect(state_t state, const char opt_list[][OPT_STR_LEN])
 {
     int center = mod(state.index,state.len);

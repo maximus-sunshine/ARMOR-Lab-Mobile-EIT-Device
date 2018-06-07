@@ -193,6 +193,7 @@ enum buttons
     PREV,
     NEXT,
     BACK,
+    EXIT,
 };
 
 enum sample_mode
@@ -217,6 +218,7 @@ enum adc_channels
 
 enum system_states
 {
+    UI,
     RUNNING, 
     EXITING,
 };
