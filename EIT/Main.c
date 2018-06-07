@@ -9,7 +9,7 @@
  *	- Aaron Gunn		(gunnahg@gmail.com)
  * -------------------------------------------------------------------------
  * 
- * Main.c (compile with 'gcc -pthread Main.c src/eit.c src/gpiolib.c src/ti-ads8684.c src/UI.c src/example_app.c src/I2C.c src/SSD1306_OLED.c -o Main')
+ * Main.c (compile with 'gcc -pthread Main.c src/gpiolib.c src/ti-ads8684.c src/UI.c src/example_app.c src/I2C.c src/SSD1306_OLED.c -o Main')
  * 
  * The Big Kahuna. This is the script that runs on boot. It does everything.
  ***************************************************************************/

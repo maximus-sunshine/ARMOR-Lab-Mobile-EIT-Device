@@ -242,66 +242,33 @@ typedef struct config_t{
 /************************************************************************************
 * FUNCTIONS
 *************************************************************************************/
-int eit_gpio_attach(int gpio_pin, gpio_info *info){
-    int bank, mask;
-    bank = gpio_pin/32;
-    mask = bit(gpio_pin%32);
-    info = gpio_attach(bank, mask, GPIO_OUT);
-    if(info == NULL){
-        perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-        fprintf(stderr, "maybe device tree is too old or the gpio pin is already exported\n");
-        return -1;
-    }
-    return 0;
-}
 
-int attach_all_gpio(){
+/****************************************************************************
+* int cur_gnd_config(int cur[],int gnd[])
+*
+* Configures current and ground nodes in "across" switching pattern.
+* Works for square samples with N nodes per edge.
+*
+* Inputs :  cur[], zero current node array (size = N*4)
+*           gnd[], zero gnd node array     (size = N*4)
+* 
+* Outputs:  TODO: return -1 on failure
+******************************************************************************/
+int mux_config(int nodal_num, int cur[],int gnd[], int volt[]){
     int i;
-    for(i = 0; i < MUX_PINS; i++){
-        if(eit_gpio_attach(current_mux_gpio[i], current_mux_gpio_info[i])<0){                   //current
-            perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-            fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",current_mux_gpio[i]);
-            return -1;
-        }
-        if(eit_gpio_attach(ground_mux_gpio[i], ground_mux_gpio_info[i])<0){                     //ground
-            perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-            fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",ground_mux_gpio[i]);
-            return -1;
-        }
-        if(eit_gpio_attach(voltage_mux_gpio[i], voltage_mux_gpio_info[i])<0){                   //voltage
-            perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-            fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",voltage_mux_gpio[i]);
-            return -1;
+    int side_len = (nodal_num/4); 
+    int node_index = 3*side_len;
+    for(i=0; i < nodal_num; i++){
+        cur[i]  = i;
+        gnd[i]  = node_index - 1;
+        volt[i] = i;
+        node_index = node_index - 1;
+        if((node_index % (side_len))==0){
+            node_index = node_index + (nodal_num/2);
+            if (node_index > nodal_num){
+                node_index = node_index % nodal_num;
+            }
         }
     }
-
-    for(i = 0; i < 10; i++){
-        if(eit_gpio_attach(current_switch_gpio[i], current_switch_gpio_info[i])<0){             //current source switches
-            perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-            fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",current_switch_gpio[i]);
-            return -1;
-        }
-    }
-
-    for(i = 0; i < 3; i++){
-        if(eit_gpio_attach(mux_disable_gpio[i], mux_disable_gpio_info[i])<0){                   //mux disable
-            perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-            fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",mux_disable_gpio[i]);
-            return -1;
-        }
-    }
-
-    if(eit_gpio_attach(adc_reset_gpio, adc_reset_gpio_info)<0){                                 //adc reset
-        perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-        fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",adc_reset_gpio);
-        return -1;
-    }
-
-    if(eit_gpio_attach(i_sense_reset_gpio, i_sense_reset_gpio_info)<0){                         //current sensor reset
-        perror("ERROR in eit_gpio_attach, unable to attach gpio\n");
-        fprintf(stderr, "maybe device tree is too old or gpio%d is already exported\n",i_sense_reset_gpio);
-        return -1;
-    }
-
     return 0;
 }
