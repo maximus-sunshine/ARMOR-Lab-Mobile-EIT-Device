@@ -324,10 +324,10 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 * Outputs: return -1 on failure, 0 on success
 *                 
 *****************************************************************************/
-int data_conversion(int nodal_num, float freq){
+int data_conversion(int current, int nodal_num, int cycles, float time, float freq){
     float volt_value;
     char data_buff[8];
-    char write_buff[15];
+    char write_buff[150];
     double volt_scale = 0.078127104;
     int index = 0;
     int len;
@@ -335,16 +335,19 @@ int data_conversion(int nodal_num, float freq){
     
     fp = fopen(VOLT_DATA_TEXT,"r");
     if(NULL == fp) {
-            perror("ERROR in opening raw data file\n");
+        perror("ERROR in opening raw data file\n");
         return -1;
-        }
+    }
 
     fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
     if(fd<0){
-            perror("ERROR in opening tempory data file\n");
-            fprintf(stderr, "path may not exhist\n");
-            return -1;
-        }
+        perror("ERROR in opening temporary data file\n");
+        fprintf(stderr, "path may not exist\n");
+        return -1;
+    }
+
+    len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
+    write(fd,write_buff,len);
 
     while(fgets(data_buff,8,fp)!= NULL){
         volt_value = atoi(data_buff)*(volt_scale/1000);
@@ -381,7 +384,6 @@ int data_conversion(int nodal_num, float freq){
         }
     }
     closedir(dirp);
-    printf("the number of files in directory is %d\n",file_count);
     char path[66];
     int i = 1;
     int k =0;
@@ -393,11 +395,11 @@ int data_conversion(int nodal_num, float freq){
         i++;
         snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
         if(k == (file_count-1)){
-                if(k == 0){
-                    snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+            if(k == 0){
+                snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
 
-                }
-                break;
+            }
+            break;
         }
 
     }
