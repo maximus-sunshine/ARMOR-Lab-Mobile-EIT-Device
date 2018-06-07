@@ -461,6 +461,31 @@ int ti_adc_read_raw(int ch)
 	return i;
 }
 
+char* ti_adc_read_str(int ch)
+{
+	//adc_raw_buff is defined in ti-ads8684 header
+	
+	//sanity checks
+	if(unlikely(!init_flag)){
+		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
+		return "-1";
+	}
+	if(unlikely(ch<0 || ch>=CHANNELS)){
+		fprintf(stderr,"ERROR: in ti_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
+		return "-1";
+	}
+	if(unlikely(lseek(fd_raw[ch],0,SEEK_SET)<0)){
+		perror("ERROR: in ti_adc_read_raw, failed to seek to beginning of FD");
+		return "-1";
+	}
+	if(unlikely(read(fd_raw[ch], adc_raw_buff, sizeof(adc_raw_buff))<0)){
+		perror("ERROR in ti_adc_read_raw, can't read iio adc fd");
+		return "-1";
+	}
+	
+	return adc_raw_buff;
+}
+
 int ti_adc_sysfs_read()
 {
 	char buf[5];

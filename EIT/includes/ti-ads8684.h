@@ -29,6 +29,11 @@
 #define OFFSETS_AVAIL  	{-32768, 0}
 
 /***************************************************************
+* READ RAW BUFFER DECLARATIONS
+****************************************************************/
+char adc_raw_buff[7];
+
+/***************************************************************
 * FUNCTION DECLARATIONS
 ****************************************************************/
 
@@ -169,13 +174,24 @@ int ti_adc_disable_buf();
 /****************************************************************************
 * int ti_adc_read_raw(int ch)
 *
-* Reads raw, 16-bit value of specified ADC channel
+* Reads raw, 16-bit value of specified ADC channel as an int
 *
 * Inputs : ch,	channel [0-4]
 * 
 * Outputs: ADC measurement on success, -1 on failure
 *****************************************************************************/
 int ti_adc_read_raw(int ch);
+
+/****************************************************************************
+* char* ti_adc_read_str(int ch)
+*
+* Reads raw, 16-bit value of specified ADC channel as a string
+*
+* Inputs : ch,	channel [0-4]
+* 
+* Outputs: string with raw ADC value
+*****************************************************************************/
+char* ti_adc_read_str(int ch);
 
 /****************************************************************************
 * int ti_adc_sysfs_read()

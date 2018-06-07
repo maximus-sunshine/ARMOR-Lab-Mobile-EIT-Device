@@ -9,7 +9,7 @@
  *	- Aaron Gunn		(gunnahg@gmail.com)
  * -------------------------------------------------------------------------
  * 
- * Main.c (compile with 'gcc -pthread Main.c src/gpiolib.c src/ti-ads8684.c src/UI.c src/example_app.c src/I2C.c src/SSD1306_OLED.c -o Main')
+ * Main.c (compile with 'gcc -pthread Main.c src/gpiolib.c src/ti-ads8684.c src/UI.c src/I2C.c src/SSD1306_OLED.c -o Main')
  * 
  * The Big Kahuna. This is the script that runs on boot. It does everything.
  ***************************************************************************/
@@ -24,8 +24,8 @@
 *************************************************************************************/
 config_t config = {
 	.nodal_num		= 8,
-	.adc_scale		= {0.078127104,0.078127104,0.078127104,0.078127104},
-	.adc_offset		= {0,0,0,0},
+	.adc_scale		= {0.078127104,0.078127104,0.078127104,0.078127104},	//see ti-ads8684.h for available scales
+	.adc_offset		= {0,0,0,0},											//see ti-ads8684.h for available offsets
 	.channels		= {1,0,0,0},
 	.sample_mode	= CYCLES,
 	.time			= 5,
@@ -47,10 +47,6 @@ state_t state = {
 /************************************************************************************
 * SETUP
 *************************************************************************************/
-
-//data storage
-FILE* fp;
-
 void sigint(int s __attribute__((unused)));
 
 /************************************************************************************
@@ -328,7 +324,8 @@ int sample()
 	int ground_mux[config.nodal_num];	// ground
 	int voltage_mux[config.nodal_num];	// voltage
 
-	mux_config(config.nodal_num,current_mux,ground_mux,voltage_mux);
+	if(config.sample_geom == ACROSS) mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);
+	else if(config.sample_geom == ADJACENT) mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);
 	printf("\n mux switching patterns configured...");
 	fflush(stdout);
 
@@ -352,20 +349,25 @@ int sample()
 	printf("\n current set to %d",config.i_setpoint);
 	fflush(stdout);
 
+	// set up data writing
+	fp = fopen(VOLT_DATA_TEXT,"w");
+	printf("\n Data file opened...");
+ 	char raw_buf[8];
+
+ 	//execute sampling
 	printf("\n\nBEGINNING sampling!");
 	fflush(stdout);
 
-	//execute sampling
 	gettimeofday(&t1, NULL);
 	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
-		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
-		fflush(stdout);
+		// printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+		// fflush(stdout);
 
 		//outer loop, move current and ground
 		for(i = 0; i < config.nodal_num; i++){
-			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
-			fflush(stdout);
+			// printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+			// fflush(stdout);
 
 			//set current and ground mux logic pins
 			for(k = 0; k < MUX_PINS; k++){                            
@@ -389,7 +391,10 @@ int sample()
 			for(j = 0; j < (config.nodal_num); j++){
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
-					data = 0;
+					//fill current and ground nodes with junk data
+          			strcpy(raw_buf, "0");
+		      		strcat(raw_buf, "\n");
+		      		fputs(raw_buf,fp);
 				}
 				
 				else{
@@ -408,9 +413,9 @@ int sample()
 					}
 
 					//read ADC
-					data = ti_adc_read_raw(NODE);
-					printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
-					fflush(stdout);
+					fputs(ti_adc_read_str(NODE),fp);
+					//printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,data*config.adc_scale[NODE]/1000);
+					//fflush(stdout);
 				}
 
 				//disable muxs
@@ -435,6 +440,13 @@ int sample()
 	long usec = 1e6 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
 	printf("\n\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",config.nodal_num, count, usec/1e6, count/(usec/1e6));
 	fflush(stdout);
+
+	//finish writing data
+	fclose(fp);
+  	printf("Converting and formatting data\n");
+
+ 	data_conversion(config.nodal_num);
+	printf("Conversion/Formatting complete\n");
 	return 0;
 }
 

@@ -24,6 +24,11 @@
 *************************************************************************************/
 
 /* OLED FUNCTIONS */
+void display_bitmap()
+{
+    drawBitmap(0, 0,  ARMOR_Logo_128_64_bmp, 128, 64, 1);
+}
+
 void printCenter(const unsigned char *text, int size)
 {
     int charcount = strlen(text);

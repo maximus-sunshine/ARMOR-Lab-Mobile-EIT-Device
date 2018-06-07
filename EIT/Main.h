@@ -30,11 +30,25 @@
 #include <sys/signal.h>
 #include <sys/time.h>
 #include <poll.h>
+#include <dirent.h>
 
 #include "includes/ti-ads8684.h"
 #include "includes/gpiolib.h"
-#include "includes/eit.h"
 #include "includes/UI.h"
+
+/************************************************************** 
+*DATA FILE EXPORT PATH
+***************************************************************/
+#define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
+#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
+#define RAW_PATH "/media/card/data/data"
+
+/************************************************************** 
+*FILE POINTERS
+***************************************************************/
+FILE* fp;
+FILE* fp_temp;
+int fd;
 
 /************************************************************************************
 * ENUMS/DEFINES/VARIABLES
@@ -238,13 +252,12 @@ typedef struct config_t{
     int i_setpoint;
 } config_t;
 
-
 /************************************************************************************
 * FUNCTIONS
 *************************************************************************************/
 
 /****************************************************************************
-* int cur_gnd_config(int cur[],int gnd[])
+* int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[])
 *
 * Configures current and ground nodes in "across" switching pattern.
 * Works for square samples with N nodes per edge.
@@ -254,7 +267,7 @@ typedef struct config_t{
 * 
 * Outputs:  TODO: return -1 on failure
 ******************************************************************************/
-int mux_config(int nodal_num, int cur[],int gnd[], int volt[]){
+int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
     int i;
     int side_len = (nodal_num/4); 
     int node_index = 3*side_len;
@@ -270,5 +283,123 @@ int mux_config(int nodal_num, int cur[],int gnd[], int volt[]){
             }
         }
     }
+    return 0;
+}
+
+/****************************************************************************
+* int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[])
+*
+* Configures current,ground, and voltage nodes in "adjacent" switching pattern.
+* Works for square samples with N nodes per edge.
+*
+* Inputs :  cur[],  zero current node array (size = N*4)
+*           gnd[],  zero gnd node array     (size = N*4)
+*           volt[], zero volt node array    (size = N*4)
+* Outputs:  TODO: return -1 on failure
+*****************************************************************************/
+int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
+    int i;
+    for(i = 0; i < nodal_num; i++){
+        cur[i] = i;
+        gnd[i] = i + 1;
+        volt[i] = i;
+        if (i == (nodal_num-1) ){
+            gnd[i] = 0;
+        }
+    }
+    return 0;
+}
+
+/****************************************************************************
+* int data_conversion()
+*
+* Reads raw voltages from VOLT_DATA_TEXT
+* Preforms voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
+* Places all voltages for one cycle on a tab seberated row
+* Original raw file is removed and temporary file is renamed to a nonexhisting file
+* increments the name of temp file by 1 untill it reaches a file that doesnt exhist
+* 
+* Only works if you create a path in working directory
+* Inputs :  
+* Outputs: return -1 on failure, 0 on success
+*                 
+*****************************************************************************/
+int data_conversion(int nodal_num){
+    float volt_value;
+    char data_buff[8];
+    char write_buff[15];
+    double volt_scale = 0.078127104;
+    int index = 0;
+    int len;
+    
+    
+    fp = fopen(VOLT_DATA_TEXT,"r");
+    if(NULL == fp) {
+            perror("ERROR in opening raw data file\n");
+        return -1;
+        }
+
+    fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
+    if(fd<0){
+            perror("ERROR in opening tempory data file\n");
+            fprintf(stderr, "path may not exhist\n");
+            return -1;
+        }
+
+    while(fgets(data_buff,8,fp)!= NULL){
+        volt_value = atoi(data_buff)*(volt_scale/1000);
+        
+        if(index == (nodal_num-1)){
+            len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
+            write(fd,write_buff,len);
+            index = 0;
+        }
+        else{
+            len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value);     
+            write(fd,write_buff,len);
+            index++;
+        }
+
+    }
+    
+    fclose(fp);
+    close(fd);
+    
+    remove(VOLT_DATA_TEXT);
+    int file_count = 0;
+    DIR * dirp;
+    struct dirent * entry;
+
+    dirp = opendir("/media/card/data");
+    while ((entry = readdir(dirp)) != NULL){
+        if (entry->d_type == DT_REG){
+            file_count++;
+
+        }
+    }
+    closedir(dirp);
+    printf("the number of files in directory is %d\n",file_count);
+    char path[66];
+    int i = 1;
+    int k =0;
+    snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+    while(1){
+        if( (access( path,F_OK ) != -1) ) {
+            k++;
+        }
+        i++;
+        snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+        if(k == (file_count-1)){
+                if(k == 0){
+                    snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+
+                }
+                break;
+        }
+
+    }
+    
+    rename(TEMP_VOLT_DATA_TEXT,path);
+
     return 0;
 }
