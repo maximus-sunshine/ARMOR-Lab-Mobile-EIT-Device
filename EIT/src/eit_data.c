@@ -15,6 +15,8 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
 
 /************************************************************************************
 * FUNCTION DEFINITIONS
@@ -150,24 +152,120 @@ int data_conversion(){
 	fclose(fp);
 	fclose(fp_temp);
 
-	//creates a file name that doesnt exhist
-	//if file exhists already it creates new file with an increment in the name
-	char path[66];
-	int i = 1;
-	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-	while(1){
-		if( access( path,F_OK ) != -1){
-			i++;
-			snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-		
-		}
-		else{
-			break;
+	remove(VOLT_DATA_TEXT);
+	int file_count = 0;
+	DIR * dirp;
+	struct dirent * entry;
+
+	dirp = opendir("/media/card/data");
+	while ((entry = readdir(dirp)) != NULL){
+		if (entry->d_type == DT_REG){
+			file_count++;
+
 		}
 	}
-	//removes original file
+	closedir(dirp);
+	printf("the number of files in directory is %d\n",file_count);
+	char path[66];
+	int i = 1;
+	int k =0;
+	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+	while(1){
+		if( (access( path,F_OK ) != -1) ) {
+			k++;
+		}
+		i++;
+		snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+		if(k == file_count){
+				if(k == 0){
+					snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+
+				}
+				break;
+		}
+
+	}
+	
+	rename(TEMP_VOLT_DATA_TEXT,path);
+
+	return 0;
+}
+
+int data_conversion_2(){
+	float volt_value;
+	char data_buff[8];
+	char write_buff[15];
+	double volt_scale = 0.078127104;
+	int index = 0;
+	int len;
+	
+	
+	fp = fopen(VOLT_DATA_TEXT,"r");
+	if(NULL == fp) {
+        	perror("ERROR in opening raw data file\n");
+		return -1;
+    	}
+
+	fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
+	if(fd<0){
+			perror("ERROR in opening tempory data file\n");
+			fprintf(stderr, "path may not exhist\n");
+			return -1;
+		}
+
+	while(fgets(data_buff,8,fp)!= NULL){
+		volt_value = atoi(data_buff)*(volt_scale/1000);
+		
+		if(index == (NODAL_NUM-1)){
+			len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value); 	
+			write(fd,write_buff,len);
+			index = 0;
+		}
+		else{
+			len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value); 	
+			write(fd,write_buff,len);
+			index++;
+		}
+
+	}
+	
+	fclose(fp);
+	close(fd);
+	
 	remove(VOLT_DATA_TEXT);
-	//renames temporary file to new incremented file name
+	int file_count = 0;
+	DIR * dirp;
+	struct dirent * entry;
+
+	dirp = opendir("/media/card/data");
+	while ((entry = readdir(dirp)) != NULL){
+		if (entry->d_type == DT_REG){
+			file_count++;
+
+		}
+	}
+	closedir(dirp);
+	printf("the number of files in directory is %d\n",file_count);
+	char path[66];
+	int i = 1;
+	int k =0;
+	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+	while(1){
+		if( (access( path,F_OK ) != -1) ) {
+			k++;
+		}
+		i++;
+		snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+		if(k == (file_count-1)){
+				if(k == 0){
+					snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+
+				}
+				break;
+		}
+
+	}
+	
 	rename(TEMP_VOLT_DATA_TEXT,path);
 
 	return 0;

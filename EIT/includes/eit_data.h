@@ -32,15 +32,14 @@
 *DATA FILE EXPORT PATH
 ***************************************************************/
 #define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
-#define TEMP_VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/temp_data.txt"
-#define RAW_PATH "/home/debian/MAE156B_Team6/data/data"
-
+#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
+#define RAW_PATH "/media/card/data/data"
 /************************************************************** 
 *FILE POINTERS
 ***************************************************************/
 FILE* fp;
 FILE* fp_temp;
-
+int fd;
 /************************************************************************************
 * FUNCTION DECLARATIONS
 *************************************************************************************/
@@ -101,6 +100,8 @@ int volt_samp_config(int cur[], int gnd[], int volt[][NODAL_NUM]);
 *				  
 *****************************************************************************/
 int data_conversion();
+
+int data_conversion_2();
 
 /****************************************************************************
 * void sigint(int s __attribute__((unused)))

@@ -93,7 +93,7 @@ int chan1; //current sense channel
 double scale = 0.078127104;	//ADC scale {0.312504320 0.156254208 0.078127104}
 int current_setpoint = 11;	//current setpoint 100uA-2000uA (0-19, 100uA) TODO, make this better
 int i_setpoint;
-int cycles = 1000;			//specify how many cycles to run
+int cycles = 100;			//specify how many cycles to run
 //NODAL_NUM 				//change this in eit.h
 
 
@@ -451,7 +451,7 @@ int main()
 	fclose(fp);
   
   	printf("Converting and formatting datan\n");
- 	data_conversion();
+ 	data_conversion_2();
 	printf("Conversion/Formatting complete\n");
 	//fflush(stdout);
 }
@@ -499,7 +499,7 @@ void sigint(int s __attribute__((unused))) {
 
 	fclose(fp);
   	printf("Converting and formatting datan\n");
-  	data_conversion();
+  	data_conversion_2();
 	printf("Conversion/Formatting complete\n");
 	exit(0);
 }
