@@ -1,2 +1,2 @@
-# MAE156B_Team6
-Densely distributed sensing skin module
+# Warfighter Protection:
+## Mobile Interrogation of Densely Distributed Wearable Sensors
