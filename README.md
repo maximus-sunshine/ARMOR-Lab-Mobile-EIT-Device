@@ -1,6 +1,6 @@
 # Warfighter Protection: Mobile Interrogation of Densely Distributed Wearable Sensors 
 
-This repository includes the code that runs on ARMOR Lab's Mobile EIT device.
+This repository includes the code that runs on ARMOR Lab's mobile EIT device.
 
 ## Team
 
