@@ -1,9 +1,8 @@
-# Warfighter Protection: 
-## Mobile Interrogation of Densely Distributed Wearable Sensors 
+## Warfighter Protection: Mobile Interrogation of Densely Distributed Wearable Sensors 
 
 This repository includes the code that runs on ARMOR Lab's mobile EIT device.
 
-## Team
+### Team
 
 [UC San Diego MAE156B: Senior Design Project Team 6](https://sites.google.com/a/eng.ucsd.edu/156b-2018-spring-team06/)
 
@@ -12,6 +11,6 @@ This repository includes the code that runs on ARMOR Lab's mobile EIT device.
 * Maxwell Sun		(maxsun96@gmail.com)
 * Matthew Williams	(mwilliams31243@gmail.com)
 
-## Sponsor
+### Sponsor
 
 Kenneth Loh Ph.D, [ARMOR Lab @UCSD](http://armor.eng.ucsd.edu/)
