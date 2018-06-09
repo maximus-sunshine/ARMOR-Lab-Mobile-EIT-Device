@@ -262,8 +262,10 @@ typedef struct config_t{
 * Configures current and ground nodes in "across" switching pattern.
 * Works for square samples with N nodes per edge.
 *
-* Inputs :  cur[], zero current node array (size = N*4)
+* Inputs :  nodal_num, # of nodes to be sampled
+*           cur[], zero current node array (size = N*4)
 *           gnd[], zero gnd node array     (size = N*4)
+*           volt[], zero volt node array   (size = N*4)
 * 
 * Outputs:  TODO: return -1 on failure
 ******************************************************************************/
@@ -292,10 +294,12 @@ int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
 * Configures current,ground, and voltage nodes in "adjacent" switching pattern.
 * Works for square samples with N nodes per edge.
 *
-* Inputs :  cur[],  zero current node array (size = N*4)
+* Inputs :  nodal_num, # of nodes to be sampled
+*           cur[],  zero current node array (size = N*4)
 *           gnd[],  zero gnd node array     (size = N*4)
 *           volt[], zero volt node array    (size = N*4)
-* Outputs:  TODO: return -1 on failure
+*
+* Outputs:
 *****************************************************************************/
 int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
     int i;
@@ -313,13 +317,14 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 /****************************************************************************
 * int data_conversion()
 *
-* Reads raw voltages from VOLT_DATA_TEXT
-* Preforms voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
-* Places all voltages for one cycle on a tab seberated row
-* Original raw file is removed and temporary file is renamed to a nonexhisting file
-* increments the name of temp file by 1 untill it reaches a file that doesnt exhist
+* -Reads raw voltages from VOLT_DATA_TEXT
+* -Performs voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
+* -Places all voltages for one cycle on a tab separated row
+* -Original raw file is removed and temporary file is renamed to a nonexisting file
+* -increments the name of temp file by 1 until it reaches a file that doesnt exist
 * 
 * Only works if you create a path in working directory
+* 
 * Inputs :  
 * Outputs: return -1 on failure, 0 on success
 *                 
@@ -345,9 +350,11 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
         fprintf(stderr, "path may not exist\n");
         return -1;
     }
-
+    
+    /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
     len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
     write(fd,write_buff,len);
+    ////////////////////////////////////////////////
 
     while(fgets(data_buff,8,fp)!= NULL){
         volt_value = atoi(data_buff)*(volt_scale/1000);
