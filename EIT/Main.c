@@ -25,12 +25,12 @@
 config_t config = {
 	.nodal_num		= 8,
 	.adc_scale		= {0.078127104,0.078127104,0.078127104,0.078127104},	//see ti-ads8684.h for available scales
-	.adc_offset		= {0,0,0,0},											//see ti-ads8684.h for available offsets
+	.adc_offset		= {0,0,0,0},						//see ti-ads8684.h for available offsets
 	.channels		= {1,0,0,0},
-	.sample_mode	= CYCLES,
+	.sample_mode		= CYCLES,
 	.time			= 5,
 	.cycles			= 10,
-	.sample_geom	= ACROSS,
+	.sample_geom		= ACROSS,
 	.i_setpoint		= 100,
 };
 
@@ -45,7 +45,7 @@ state_t state = {
 };
 
 /************************************************************************************
-* SETUP
+* SETUP SIGINT
 *************************************************************************************/
 void sigint(int s __attribute__((unused)));
 
@@ -63,9 +63,9 @@ void* button_poll(void* ptr);
 /************************************************************************************
 * FUNCTION DECLARATIONS
 *************************************************************************************/
-int sample();
-int process_button();
-int manage_menu();
+int sample();		//executes sampling process
+int process_button();	//processes button push
+int manage_menu();	//handles UI navigation and OLED display
 
 /************************************************************************************
 * MAIN
@@ -73,7 +73,8 @@ int manage_menu();
 int main(){
 
 	printf("\n entered MAIN...\n");
-
+	
+	/* SETUP SIGINT */
 	signal(SIGINT, sigint);
 	printf(" setup SIGINT...\n");
 
@@ -111,69 +112,62 @@ int main(){
 
 	//attach gpio pins
 	int bank, mask;
-	for(i = 0; i < MUX_PINS; i++){
+	for(i = 0; i < MUX_PINS; i++){						//current
 		bank = current_mux_gpio[i]/32;
 		mask = bit(current_mux_gpio[i]%32);
 		current_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
-	//attach ground gpio pins
-	for(i = 0; i < MUX_PINS; i++){                            
+	for(i = 0; i < MUX_PINS; i++){						//ground
 		bank = ground_mux_gpio[i]/32;
 		mask = bit(ground_mux_gpio[i]%32);
 		ground_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);
 	}
-	//attach voltage gpio pins
-	for(i = 0; i < MUX_PINS; i++){                            
+	for(i = 0; i < MUX_PINS; i++){						//voltage
 		bank = voltage_mux_gpio[i]/32;
 		mask = bit(voltage_mux_gpio[i]%32);
 		voltage_mux_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
-	//attach current switch gpio pins
-	for(i = 0; i < 10; i++){                            
+	for(i = 0; i < 10; i++){						//current source switch
 		int bank = current_switch_gpio[i]/32;
 		int mask = bit(current_switch_gpio[i]%32);
 		current_switch_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
-	//attach mux enable gpio pins
-	for(i = 0; i < 3; i++){                            
+	for(i = 0; i < 3; i++){							//mux disable
 		int bank = mux_disable_gpio[i]/32;
 		int mask = bit(mux_disable_gpio[i]%32);
 		mux_disable_gpio_info[i] = gpio_attach(bank, mask, GPIO_OUT);	
 	}
-	//adc reset attach
-	bank = adc_reset_gpio/32;
+
+	bank = adc_reset_gpio/32;						//adc reset
 	mask = bit(adc_reset_gpio%32);
 	adc_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
-	//i sense reset attach
-	bank = i_sense_reset_gpio/32;
+	
+	bank = i_sense_reset_gpio/32;						//current sense reset
 	mask = bit(i_sense_reset_gpio%32);
 	i_sense_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
-	//oled reset attach
-	bank = oled_reset_gpio/32;
+	
+	bank = oled_reset_gpio/32;						//oled reset
 	mask = bit(oled_reset_gpio%32);
 	oled_reset_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
-	//oled reset attach
-	bank = oled_power_gpio/32;
+	
+	bank = oled_power_gpio/32;						//oled power
 	mask = bit(oled_power_gpio%32);
 	oled_power_gpio_info = gpio_attach(bank, mask, GPIO_OUT);
 
 	printf(" gpio pins attached...\n");
 	
-
 	//power on OLED
 	gpio_set(oled_power_gpio_info);
 	gpio_set(oled_reset_gpio_info);
 	printf(" OLED power and reset pins set high...\n");
 	
-
-    //reset OLED
+	//reset OLED
 	gpio_clear(oled_reset_gpio_info);
 	usleep(0.5*1e6);
 	gpio_set(oled_reset_gpio_info);
 	printf(" OLED display reset...\n");
 	
-
-    //Initialize I2C bus and connect to the I2C Device
+	//Initialize I2C bus and connect to the I2C Device
 	if(init_i2c_dev2(SSD1306_OLED_ADDR) == 0)
 	{
 		printf(" (Main)i2c-2: Bus Connected to SSD1306\n");
@@ -182,7 +176,6 @@ int main(){
 	else
 	{
 		printf(" (Main)i2c-2: OOPS! Something Went Wrong\n");
-		
 		exit(1);
 	}
 
@@ -191,63 +184,53 @@ int main(){
 	gpio_set(adc_reset_gpio_info);
 	printf(" ADC enabled...\n");
 	
-
 	/* START PTHREAD TO READ BATTERY */	
 	pthread_create(&batt_read_thread, NULL, batt_read, (void*) NULL);
 	printf(" battery reading pthread created...\n");
 	
-
 	/* Run SDD1306 Initialization Sequence */
 	display_Init_seq();
 	printf(" init sequence displayed...\n");
-	
 	printf(" OLED initialized...\n");
 	
-
-    /* Display ARMOR logo */
+	/* Display ARMOR logo */
 	printf(" Displaying ARMOR logo...\n");
-	
 	display_bitmap();
 	Display();
 	usleep(2*1e6);
 
-    /* Start button poll pthread */
+	/* Start button poll pthread */
 	pthread_create(&button_poll_thread, NULL, button_poll, (void*) NULL);
 	printf(" polling buttons...\n");
 	
-
 	/* ENTER UI */
 	printf(" entering menu interface...\n");
-	
-
 	state.system = UI;
-	
 	usleep(0.5*1e6);
 	button = -1;
 	while(state.system != EXITING){
-		if(state.system == UI){
+		if(state.system == UI){			//manage menu until "START" is pressed
 			manage_menu();
-		} 
-		else if (state.system == RUNNING){
+		}
+		else if (state.system == RUNNING){	//execute sampling process and then return to menu
 			sample();
 			state.system = UI;
 		} 
 	}
 
-	/* CLEANUP */
-    //display ARMOR logo
+	/* CLEANUP, this only happens if the process is killed from the command line */
+	//display ARMOR logo
 	printf(" displaying ARMOR logo\n");
-	
 	display_bitmap();
 	Display();
 	usleep(2*1e6);
 
-    //join pthreads
+	//join pthreads
 	pthread_join(button_poll_thread, NULL);
 	pthread_join(batt_read_thread, NULL);
 	printf(" pthreads joined... \n");
 
-    //detach gpio pins
+	//detach gpio pins
 	for(i=0;i<MUX_PINS;i++){
 		gpio_detach(current_mux_gpio_info[i]);
 		gpio_detach(ground_mux_gpio_info[i]);
@@ -265,20 +248,16 @@ int main(){
 	gpio_detach(i_sense_reset_gpio_info);
 	gpio_detach(oled_reset_gpio_info);
 	gpio_detach(oled_power_gpio_info);
-
 	printf(" detached all gpio pins\n");
 	
-
 	//clean up gpio library
 	gpio_finish();
 	printf(" closed gpiolib cleanly...\n");
 	
-
 	//clean up adc library
 	ti_adc_cleanup();
 	printf(" cleaned up ADC interface...\n");
 	
-
 	// fclose(fp);
 
 	// printf("\n file has closed");
@@ -289,19 +268,18 @@ int main(){
 /************************************************************************************
 * FUNCTIONS
 *************************************************************************************/
-int sample()
+int sample()	//executes sampling process
 {
 	printf("\n\n CONFIGURING SAMPLE PROCESS...\n");
 	
-
-	long elapsed_time = 0;
+	long elapsed_time = 0;	//initialize some variables
 	int count = 0;
 	int data, n, k;
 	struct timeval t1, t2;
 
-	print_sample_screen();
+	print_sample_screen();	//write to OLED display
 
-	//set ADC scales and offsets
+	//set ADC scales and offsets (CHANNELS defined in ti-ads8684.h)
 	int i;
 	for(i=0;i<CHANNELS;i++){
 		if(ti_adc_set_scale(i, config.adc_scale[i])<0){
@@ -317,24 +295,21 @@ int sample()
 	}
 	printf(" ADC scales and offsets configured...\n");
 	
-
 	//configure mux switching patterns
 	int current_mux[config.nodal_num];	// current                                           
 	int ground_mux[config.nodal_num];	// ground
 	int voltage_mux[config.nodal_num];	// voltage
 
-	if(config.sample_geom == ACROSS) mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);
-	else if(config.sample_geom == ADJACENT) mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);
+	if(config.sample_geom == ACROSS) mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);		//for ACROSS
+	else if(config.sample_geom == ADJACENT) mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);	//for ADJACENT
 	printf(" mux switching patterns configured...\n");
 	
-
 	//disable muxes for safety
 	for(i = 0;i < 3; i++){
 		gpio_set(mux_disable_gpio_info[i]);
 	}
 	printf(" muxes disabled...\n");
 	
-
 	//turn on current source
 	int current_setpoint = (config.i_setpoint/100)-1;
 	for(i = 0; i< 10; i++){
@@ -347,7 +322,6 @@ int sample()
 	}
 	printf(" current set to %d\n",config.i_setpoint);
 	
-
 	// set up data writing
 	fp = fopen(VOLT_DATA_TEXT,"w");
 	printf(" Data file opened...\n");
@@ -355,8 +329,6 @@ int sample()
 
  	//execute sampling
 	printf("\n BEGINNING sampling!\n");
-	
-
 	gettimeofday(&t1, NULL);
 	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
@@ -392,9 +364,9 @@ int sample()
 			for(j = 0; j < (config.nodal_num); j++){
 				
 				if(i==j || ground_mux[i] == current_mux[j]){
-					//fill current and ground nodes with placeholder data
-          			strcpy(raw_buf, "0\n");
-		      		fputs(raw_buf,fp);
+					//filler data for current and ground nodes
+          				strcpy(raw_buf, "0\n");
+		      			fputs(raw_buf,fp);
 				}
 				
 				else{
@@ -437,18 +409,16 @@ int sample()
 	float time = usec/1e6;
 	printf("\n DONE SAMPLING %d nodes, %d cycles in %0.5f seconds: Avg. cyclic frequency: %0.5f\n",config.nodal_num, count, time, freq);
 	
-
 	//finish writing data
 	fclose(fp);
   	printf(" Converting and formatting data\n");
-
  	data_conversion(config.i_setpoint,config.nodal_num, count, time, freq);
 	printf(" Conversion/Formatting complete\n\n\n");
 	
 	return 0;
 }
 
-int process_button(const char opt_list[][OPT_STR_LEN])
+int process_button(const char opt_list[][OPT_STR_LEN])	//process button push
 {
 	switch(button) {
 		case SELECT:
@@ -484,11 +454,12 @@ int process_button(const char opt_list[][OPT_STR_LEN])
 	}
 }
 
-int manage_menu(){
+int manage_menu()	//manage menu navigation
+{
 	switch (state.menu) {
 		case HOME:
-		state.prev_index = 0;
 		state.back = HOME;
+		state.prev_index = 0;
 		state.len = HOME_OPTS_LEN;
 		printUI(state, HOME_OPTS);
 		if(process_button(HOME_OPTS)){
@@ -617,83 +588,82 @@ void* button_poll(void* ptr){
 	unsigned int gpio[nfds];
 	int len;
 
-    gpio[0] = 61; // button select
-    gpio[1] = 88; // button previous
-    gpio[2] = 89; // button next
-    gpio[3] = 11; // button back
+	gpio[0] = 61; // button select
+	gpio[1] = 88; // button previous
+	gpio[2] = 89; // button next
+	gpio[3] = 11; // button back
 
-    for(int i=0;i<nfds;i++){
-    	gpio_export(gpio[i]);
-    	gpio_set_dir(gpio[i], 0);
-    	gpio_set_edge(gpio[i], "rising");
-    	gpio_fd[i] = gpio_fd_open(gpio[i]);
-    }
+	for(int i=0;i<nfds;i++){
+		gpio_export(gpio[i]);
+		gpio_set_dir(gpio[i], 0);
+		gpio_set_edge(gpio[i], "rising");
+		gpio_fd[i] = gpio_fd_open(gpio[i]);
+	}
 
-    timeout = POLL_TIMEOUT;
+	timeout = POLL_TIMEOUT;
 
-    while(state.system != EXITING){
-    	memset((void*)fdset, 0, sizeof(fdset));
+	while(state.system != EXITING){
+    		memset((void*)fdset, 0, sizeof(fdset));
 
-    	for(int i=0;i<nfds;i++){
-    		fdset[i].fd = gpio_fd[i];
-    		fdset[i].events = POLLPRI;
-    	}
-
-    	rc = poll(fdset, nfds, timeout);
-
-    	if (rc < 0) {
-    		if (errno == EINTR) {
-    			printf("\n Interrupted system call... continuing\n");
-    			continue;
+    		for(int i=0;i<nfds;i++){
+    			fdset[i].fd = gpio_fd[i];
+    			fdset[i].events = POLLPRI;
     		}
-    		perror("\n poll() failed!\n");
-    		return NULL;
-    	}
 
-    	switch(state.system){
+    		rc = poll(fdset, nfds, timeout);
+
+		if (rc < 0) {
+			if (errno == EINTR) {
+				printf("\n Interrupted system call... continuing\n");
+				continue;
+			}
+			perror("\n poll() failed!\n");
+			return NULL;
+		}
+
+    		switch(state.system){
     		
-    		case UI:
-    		if (fdset[SELECT].revents & POLLPRI) {
-    			lseek(fdset[SELECT].fd, 0, SEEK_SET);
-    			len = read(fdset[SELECT].fd, buf, MAX_BUF);
-    			button = SELECT;
-    		}
-    		if (fdset[PREV].revents & POLLPRI) {
-    			lseek(fdset[PREV].fd, 0, SEEK_SET);
-    			len = read(fdset[PREV].fd, buf, MAX_BUF);
-    			button = PREV;
-    		}
-    		if (fdset[NEXT].revents & POLLPRI) {
-    			lseek(fdset[NEXT].fd, 0, SEEK_SET);
-    			len = read(fdset[NEXT].fd, buf, MAX_BUF);
-    			button = NEXT;
-    		}
-    		if (fdset[BACK].revents & POLLPRI) {
-    			lseek(fdset[BACK].fd, 0, SEEK_SET);
-    			len = read(fdset[BACK].fd, buf, MAX_BUF);
-    			button = BACK;
-    		}
-    		break;
+			case UI:
+			if (fdset[SELECT].revents & POLLPRI) {
+				lseek(fdset[SELECT].fd, 0, SEEK_SET);
+				len = read(fdset[SELECT].fd, buf, MAX_BUF);
+				button = SELECT;
+			}
+			if (fdset[PREV].revents & POLLPRI) {
+				lseek(fdset[PREV].fd, 0, SEEK_SET);
+				len = read(fdset[PREV].fd, buf, MAX_BUF);
+				button = PREV;
+			}
+			if (fdset[NEXT].revents & POLLPRI) {
+				lseek(fdset[NEXT].fd, 0, SEEK_SET);
+				len = read(fdset[NEXT].fd, buf, MAX_BUF);
+				button = NEXT;
+			}
+			if (fdset[BACK].revents & POLLPRI) {
+				lseek(fdset[BACK].fd, 0, SEEK_SET);
+				len = read(fdset[BACK].fd, buf, MAX_BUF);
+				button = BACK;
+			}
+			break;
 
-    		case RUNNING:
-    		if (fdset[BACK].revents & POLLPRI) {
-    			state.system = UI;
-    			for(int i=0;i<nfds;i++){
-    				lseek(fdset[i].fd, 0, SEEK_SET);
-    				len = read(fdset[i].fd, buf, MAX_BUF);
-    			}
+			case RUNNING:
+			if (fdset[BACK].revents & POLLPRI) {
+				state.system = UI;
+				for(int i=0;i<nfds;i++){
+					lseek(fdset[i].fd, 0, SEEK_SET);
+					len = read(fdset[i].fd, buf, MAX_BUF);
+				}
+			}
+			break;
     		}
-    		break;
-    		
-    	}
-    }
+	}
 
-    for(int i=0;i<nfds;i++){
-    	gpio_unexport(gpio[i]);
-    	gpio_fd_close(gpio_fd[i]);
-    }
-
-    return NULL;
+	for(int i=0;i<nfds;i++){
+		gpio_unexport(gpio[i]);
+		gpio_fd_close(gpio_fd[i]);
+	}
+	
+	return NULL;
 }
 
 /* BATTERY READ THREAD */
@@ -758,59 +728,51 @@ void* batt_read(void *ptr){
 *************************************************************************************/
 void sigint(int s __attribute__((unused))) {
 	printf("\n Received SIGINT: \n");
-	
-
 	printf(" Exiting cleanly...\n");
 	
-
 	state.system = EXITING;
 
-    //Display ARMOR logo
+	//Display ARMOR logo
 	clearDisplay();
 	display_bitmap();
 	Display();
 	usleep(2*1e6);
 
-    //join pthreads
+	//join pthreads
 	pthread_join(button_poll_thread, NULL);
 	pthread_join(batt_read_thread, NULL);
 	printf(" pthreads joined...\n");
 
-    //detach gpio pins
+	//detach gpio pins
 	int i;
 	for(i=0;i<MUX_PINS;i++){
 		gpio_detach(current_mux_gpio_info[i]);
 		gpio_detach(ground_mux_gpio_info[i]);
 		gpio_detach(voltage_mux_gpio_info[i]);
-	}   
-
+	}
 	for(i=0;i<10;i++){
 		gpio_detach(current_switch_gpio_info[i]);
 
-	}   
+	}
 	for(i=0;i<3;i++){
 		gpio_detach(mux_disable_gpio_info[i]);
 
-	}   
+	}
 	gpio_detach(adc_reset_gpio_info);
 	gpio_detach(i_sense_reset_gpio_info);
 	gpio_detach(oled_reset_gpio_info);
 	gpio_detach(oled_power_gpio_info);
-
 	printf(" Detached all gpio pins\n");
 	
-
-    //clean up gpio library
+	//clean up gpio library
 	gpio_finish();
 	printf(" closed gpiolib cleanly...\n");
 	
-
-    //clean up adc library
+	//clean up adc library
 	ti_adc_cleanup();
 	printf(" cleaned up ADC interface...\n\n");
 	
-
-    // fclose(fp);
-    // printf("\n file has closed\n\n");
+	// fclose(fp);
+	// printf("\n file has closed\n\n");
 	exit(0);
 }
