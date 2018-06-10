@@ -320,12 +320,11 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 * -Reads raw voltages from VOLT_DATA_TEXT
 * -Performs voltage conversion on raw measurement and writes data to TEMP_VOLT_DATA_TEXT
 * -Places all voltages for one cycle on a tab separated row
-* -Original raw file is removed and temporary file is renamed to a nonexisting file
-* -increments the name of temp file by 1 until it reaches a file that doesnt exist
+* Original raw file is removed and tempory file is renamed to highest incremented file in directory
 * 
-* Only works if you create a path in working directory
+* Do not write/store any additional text files to /media/card/data
 * 
-* Inputs :  
+* Inputs :  currnt, nodal_num, cycles, time, and frequency
 * Outputs: return -1 on failure, 0 on success
 *                 
 *****************************************************************************/
@@ -360,7 +359,7 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
 	write(fd,write_buff,len);
         ////////////////////////////////////////////////
 
-        //reads raw values and writes them to new text file
+        // converts/formats raw values and writes them to new text file
 	while(fgets(data_buff,8,fp)!= NULL){
 		volt_value = atoi(data_buff)*(volt_scale/1000);
                 //prints a newline once a nodal_num values have been written
