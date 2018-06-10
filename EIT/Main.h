@@ -330,88 +330,104 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 *                 
 *****************************************************************************/
 int data_conversion(int current, int nodal_num, int cycles, float time, float freq){
-    float volt_value;
-    char data_buff[8];
-    char write_buff[150];
-    double volt_scale = 0.078127104;
-    int index = 0;
-    int len;
-    
-    
-    fp = fopen(VOLT_DATA_TEXT,"r");
-    if(NULL == fp) {
-        perror("ERROR in opening raw data file\n");
-        return -1;
-    }
+  //buffers
+	char data_buff[8];
+	char write_buff[150];
+	int len;
+	int index = 0;
+  //voltage value and conversion factor
+	float volt_value;
+	double volt_scale = 0.078127104;
 
-    fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
-    if(fd<0){
-        perror("ERROR in opening temporary data file\n");
-        fprintf(stderr, "path may not exist\n");
-        return -1;
-    }
-    
-    /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
-    len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
-    write(fd,write_buff,len);
-    ////////////////////////////////////////////////
 
-    while(fgets(data_buff,8,fp)!= NULL){
-        volt_value = atoi(data_buff)*(volt_scale/1000);
-        
-        if(index == (nodal_num-1)){
-            len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
-            write(fd,write_buff,len);
-            index = 0;
-        }
-        else{
-            len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value);     
-            write(fd,write_buff,len);
-            index++;
-        }
 
-    }
-    
-    len = snprintf(write_buff, sizeof(write_buff),"\n\n %0.5f \n\n",freq);
-    write(fd,write_buff,len);
+  //opening raw data file for reading
+	fp = fopen(VOLT_DATA_TEXT,"r");
+	if(NULL == fp) {
+		perror("ERROR in opening raw data file\n");
+		return -1;
+	}
+  //creating text file for converted and formatted voltage values
+	fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
+	if(fd<0){
+		perror("ERROR in opening temporary data file\n");
+		fprintf(stderr, "path may not exist\n");
+		return -1;
+	}
 
-    fclose(fp);
-    close(fd);
-    
-    remove(VOLT_DATA_TEXT);
-    int file_count = 0;
-    DIR * dirp;
-    struct dirent * entry;
+  /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
+	len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
+	write(fd,write_buff,len);
+  ////////////////////////////////////////////////
 
-    dirp = opendir("/media/card/data");
-    while ((entry = readdir(dirp)) != NULL){
-        if (entry->d_type == DT_REG){
-            file_count++;
+  //reads raw values and writes them to new text file
+	while(fgets(data_buff,8,fp)!= NULL){
+		volt_value = atoi(data_buff)*(volt_scale/1000);
+    //prints a newline once a nodal_num values have been written
+    //tab seperates values in row
+		if(index == (nodal_num-1)){
+			len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
+			write(fd,write_buff,len);
+			index = 0;
+		}
+		else{
+			len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value);     
+			write(fd,write_buff,len);
+			index++;
+		}
 
-        }
-    }
-    closedir(dirp);
-    char path[66];
-    int i = 1;
-    int k =0;
-    snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-    while(1){
-        if( (access( path,F_OK ) != -1) ) {
-            k++;
-        }
-        i++;
-        snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-        if(k == (file_count-1)){
-            if(k == 0){
-                snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+	}
 
-            }
-            break;
-        }
+  //closes text files
+	fclose(fp);
+	close(fd);
+  //removes raw data file
+	remove(VOLT_DATA_TEXT);
 
-    }
-    
-    rename(TEMP_VOLT_DATA_TEXT,path);
 
-    return 0;
+	DIR * dirp;
+	struct dirent * entry;
+	char *p1, *p2;
+	int file_count = 0;
+	int ret;
+
+  //counts # of text files inside specified directory
+	dirp = opendir("/media/card/data");
+	while ((entry = readdir(dirp)) != NULL){
+		p1=strtok(entry->d_name,".");
+		p2=strtok(NULL,".");
+		if(p2!=NULL){
+			ret=strcmp(p2,"txt");
+			if(ret==0){
+				file_count++;
+			}
+		}
+
+	}
+	closedir(dirp);
+
+  //renames text file to a highest increment within directory
+	char path[66];
+	int i = 1;
+	int k =0;
+	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+	while(1){
+		if( (access( path,F_OK ) != -1) ) {
+			k++;
+		}
+		i++;
+		snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+		if(k == (file_count-1)){
+			if(k == 0){
+				snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+
+			}
+			break;
+		}
+
+	}
+
+	rename(TEMP_VOLT_DATA_TEXT,path);
+
+	return 0;
 }
