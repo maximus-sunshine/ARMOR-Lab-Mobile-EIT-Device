@@ -289,6 +289,39 @@ int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
 }
 
 /****************************************************************************
+* int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[])
+*
+* Configures current and ground nodes in "across" switching pattern.
+* Utilizes symmetry by sampling half the amount of nodes
+* Works for square samples with N nodes per edge.
+*
+* Inputs :  nodal_num, # of nodes to be sampled
+*           cur[], zero current node array (size = N*2)
+*           gnd[], zero gnd node array     (size = N*2)
+*           volt[], zero volt node array   (size = N*2)
+* 
+* Outputs:  TODO: return -1 on failure
+******************************************************************************/
+int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[]){
+    int i;
+    int side_len = (nodal_num/4); 
+    int node_index = 3*side_len;
+    for(i=0; i < (nodal_num/2); i++){
+        cur[i]  = i;
+        gnd[i]  = node_index - 1;
+        volt[i] = i;
+        node_index = node_index - 1;
+        if((node_index % (side_len))==0){
+            node_index = node_index + (nodal_num/2);
+            if (node_index > nodal_num){
+                node_index = node_index % nodal_num;
+            }
+        }
+    }
+    return 0;
+}
+
+/****************************************************************************
 * int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[])
 *
 * Configures current,ground, and voltage nodes in "adjacent" switching pattern.
