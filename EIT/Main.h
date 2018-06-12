@@ -303,13 +303,13 @@ int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
 * Outputs:  TODO: return -1 on failure
 ******************************************************************************/
 int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[]){
-    int i;
+    int i,j;
     int side_len = (nodal_num/4); 
     int node_index = 3*side_len;
+		
     for(i=0; i < (nodal_num/2); i++){
         cur[i]  = i;
         gnd[i]  = node_index - 1;
-        volt[i] = i;
         node_index = node_index - 1;
         if((node_index % (side_len))==0){
             node_index = node_index + (nodal_num/2);
@@ -318,6 +318,11 @@ int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[]){
             }
         }
     }
+		
+    for(j =0; j< nodal_num; j++){
+	volt[j] = j;    
+    }
+	
     return 0;
 }
 
