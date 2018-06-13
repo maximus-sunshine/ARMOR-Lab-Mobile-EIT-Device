@@ -40,8 +40,10 @@
 *DATA FILE EXPORT PATH
 ***************************************************************/
 #define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
-#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
-#define RAW_PATH "/media/card/data/data"
+#define TEMP_VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/temp_data.txt"
+//#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
+#define RAW_PATH "/home/debian/MAE156B_Team6/data/data"
+//#define RAW_PATH "/media/card/data/data"
 
 /************************************************************** 
 *FILE POINTERS
@@ -183,19 +185,20 @@ const char MENU_OPTS[8][OPT_STR_LEN] = {"HOME","SETTINGS","NODES","CURRENT","CON
 const char HOME_OPTS[2][OPT_STR_LEN] = {"START","SETTINGS"};
 const char SETTINGS_OPTS[4][OPT_STR_LEN] = {"NODES","CURRENT","CONFIG","MODE"};
 const char NODES_OPTS[7][OPT_STR_LEN] = {"8","12","16","20","24","28","32"};
-const char CURRENT_OPTS[20][OPT_STR_LEN] = {"100","200","300","400","500","600","700","800","900","1000","1100","1200","1300","1400","1500","1600","1700","1800","1900","2000"};
-const char CONFIG_OPTS[2][OPT_STR_LEN] = {"ACROSS","ADJACENT"};
+const char CURRENT_OPTS[21][OPT_STR_LEN] = {"AUTO","100uA","200uA","300uA","400uA","500uA","600uA","700uA","800uA","900uA","1000uA","1100uA","1200uA","1300uA","1400uA","1500uA","1600uA","1700uA","1800uA","1900uA","2000uA"};
+const char CONFIG_OPTS[3][OPT_STR_LEN] = {"ACROSS","ADJACENT","SYMMETRIC"};
 const char SAMPLING_OPTS[3][OPT_STR_LEN] = {"TIMED","CYCLES","CONT."};
 const char TIME_OPTS[13][OPT_STR_LEN] = {"5 s","10 s","20 s","30 s","45 s","1 min","2 min","5 min","10 min","20 min","30 min","1 hr","2 hr"};
 const char CYCLE_OPTS[13][OPT_STR_LEN] = {"1","5","10","20","30","40","50","100","200","500","1000","5000","10000"};
 
 const int time_opts[13] = {5, 10, 20, 30, 45, 60, 120, 300, 600, 1200, 1800, 3600, 7200}; //time options in seconds
+const int current_opts[20] = {100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000};
 
 #define HOME_OPTS_LEN 2
 #define SETTINGS_OPTS_LEN 4
 #define NODES_OPTS_LEN 7
-#define CURRENT_OPTS_LEN 20
-#define CONFIG_OPTS_LEN 2
+#define CURRENT_OPTS_LEN 21
+#define CONFIG_OPTS_LEN 3
 #define SAMPLING_OPTS_LEN 3
 #define TIME_OPTS_LEN 13
 #define CYCLE_OPTS_LEN 13
@@ -221,6 +224,7 @@ enum sample_geom
 {
     ACROSS,
     ADJACENT,
+    SYMMETRIC,
 };
 
 enum adc_channels
@@ -289,7 +293,7 @@ int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
 }
 
 /****************************************************************************
-* int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[])
+* int mux_config_symmetric(int nodal_num, int cur[],int gnd[], int volt[])
 *
 * Configures current and ground nodes in "across" switching pattern.
 * Utilizes symmetry by sampling half the amount of nodes
@@ -302,11 +306,11 @@ int mux_config_across(int nodal_num, int cur[],int gnd[], int volt[]){
 * 
 * Outputs:  TODO: return -1 on failure
 ******************************************************************************/
-int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[]){
+int mux_config_symmetric(int nodal_num, int cur[],int gnd[], int volt[]){
     int i,j;
     int side_len = (nodal_num/4); 
     int node_index = 3*side_len;
-		
+        
     for(i=0; i < (nodal_num/2); i++){
         cur[i]  = i;
         gnd[i]  = node_index - 1;
@@ -318,11 +322,11 @@ int mux_config_sym_across(int nodal_num, int cur[],int gnd[], int volt[]){
             }
         }
     }
-		
+        
     for(j =0; j< nodal_num; j++){
-	volt[j] = j;    
+    volt[j] = j;    
     }
-	
+    
     return 0;
 }
 
@@ -368,103 +372,103 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 *****************************************************************************/
 int data_conversion(int current, int nodal_num, int cycles, float time, float freq){
         //buffers
-	char data_buff[8];
-	char write_buff[150];
-	int len;
-	int index = 0;
+    char data_buff[8];
+    char write_buff[150];
+    int len;
+    int index = 0;
         //voltage value and conversion factor
-	float volt_value;
-	double volt_scale = 0.078127104;
+    float volt_value;
+    double volt_scale = 0.078127104;
 
 
 
         //opening raw data file for reading
-	fp = fopen(VOLT_DATA_TEXT,"r");
-	if(NULL == fp) {
-		perror("ERROR in opening raw data file\n");
-		return -1;
-	}
+    fp = fopen(VOLT_DATA_TEXT,"r");
+    if(NULL == fp) {
+        perror("ERROR in opening raw data file\n");
+        return -1;
+    }
         //creating text file for converted and formatted voltage values
-	fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
-	if(fd<0){
-		perror("ERROR in opening temporary data file\n");
-		fprintf(stderr, "path may not exist\n");
-		return -1;
-	}
+    fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
+    if(fd<0){
+        perror("ERROR in opening temporary data file\n");
+        fprintf(stderr, "path may not exist\n");
+        return -1;
+    }
 
         /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
-	len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
-	write(fd,write_buff,len);
+    len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
+    write(fd,write_buff,len);
         ////////////////////////////////////////////////
 
         // converts/formats raw values and writes them to new text file
-	while(fgets(data_buff,8,fp)!= NULL){
-		volt_value = atoi(data_buff)*(volt_scale/1000);
+    while(fgets(data_buff,8,fp)!= NULL){
+        volt_value = atoi(data_buff)*(volt_scale/1000);
                 //prints a newline once a nodal_num values have been written
                 //tab seperates values in row
-		if(index == (nodal_num-1)){
-			len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
-			write(fd,write_buff,len);
-			index = 0;
-		}
-		else{
-			len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value);     
-			write(fd,write_buff,len);
-			index++;
-		}
+        if(index == (nodal_num-1)){
+            len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
+            write(fd,write_buff,len);
+            index = 0;
+        }
+        else{
+            len = snprintf(write_buff, sizeof(write_buff),"%.9f\t",volt_value);     
+            write(fd,write_buff,len);
+            index++;
+        }
 
-	}
+    }
 
         //closes text files
-	fclose(fp);
-	close(fd);
+    fclose(fp);
+    close(fd);
         //removes raw data file
-	remove(VOLT_DATA_TEXT);
+    remove(VOLT_DATA_TEXT);
 
 
-	DIR * dirp;
-	struct dirent * entry;
-	char *p1, *p2;
-	int file_count = 0;
-	int ret;
+    DIR * dirp;
+    struct dirent * entry;
+    char *p1, *p2;
+    int file_count = 0;
+    int ret;
 
         //counts # of text files inside specified directory
-	dirp = opendir("/media/card/data");
-	while ((entry = readdir(dirp)) != NULL){
-		p1=strtok(entry->d_name,".");
-		p2=strtok(NULL,".");
-		if(p2!=NULL){
-			ret=strcmp(p2,"txt");
-			if(ret==0){
-				file_count++;
-			}
-		}
+    //dirp = opendir("/media/card/data");
+    dirp = opendir("/home/debian/MAE156B_Team6/data");
+    while ((entry = readdir(dirp)) != NULL){
+        p1=strtok(entry->d_name,".");
+        p2=strtok(NULL,".");
+        if(p2!=NULL){
+            ret=strcmp(p2,"txt");
+            if(ret==0){
+                file_count++;
+            }
+        }
 
-	}
-	closedir(dirp);
-
+    }
+    closedir(dirp);
         //renames text file to a highest increment within directory
-	char path[66];
-	int i = 1;
-	int k =0;
-	snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-	while(1){
-		if( (access( path,F_OK ) != -1) ) {
-			k++;
-		}
-		i++;
-		snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
-		if(k == (file_count-1)){
-			if(k == 0){
-				snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
+    char path[66];
+    int i = 1;
+    int k =0;
+    snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+    while(1){
+        if( (access( path,F_OK ) != -1) ) {
+            k++;
+        }
+        i++;
+        snprintf(path,sizeof(path),RAW_PATH "_%d.txt",i);
+        if(k == (file_count-1)){
+            if(k == 0){
+                snprintf(path,sizeof(path),RAW_PATH "_%d.txt",1);
 
-			}
-			break;
-		}
+            }
+            break;
+        }
 
-	}
+    }
 
-	rename(TEMP_VOLT_DATA_TEXT,path);
+    rename(TEMP_VOLT_DATA_TEXT,path);
 
-	return 0;
+    return 0;
 }
