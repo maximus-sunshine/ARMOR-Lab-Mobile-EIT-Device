@@ -39,11 +39,15 @@
 /************************************************************** 
 *DATA FILE EXPORT PATH
 ***************************************************************/
-#define VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/data.txt"
-#define TEMP_VOLT_DATA_TEXT "/home/debian/MAE156B_Team6/data/temp_data.txt"
-//#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
-#define RAW_PATH "/home/debian/MAE156B_Team6/data/data"
-//#define RAW_PATH "/media/card/data/data"
+#define VOLT_DATA_TEXT "/home/debian/ARMOR-Lab-Mobile-EIT-Device/data/data.txt"
+
+// // Uncomment for data storage on device not microSD
+// #define TEMP_VOLT_DATA_TEXT "/home/debian/ARMOR-Lab-Mobile-EIT-Device/data/temp_data.txt"
+#define TEMP_VOLT_DATA_TEXT "/media/card/data/temp_data.txt" 
+
+// // Uncomment for data storage on device not microSD
+// #define RAW_PATH "/home/debian/ARMOR-Lab-Mobile-EIT-Device/data/data"
+#define RAW_PATH "/media/card/data/data"
 
 /************************************************************** 
 *FILE POINTERS
@@ -373,22 +377,22 @@ int mux_config_adjacent(int nodal_num,int cur[],int gnd[],int volt[]){
 int data_conversion(int current, int nodal_num, int cycles, float time, float freq){
         //buffers
     char data_buff[8];
-    char write_buff[150];
+    char write_buff[200];
     int len;
     int index = 0;
-        //voltage value and conversion factor
+    
+    //voltage value and conversion factor
     float volt_value;
-    double volt_scale = 0.078127104;
+    float volt_scale = 0.078127104;
 
-
-
-        //opening raw data file for reading
+    //opening raw data file for reading
     fp = fopen(VOLT_DATA_TEXT,"r");
     if(NULL == fp) {
         perror("ERROR in opening raw data file\n");
         return -1;
     }
-        //creating text file for converted and formatted voltage values
+    
+    //creating text file for converted and formatted voltage values
     fd = open(TEMP_VOLT_DATA_TEXT,O_RDWR | O_CREAT | S_IRGRP | S_IROTH, 750);
     if(fd<0){
         perror("ERROR in opening temporary data file\n");
@@ -396,16 +400,16 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
         return -1;
     }
 
-        /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
+    /*COMMENT THIS OUT TO REMOVE DATA FILE HEADERS*/
     len = snprintf(write_buff, sizeof(write_buff),"Current:\t%duA\nNodes:\t\t%d\nCycles:\t\t%d\nElapsed time:\t%0.5f seconds\nFrequency:\t%0.5f Hz\n\n",current,nodal_num,cycles,time,freq);     
     write(fd,write_buff,len);
-        ////////////////////////////////////////////////
+    ////////////////////////////////////////////////
 
-        // converts/formats raw values and writes them to new text file
+    // converts/formats raw values and writes them to new text file
     while(fgets(data_buff,8,fp)!= NULL){
         volt_value = atoi(data_buff)*(volt_scale/1000);
-                //prints a newline once a nodal_num values have been written
-                //tab seperates values in row
+        //prints a newline once a nodal_num values have been written
+        //tab seperates values in row
         if(index == (nodal_num-1)){
             len = snprintf(write_buff, sizeof(write_buff),"%.9f\n",volt_value);     
             write(fd,write_buff,len);
@@ -419,10 +423,10 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
 
     }
 
-        //closes text files
+    //closes text files
     fclose(fp);
     close(fd);
-        //removes raw data file
+    //removes raw data file
     remove(VOLT_DATA_TEXT);
 
 
@@ -432,9 +436,12 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
     int file_count = 0;
     int ret;
 
-        //counts # of text files inside specified directory
-    //dirp = opendir("/media/card/data");
-    dirp = opendir("/home/debian/MAE156B_Team6/data");
+        
+    // //Uncomment for data writing to device not microSD
+    // dirp = opendir("/home/debian/ARMOR-Lab-Mobile-EIT-Device/data");
+    
+    //counts # of text files inside specified directory
+    dirp = opendir("/media/card/data");
     while ((entry = readdir(dirp)) != NULL){
         p1=strtok(entry->d_name,".");
         p2=strtok(NULL,".");
@@ -447,7 +454,7 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
 
     }
     closedir(dirp);
-        //renames text file to a highest increment within directory
+    //renames text file to a highest increment within directory
     char path[66];
     int i = 1;
     int k =0;

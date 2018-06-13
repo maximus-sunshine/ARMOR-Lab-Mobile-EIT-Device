@@ -29,7 +29,7 @@ config_t config = {
 	.channels		= {1,0,0,0},
 	.sample_mode	= CYCLES,
 	.time			= 5,
-	.cycles			= 10,
+	.cycles			= 1,
 	.sample_geom	= ACROSS,
 	.i_setpoint		= 100,
 };
@@ -354,14 +354,14 @@ int sample()	//executes sampling process
 	printf(" Got time of day..\n");
 	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
-		// //Uncomment for DEBUG
-		// printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+		//Uncomment for DEBUG
+		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
 		
 
 		//outer loop, move current and ground
-		for(i = 0; i < sizeof(current_mux)/sizeof(int); i++){
-			// //Uncomment for DEBUG
-			// printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
+		for(i = 0; i < cur_gnd_mux_len; i++){
+			//Uncomment for DEBUG
+			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
 			
 
 			//set current and ground mux logic pins
@@ -385,7 +385,8 @@ int sample()	//executes sampling process
 			int j;
 			for(j = 0; j < (config.nodal_num); j++){
 				
-				if(i==j || ground_mux[i] == current_mux[j]){
+				// if(i==j || ground_mux[i] == current_mux[j]){
+				if(1==0){
 					//filler data for current and ground nodes
           				strcpy(raw_buf, "0\n");
 		      			fputs(raw_buf,fp);
@@ -409,8 +410,8 @@ int sample()	//executes sampling process
 					//read ADC
 					strcpy(raw_buf, ti_adc_read_str(NODE));
 					fputs(raw_buf,fp);
-					// // Uncomment for DEBUG
-					// printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,atoi(raw_buf)*config.adc_scale[NODE]/1000);
+					// Uncomment for DEBUG
+					printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,atoi(raw_buf)*config.adc_scale[NODE]/1000);
 					
 				}
 
