@@ -427,7 +427,7 @@ int data_conversion(int current, int nodal_num, int cycles, float time, float fr
     fclose(fp);
     close(fd);
     //removes raw data file
-    remove(VOLT_DATA_TEXT);
+    //remove(VOLT_DATA_TEXT);
 
 
     DIR * dirp;
