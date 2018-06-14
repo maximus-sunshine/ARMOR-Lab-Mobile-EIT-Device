@@ -44,7 +44,7 @@ extern I2C_DeviceT I2C_DEV_2;
 *******************************************************************************/
 #define SYSFS_GPIO_DIR "/sys/class/gpio"
 #define POLL_TIMEOUT (3 * 1000) /* 3 seconds */
-#define OPT_STR_LEN 11   
+#define OPT_STR_LEN 15   
 #define MAX_BUF 64
 #define mod(a,b) (a%b+b)%b
 

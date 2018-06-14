@@ -66,6 +66,7 @@ void* button_poll(void* ptr);
 int sample();		//executes sampling process
 int process_button();	//processes button push
 int manage_menu();	//handles UI navigation and OLED display
+int auto_current(); //scales current for voltages to be centered at 2.5V
 
 /************************************************************************************
 * MAIN
@@ -304,25 +305,17 @@ int sample()	//executes sampling process
 		cur_gnd_mux_len = config.nodal_num;
 	}
 
-	int current_mux[cur_gnd_mux_len];	// current                                           
-	int ground_mux[cur_gnd_mux_len];	// ground
+	int current_mux[config.nodal_num];	// current                                           
+	int ground_mux[config.nodal_num];	// ground
 	int voltage_mux[config.nodal_num];	// voltage
 
-	if(config.sample_geom == SYMMETRIC){
-		mux_config_symmetric(config.nodal_num,current_mux,ground_mux,voltage_mux);	
+	if(config.sample_geom == ADJACENT){
+		mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);	
 	}
 	else{
-		if(config.sample_geom == ACROSS){
-			mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);
-		}
-		else{
-			mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);
-		}
+		mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);	
 	}
 
-	//if(config.sample_geom == ACROSS) mux_config_across(config.nodal_num,current_mux,ground_mux,voltage_mux);		//for ACROSS
-	//else if(config.sample_geom == ADJACENT) mux_config_adjacent(config.nodal_num,current_mux,ground_mux,voltage_mux);	//for ADJACENT
-	
 	printf(" mux switching patterns configured...\n");
 	
 	//disable muxes for safety
@@ -355,14 +348,12 @@ int sample()	//executes sampling process
 	while(state.system == RUNNING && ((config.sample_mode == TIMED && elapsed_time < config.time) || (config.sample_mode == CYCLES && count < config.cycles) || config.sample_mode == CONTINUOUS))
 	{
 		//Uncomment for DEBUG
-		printf("\n\n\n******************** Cycle %d *************************\n\n",count);
-		
-
+		//printf("\n\n\n******************** Cycle %d *************************\n\n",count);
+	
 		//outer loop, move current and ground
 		for(i = 0; i < cur_gnd_mux_len; i++){
 			//Uncomment for DEBUG
-			printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
-			
+			//printf("--------------Current Configuration: Current at node %d, GND at node %d ------------\n", current_mux[i]+1, ground_mux[i]+1);
 
 			//set current and ground mux logic pins
 			for(k = 0; k < MUX_PINS; k++){                            
@@ -384,12 +375,11 @@ int sample()	//executes sampling process
 			//inner loop, measure voltage
 			int j;
 			for(j = 0; j < (config.nodal_num); j++){
-				
-				// if(i==j || ground_mux[i] == current_mux[j]){
-				if(1==0){
+
+				if(i==j || ground_mux[i] == current_mux[j]){
 					//filler data for current and ground nodes
-          				strcpy(raw_buf, "0\n");
-		      			fputs(raw_buf,fp);
+          			// strcpy(raw_buf, "0\n");
+		      		fputs("0\n",fp);
 				}
 				
 				else{
@@ -406,13 +396,12 @@ int sample()	//executes sampling process
 					for(n = 0;n < 3; n++){
 						gpio_clear(mux_disable_gpio_info[n]);
 					}
+					//read ADC and write to temp file
+					ti_adc_read_str(NODE,fp);
 
-					//read ADC
-					strcpy(raw_buf, ti_adc_read_str(NODE));
-					fputs(raw_buf,fp);
 					// Uncomment for DEBUG
-					printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,atoi(raw_buf)*config.adc_scale[NODE]/1000);
-					
+					//printf("Voltage at node %d:  %.4f V\n", voltage_mux[j]+1,atoi(raw_buf)*config.adc_scale[NODE]/1000);
+
 				}
 
 				//disable muxs
@@ -441,20 +430,6 @@ int sample()	//executes sampling process
 	return 0;
 }
 
-/****************************************************************************
-* int auto_current_scaling()
-*
-* Configures current and voltage mux to node 0
-* Configures ground mux across from current mux
-* Cycles through current configuratoins until voltage is greater then 2.5V
-* 
-* 
-*
-* Inputs :	
-
-* Outputs:	current_setpoint on success, -1 on failure
-*				  
-*****************************************************************************/
 int auto_current(){
 	
 	//set ADC scales and offsets (CHANNELS defined in ti-ads8684.h)
@@ -663,7 +638,7 @@ int manage_menu()	//manage menu navigation
 		printUI(state, CONFIG_OPTS);
 		if(process_button(CONFIG_OPTS)){
 			config.sample_geom = mod(state.index,state.len);
-			printf(" geometry set to %s\n",CONFIG_OPTS[state.index]);
+			printf(" geometry set to %s\n",CONFIG_OPTS[mod(state.index,state.len)]);
 			state.menu = state.back;
 			state.index = state.prev_index;
 		};

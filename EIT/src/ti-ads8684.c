@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fcntl.h> // for open
 #include <unistd.h> // for close
+#include <string.h>
 #include "../includes/ti-ads8684.h"
 
 // preprocessor macros
@@ -311,7 +312,7 @@ int ti_adc_set_scale(int ch, double scale)
 
 int ti_adc_enable_channel(int ch)
 {
-	char buf[5];
+	char buf[6];
 	int i;
 	
 	//sanity checks
@@ -335,7 +336,7 @@ int ti_adc_enable_channel(int ch)
 
 int ti_adc_disable_channel(int ch)
 {
-	char buf[5];
+	char buf[6];
 	int i;
 	
 	//sanity checks
@@ -397,7 +398,7 @@ int ti_adc_set_hrtimer_freq(int freq)
 
 int ti_adc_enable_buf()
 {
-	char buf[5];
+	char buf[6];
 	int i;
 	
 	//sanity checks
@@ -417,7 +418,7 @@ int ti_adc_enable_buf()
 
 int ti_adc_disable_buf()
 {
-	char buf[5];
+	char buf[6];
 	int i;
 	
 	//sanity checks
@@ -437,7 +438,7 @@ int ti_adc_disable_buf()
 
 int ti_adc_read_raw(int ch)
 {
-	char buf[5];
+	static char buf[6];
 	int i;
 	
 	//sanity checks
@@ -461,34 +462,33 @@ int ti_adc_read_raw(int ch)
 	return i;
 }
 
-char* ti_adc_read_str(int ch)
+int ti_adc_read_str(int ch, FILE *fp)
 {
-	//adc_raw_buff is defined in ti-ads8684 header
-	
-	//sanity checks
+	static char buf[6];
+
 	if(unlikely(!init_flag)){
-		fprintf(stderr,"ERROR in ti_adc_read_raw, please initialize with ti_adc_init() first\n");
-		return "-1";
+		fprintf(stderr,"ERROR in ti_adc_read_str, please initialize with ti_adc_init() first\n");
+		return -1;
 	}
 	if(unlikely(ch<0 || ch>=CHANNELS)){
-		fprintf(stderr,"ERROR: in ti_adc_read_raw, adc channel must be between 0 & %d\n", CHANNELS-1);
-		return "-1";
+		fprintf(stderr,"ERROR: in ti_adc_read_str, adc channel must be between 0 & %d\n", CHANNELS-1);
+		return -1;
 	}
 	if(unlikely(lseek(fd_raw[ch],0,SEEK_SET)<0)){
-		perror("ERROR: in ti_adc_read_raw, failed to seek to beginning of FD");
-		return "-1";
+		perror("ERROR: in ti_adc_read_str, failed to seek to beginning of FD");
+		return -1;
 	}
-	if(unlikely(read(fd_raw[ch], adc_raw_buff, sizeof(adc_raw_buff))<0)){
-		perror("ERROR in ti_adc_read_raw, can't read iio adc fd");
-		return "-1";
+	if(unlikely(read(fd_raw[ch], buf, sizeof(buf))<0)){
+		perror("ERROR in ti_adc_read_str, can't read iio adc fd");
+		return -1;
 	}
-	
-	return adc_raw_buff;
+	fprintf(fp,"%d\n",atoi(buf));
+	return 0;
 }
 
 int ti_adc_sysfs_read()
 {
-	char buf[5];
+	char buf[6];
 	int i;
 	
 	//sanity checks
